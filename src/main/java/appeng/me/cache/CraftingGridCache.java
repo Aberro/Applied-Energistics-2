@@ -36,6 +36,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
+import appeng.api.storage.channels.IFluidStorageChannel;
+import appeng.api.storage.data.IAEFluidStack;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -107,6 +109,7 @@ public class CraftingGridCache implements ICraftingGrid, ICraftingProviderHelper
 	private final IGrid grid;
 	private final Map<ICraftingPatternDetails, List<ICraftingMedium>> craftingMethods = new HashMap<>();
 	private final Map<IAEItemStack, ImmutableList<ICraftingPatternDetails>> craftableItems = new HashMap<>();
+	private final Map<IAEFluidStack, ImmutableList<ICraftingPatternDetails>> craftableFluids = new HashMap<>();
 	private final Set<IAEItemStack> emitableItems = new HashSet<>();
 	private final Map<String, CraftingLinkNexus> craftingLinks = new HashMap<>();
 	private final Multimap<IAEStack, CraftingWatcher> interests = HashMultimap.create();
@@ -247,10 +250,13 @@ public class CraftingGridCache implements ICraftingGrid, ICraftingProviderHelper
 		// erase list.
 		this.craftingMethods.clear();
 		this.craftableItems.clear();
+		this.craftableFluids.clear();
 		this.emitableItems.clear();
 
 		// update the stuff that was in the list...
 		this.storageGrid.postAlterationOfStoredItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ), oldItems.keySet(),
+				new BaseActionSource() );
+		this.storageGrid.postAlterationOfStoredItems( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ), oldItems.keySet(),
 				new BaseActionSource() );
 
 		// re-create list..
@@ -260,6 +266,7 @@ public class CraftingGridCache implements ICraftingGrid, ICraftingProviderHelper
 		}
 
 		final Map<IAEItemStack, Set<ICraftingPatternDetails>> tmpCraft = new HashMap<>();
+		final Map<IAEFluidStack, Set<ICraftingPatternDetails>> tmpCraftFluids = new HashMap<>();
 
 		// new craftables!
 		for( final ICraftingPatternDetails details : this.craftingMethods.keySet() )
@@ -279,6 +286,22 @@ public class CraftingGridCache implements ICraftingGrid, ICraftingProviderHelper
 
 				methods.add( details );
 			}
+			for( IAEFluidStack out : details.getOutputFluids() )
+			{
+				out = out.copy();
+				out.reset();
+				out.setCraftable( true );
+
+
+				Set<ICraftingPatternDetails> methods = tmpCraftFluids.get( out );
+
+				if( methods == null )
+				{
+					tmpCraftFluids.put( out, methods = new TreeSet<>( COMPARATOR ) );
+				}
+
+				methods.add( details );
+			}
 		}
 
 		// make them immutable
@@ -286,8 +309,15 @@ public class CraftingGridCache implements ICraftingGrid, ICraftingProviderHelper
 		{
 			this.craftableItems.put( e.getKey(), ImmutableList.copyOf( e.getValue() ) );
 		}
+		// make them immutable
+		for( final Entry<IAEFluidStack, Set<ICraftingPatternDetails>> e : tmpCraftFluids.entrySet() )
+		{
+			this.craftableFluids.put( e.getKey(), ImmutableList.copyOf( e.getValue() ) );
+		}
 
 		this.storageGrid.postAlterationOfStoredItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ), this.craftableItems.keySet(),
+				new BaseActionSource() );
+		this.storageGrid.postAlterationOfStoredItems( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ), this.craftableFluids.keySet(),
 				new BaseActionSource() );
 	}
 

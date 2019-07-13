@@ -74,6 +74,15 @@ public interface IMEInventory<T extends IAEStack<T>>
 	IItemList<T> getAvailableItems( IItemList<T> out );
 
 	/**
+	 * request a full report of all available fluids, storage.
+	 *
+	 * @param out the IItemList the results will be written too
+	 *
+	 * @return returns same list that was passed in, is passed out
+	 */
+	IItemList<T> getAvailableFluids( IItemList<T> out );
+
+	/**
 	 * @return the type of channel your handler should be part of
 	 */
 	IStorageChannel<T> getChannel();
