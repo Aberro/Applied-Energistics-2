@@ -162,6 +162,8 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
 
 		final IAEItemStack[] in = details.getCondensedInputs();
 		final IAEItemStack[] out = details.getCondensedOutputs();
+		final IAEFluidStack[] inFluids = details.getInputFluids();
+		final IAEFluidStack[] outFluids = details.getOutputFluids();
 
 		final String label = ( isCrafting ? GuiText.Crafts.getLocal() : GuiText.Creates.getLocal() ) + ": ";
 		final String and = ' ' + GuiText.And.getLocal() + ' ';
@@ -179,6 +181,17 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
 			first = false;
 		}
 
+		for( final IAEFluidStack anOut : outFluids )
+		{
+			if( anOut == null )
+			{
+				continue;
+			}
+
+			lines.add( ( first ? label : and ) + anOut.getFluidStack().amount + ' ' + anOut.getFluidStack().getLocalizedName() );
+			first = false;
+		}
+
 		first = true;
 		for( final IAEItemStack anIn : in )
 		{
@@ -188,6 +201,17 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
 			}
 
 			lines.add( ( first ? with : and ) + anIn.getStackSize() + ' ' + Platform.getItemDisplayName( anIn ) );
+			first = false;
+		}
+
+		for( final IAEFluidStack anIn : inFluids )
+		{
+			if( anIn == null )
+			{
+				continue;
+			}
+
+			lines.add( ( first ? with : and ) + anIn.getFluidStack().amount + ' ' + anIn.getFluidStack().getLocalizedName() );
 			first = false;
 		}
 
