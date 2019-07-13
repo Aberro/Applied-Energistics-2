@@ -236,7 +236,7 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
 		else
 		{
 			IAEItemStack[] outputs = details.getOutputs();
-			out = outputs != null ? outputs[0].createItemStack() : ItemStack.EMPTY;
+			out = outputs != null && outputs.length > 0 ? outputs[0].createItemStack() : ItemStack.EMPTY;
 		}
 
 		SIMPLE_CACHE.put( item, out );
@@ -254,13 +254,13 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
 		final World w = AppEng.proxy.getWorld();
 		if (w == null)
 		{
-			return null;
+			return ItemStack.EMPTY;
 		}
 
 		final ICraftingPatternDetails details = this.getPatternForItem(item, w);
-		if( details != null )
+		if( details == null )
 		{
-			out = null;
+			out = ItemStack.EMPTY;
 		}
 		else
 		{

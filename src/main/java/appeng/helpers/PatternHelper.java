@@ -166,7 +166,7 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 
 				if( gs.getFluid() != null)
 				{
-					inFluids.add( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createStack( gs ) );
+					inFluids.add( gs );
 				}
 			}
 
@@ -182,7 +182,7 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 
 				if( gs.getFluid() != null)
 				{
-					outFluids.add( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createStack( gs ) );
+					outFluids.add( gs );
 				}
 			}
 
