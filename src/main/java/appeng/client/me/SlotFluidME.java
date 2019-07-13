@@ -37,21 +37,27 @@ import appeng.fluids.container.slots.IMEFluidSlot;
  */
 public class SlotFluidME extends SlotItemHandler implements IMEFluidSlot
 {
+	private final int offset;
+	private final FluidRepo repo;
 
-	private InternalFluidSlotME slot;
-
-	public SlotFluidME( InternalFluidSlotME slot )
+	private IAEFluidStack getAEStack()
 	{
-		super( null, 0, slot.getxPosition(), slot.getyPosition() );
-		this.slot = slot;
+		return this.repo.getReferenceFluid( this.offset );
+	}
+
+	public SlotFluidME( final FluidRepo def, final int offset, final int displayX, final int displayY )
+	{
+		super( null, 0, displayX, displayY );
+		this.repo = def;
+		this.offset = offset;
 	}
 
 	@Override
 	public IAEFluidStack getAEFluidStack()
 	{
-		if( this.slot.hasPower() )
+		if( this.repo.hasPower() )
 		{
-			return this.slot.getAEStack();
+			return this.getAEStack();
 		}
 		return null;
 	}
@@ -72,7 +78,7 @@ public class SlotFluidME extends SlotItemHandler implements IMEFluidSlot
 	@Override
 	public boolean getHasStack()
 	{
-		if( this.slot.hasPower() )
+		if( this.repo.hasPower() )
 		{
 			return this.getAEFluidStack() != null;
 		}

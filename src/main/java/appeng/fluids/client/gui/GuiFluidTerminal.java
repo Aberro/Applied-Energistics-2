@@ -46,7 +46,6 @@ import appeng.client.gui.widgets.GuiScrollbar;
 import appeng.client.gui.widgets.ISortSource;
 import appeng.client.gui.widgets.MEGuiTextField;
 import appeng.client.me.FluidRepo;
-import appeng.client.me.InternalFluidSlotME;
 import appeng.client.me.SlotFluidME;
 import appeng.core.AELog;
 import appeng.core.localization.GuiText;
@@ -125,7 +124,7 @@ public class GuiFluidTerminal extends AEBaseMEGui implements ISortSource, IConfi
 		{
 			for( int x = 0; x < this.perRow; x++ )
 			{
-				SlotFluidME slot = new SlotFluidME( new InternalFluidSlotME( this.repo, x + y * this.perRow, this.offsetX + x * 18, 18 + y * 18 ) );
+				SlotFluidME slot = new SlotFluidME( this.repo, x + y * this.perRow, this.offsetX + x * 18, 18 + y * 18 );
 				this.getMeFluidSlots().add( slot );
 				this.inventorySlots.inventorySlots.add( slot );
 			}

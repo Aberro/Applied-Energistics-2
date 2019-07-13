@@ -26,6 +26,7 @@ import net.minecraft.item.ItemStack;
 import appeng.container.slot.AppEngSlot;
 import appeng.items.misc.ItemEncodedPattern;
 import appeng.util.Platform;
+import net.minecraftforge.fluids.FluidStack;
 
 
 public class SlotDisconnected extends AppEngSlot
@@ -66,8 +67,13 @@ public class SlotDisconnected extends AppEngSlot
 			if( !is.isEmpty() && is.getItem() instanceof ItemEncodedPattern )
 			{
 				final ItemEncodedPattern iep = (ItemEncodedPattern) is.getItem();
-				final ItemStack out = iep.getOutput( is );
+				ItemStack out = iep.getOutput( is );
 				if( !out.isEmpty() )
+				{
+					return out;
+				}
+				out = iep.getOutputFluidDummyStack( is );
+				if(out != null)
 				{
 					return out;
 				}

@@ -31,10 +31,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import appeng.container.slot.*;
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 
+import net.minecraftforge.fluids.FluidStack;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -68,17 +70,7 @@ import appeng.client.me.SlotDisconnected;
 import appeng.client.me.SlotME;
 import appeng.client.render.StackSizeRenderer;
 import appeng.container.AEBaseContainer;
-import appeng.container.slot.AppEngCraftingSlot;
-import appeng.container.slot.AppEngSlot;
 import appeng.container.slot.AppEngSlot.hasCalculatedValidness;
-import appeng.container.slot.IOptionalSlot;
-import appeng.container.slot.SlotCraftingTerm;
-import appeng.container.slot.SlotDisabled;
-import appeng.container.slot.SlotFake;
-import appeng.container.slot.SlotInaccessible;
-import appeng.container.slot.SlotOutput;
-import appeng.container.slot.SlotPatternTerm;
-import appeng.container.slot.SlotRestrictedInput;
 import appeng.core.AELog;
 import appeng.core.AppEng;
 import appeng.core.sync.network.NetworkHandler;
@@ -783,7 +775,7 @@ public abstract class AEBaseGui extends GuiContainer
 
 			return;
 		}
-		else if( s instanceof IMEFluidSlot && ( (IMEFluidSlot) s ).shouldRenderAsFluid() )
+		else if( (s instanceof IMEFluidSlot && ( (IMEFluidSlot) s ).shouldRenderAsFluid()) )
 		{
 			final IMEFluidSlot slot = (IMEFluidSlot) s;
 			final IAEFluidStack fs = slot.getAEFluidStack();

@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import appeng.api.storage.data.IAEFluidStack;
+import appeng.container.slot.*;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -38,6 +40,7 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.PlayerInvWrapper;
 
@@ -51,12 +54,6 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.container.ContainerNull;
 import appeng.container.guisync.GuiSync;
-import appeng.container.slot.IOptionalSlotHost;
-import appeng.container.slot.OptionalSlotFake;
-import appeng.container.slot.SlotFakeCraftingMatrix;
-import appeng.container.slot.SlotPatternOutputs;
-import appeng.container.slot.SlotPatternTerm;
-import appeng.container.slot.SlotRestrictedInput;
 import appeng.core.sync.packets.PacketPatternSlot;
 import appeng.helpers.IContainerCraftingPacket;
 import appeng.items.storage.ItemViewCell;
@@ -80,6 +77,8 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 	private final IItemHandler crafting;
 	private final SlotFakeCraftingMatrix[] craftingSlots = new SlotFakeCraftingMatrix[9];
 	private final OptionalSlotFake[] outputSlots = new OptionalSlotFake[3];
+	private final SlotFakeFluid[] inputFluidSlots = new SlotFakeFluid[3];
+	private final SlotFakeFluid[] outputFluidSlots = new SlotFakeFluid[3];
 	private final SlotPatternTerm craftSlot;
 	private final SlotRestrictedInput patternSlotIN;
 	private final SlotRestrictedInput patternSlotOUT;
@@ -97,6 +96,8 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 
 		final IItemHandler patternInv = this.getPatternTerminal().getInventoryByName( "pattern" );
 		final IItemHandler output = this.getPatternTerminal().getInventoryByName( "output" );
+		final IItemHandler inFluids = this.getPatternTerminal().getInventoryByName( "inFluids");
+		final IItemHandler outFluids = this.getPatternTerminal().getInventoryByName( "outFluids");
 
 		this.crafting = this.getPatternTerminal().getInventoryByName( "crafting" );
 
@@ -106,6 +107,7 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 			{
 				this.addSlotToContainer( this.craftingSlots[x + y * 3] = new SlotFakeCraftingMatrix( this.crafting, x + y * 3, 18 + x * 18, -76 + y * 18 ) );
 			}
+			this.addSlotToContainer(this.inputFluidSlots[y] = new SlotFakeFluid( inFluids, this, y, 74, -76 + y * 18, 0, 0, 1 ) );
 		}
 
 		this.addSlotToContainer( this.craftSlot = new SlotPatternTerm( ip.player, this.getActionSource(), this
@@ -115,15 +117,18 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 		for( int y = 0; y < 3; y++ )
 		{
 			this.addSlotToContainer( this.outputSlots[y] = new SlotPatternOutputs( output, this, y, 110, -76 + y * 18, 0, 0, 1 ) );
+			this.addSlotToContainer( this.outputFluidSlots[y] = new SlotFakeFluid( outFluids, this, y, 130, -76 + y * 18, 0, 0, 1) );
 			this.outputSlots[y].setRenderDisabled( false );
 			this.outputSlots[y].setIIcon( -1 );
+			this.outputFluidSlots[y].setRenderDisabled ( false );
+			this.outputFluidSlots[y].setIIcon( -1 );
 		}
 
 		this.addSlotToContainer(
-				this.patternSlotIN = new SlotRestrictedInput( SlotRestrictedInput.PlacableItemType.BLANK_PATTERN, patternInv, 0, 147, -72 - 9, this
+				this.patternSlotIN = new SlotRestrictedInput( SlotRestrictedInput.PlacableItemType.BLANK_PATTERN, patternInv, 0, 165, -72 - 9, this
 						.getInventoryPlayer() ) );
 		this.addSlotToContainer(
-				this.patternSlotOUT = new SlotRestrictedInput( SlotRestrictedInput.PlacableItemType.ENCODED_PATTERN, patternInv, 1, 147, -72 + 34, this
+				this.patternSlotOUT = new SlotRestrictedInput( SlotRestrictedInput.PlacableItemType.ENCODED_PATTERN, patternInv, 1, 165, -72 + 34, this
 						.getInventoryPlayer() ) );
 
 		this.patternSlotOUT.setStackLimit( 1 );
@@ -141,6 +146,7 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 			for( int y = 0; y < 3; y++ )
 			{
 				this.outputSlots[y].xPos = this.outputSlots[y].getX();
+				this.outputFluidSlots[y].xPos = this.outputFluidSlots[y].getX();
 			}
 		}
 		else
@@ -150,6 +156,7 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 			for( int y = 0; y < 3; y++ )
 			{
 				this.outputSlots[y].xPos = -9000;
+				this.outputFluidSlots[y].xPos = -9000;
 			}
 		}
 	}
@@ -209,9 +216,11 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 
 		final ItemStack[] in = this.getInputs();
 		final ItemStack[] out = this.getOutputs();
+		final IAEFluidStack[] inFluids = this.getInputFluids();
+		final IAEFluidStack[] outFluids = this.getOutputFluids();
 
 		// if there is no input, this would be silly.
-		if( in == null || out == null )
+		if( ( in == null && inFluids == null ) || ( out == null && outFluids == null ) )
 		{
 			return;
 		}
@@ -250,19 +259,39 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 
 		final NBTTagList tagIn = new NBTTagList();
 		final NBTTagList tagOut = new NBTTagList();
+		final NBTTagList tagFluidIn = new NBTTagList();
+		final NBTTagList tagFluidOut = new NBTTagList();
 
-		for( final ItemStack i : in )
-		{
-			tagIn.appendTag( this.createItemTag( i ) );
-		}
+		if( in != null )
+			for( final ItemStack i : in )
+			{
+				tagIn.appendTag( this.createItemTag( i ) );
+			}
 
-		for( final ItemStack i : out )
-		{
-			tagOut.appendTag( this.createItemTag( i ) );
-		}
+		if( out != null )
+			for( final ItemStack i : out )
+			{
+				tagOut.appendTag( this.createItemTag( i ) );
+			}
+
+		if( inFluids != null )
+			for( final IAEFluidStack i : inFluids )
+			{
+				if( i != null )
+					tagFluidIn.appendTag( this.createFluidTag( i ) );
+			}
+
+		if( outFluids != null )
+			for( final IAEFluidStack i : outFluids )
+			{
+				if( i != null )
+					tagFluidOut.appendTag( this.createFluidTag( i ) );
+			}
 
 		encodedValue.setTag( "in", tagIn );
 		encodedValue.setTag( "out", tagOut );
+		encodedValue.setTag( "inFluids", tagFluidIn );
+		encodedValue.setTag( "outFluids", tagFluidOut );
 		encodedValue.setBoolean( "crafting", this.isCraftingMode() );
 		encodedValue.setBoolean( "substitute", this.isSubstitute() );
 
@@ -327,6 +356,50 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 		return null;
 	}
 
+	private IAEFluidStack[] getInputFluids()
+	{
+		final IAEFluidStack[] input = new IAEFluidStack[3];
+		boolean hasValue = false;
+
+		for( int x = 0; x < this.inputFluidSlots.length; x++ )
+		{
+			input[x] = this.inputFluidSlots[x].getAEFluidStack();
+			if( input[x] != null && input[x].getFluid() != null )
+			{
+				hasValue = true;
+			}
+		}
+
+		if( hasValue )
+		{
+			return input;
+		}
+
+		return null;
+	}
+
+	private IAEFluidStack[] getOutputFluids()
+	{
+		final IAEFluidStack[] output = new IAEFluidStack[3];
+		boolean hasValue = false;
+
+		for( int x = 0; x < this.outputFluidSlots.length; x++ )
+		{
+			output[x] = this.outputFluidSlots[x].getAEFluidStack();
+			if( output[x] != null && output[x].getFluid() != null )
+			{
+				hasValue = true;
+			}
+		}
+
+		if( hasValue )
+		{
+			return output;
+		}
+
+		return null;
+	}
+
 	private boolean isPattern( final ItemStack output )
 	{
 		if( output.isEmpty() )
@@ -347,6 +420,18 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 		final NBTTagCompound c = new NBTTagCompound();
 
 		if( !i.isEmpty() )
+		{
+			i.writeToNBT( c );
+		}
+
+		return c;
+	}
+
+	private NBTBase createFluidTag( final IAEFluidStack i )
+	{
+		final NBTTagCompound c = new NBTTagCompound();
+
+		if(i != null)
 		{
 			i.writeToNBT( c );
 		}
@@ -541,6 +626,16 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 		}
 
 		for( final Slot s : this.outputSlots )
+		{
+			s.putStack( ItemStack.EMPTY );
+		}
+
+		for (final Slot s : this.inputFluidSlots )
+		{
+			s.putStack( ItemStack.EMPTY );
+		}
+
+		for (final Slot s : this.outputFluidSlots )
 		{
 			s.putStack( ItemStack.EMPTY );
 		}

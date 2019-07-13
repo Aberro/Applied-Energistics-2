@@ -57,7 +57,6 @@ public class FluidRepo
 	private int rowSize = 9;
 
 	private String searchString = "";
-	private IPartitionList<IAEFluidStack> myPartitionList;
 	private boolean hasPower;
 
 	public FluidRepo( final IScrollSource src, final ISortSource sortSrc )
@@ -105,11 +104,6 @@ public class FluidRepo
 		boolean notDone = false;
 		for( IAEFluidStack fs : this.list )
 		{
-			if( this.myPartitionList != null && !this.myPartitionList.isListed( fs ) )
-			{
-				continue;
-			}
-
 			if( viewMode == ViewItems.CRAFTABLE && !fs.isCraftable() )
 			{
 				continue;

@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import appeng.api.storage.data.IAEFluidStack;
+import appeng.core.Api;
+import appeng.fluids.items.FluidDummyItem;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -34,6 +37,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -53,6 +57,7 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
 {
 	// rather simple client side caching.
 	private static final Map<ItemStack, ItemStack> SIMPLE_CACHE = new WeakHashMap<>();
+	private static final Map<ItemStack, ItemStack> SIMPLE_FLUID_CACHE = new WeakHashMap<>();
 
 	public ItemEncodedPattern()
 	{
@@ -224,10 +229,49 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
 		}
 
 		final ICraftingPatternDetails details = this.getPatternForItem( item, w );
-
-		out = details != null ? details.getOutputs()[0].createItemStack() : ItemStack.EMPTY;
+		if( details == null )
+		{
+			out = ItemStack.EMPTY;
+		}
+		else
+		{
+			IAEItemStack[] outputs = details.getOutputs();
+			out = outputs != null ? outputs[0].createItemStack() : ItemStack.EMPTY;
+		}
 
 		SIMPLE_CACHE.put( item, out );
+		return out;
+	}
+	public ItemStack getOutputFluidDummyStack(final ItemStack item )
+	{
+		ItemStack out = SIMPLE_FLUID_CACHE.get( item );
+
+		if( out != null )
+		{
+			return out;
+		}
+
+		final World w = AppEng.proxy.getWorld();
+		if (w == null)
+		{
+			return null;
+		}
+
+		final ICraftingPatternDetails details = this.getPatternForItem(item, w);
+		if( details != null )
+		{
+			out = null;
+		}
+		else
+		{
+			IAEFluidStack[] outputs = details.getOutputFluids();
+			FluidStack outFluid = outputs != null ? outputs[0].getFluidStack() : null;
+			out = Api.INSTANCE.definitions().items().dummyFluidItem().maybeStack( 1 ).get();
+			FluidDummyItem dummyItem = (FluidDummyItem) out.getItem();
+			dummyItem.setFluidStack( out, outFluid );
+		}
+
+		SIMPLE_FLUID_CACHE.put(item, out);
 		return out;
 	}
 }

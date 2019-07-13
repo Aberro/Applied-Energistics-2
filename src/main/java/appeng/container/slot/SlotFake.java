@@ -19,6 +19,7 @@
 package appeng.container.slot;
 
 
+import appeng.fluids.container.slots.IMEFluidSlot;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;

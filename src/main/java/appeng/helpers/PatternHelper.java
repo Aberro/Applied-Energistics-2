@@ -27,6 +27,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 
+import appeng.api.storage.channels.IFluidStorageChannel;
+import appeng.api.storage.data.IAEFluidStack;
+import appeng.fluids.container.slots.IMEFluidSlot;
+import appeng.fluids.util.AEFluidStack;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -46,6 +50,7 @@ import appeng.core.AELog;
 import appeng.core.features.AEFeature;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
+import net.minecraftforge.fluids.FluidStack;
 
 
 public class PatternHelper implements ICraftingPatternDetails, Comparable<PatternHelper>
@@ -60,6 +65,8 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 	private final IAEItemStack[] condensedOutputs;
 	private final IAEItemStack[] inputs;
 	private final IAEItemStack[] outputs;
+	private final IAEFluidStack[] inputFluids;
+	private final IAEFluidStack[] outputFluids;
 	private final boolean isCrafting;
 	private final boolean canSubstitute;
 	private final Set<TestLookup> failCache = new HashSet<>();
@@ -78,6 +85,8 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 
 		final NBTTagList inTag = encodedValue.getTagList( "in", 10 );
 		final NBTTagList outTag = encodedValue.getTagList( "out", 10 );
+		final NBTTagList inFluidsTag = encodedValue.getTagList( "inFluids", 10);
+		final NBTTagList outFluidsTag = encodedValue.getTagList( "outFluids", 10);
 		this.isCrafting = encodedValue.getBoolean( "crafting" );
 
 		this.canSubstitute = this.isCrafting && encodedValue.getBoolean( "substitute" );
@@ -86,6 +95,8 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 
 		final List<IAEItemStack> in = new ArrayList<>();
 		final List<IAEItemStack> out = new ArrayList<>();
+		final List<IAEFluidStack> inFluids = new ArrayList<>();
+		final List<IAEFluidStack> outFluids = new ArrayList<>();
 
 		for( int x = 0; x < inTag.tagCount(); x++ )
 		{
@@ -142,10 +153,45 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 					out.add( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( gs ) );
 				}
 			}
+
+			for(int x = 0; x < inFluidsTag.tagCount(); x++)
+			{
+				NBTTagCompound resultFluidTag = inFluidsTag.getCompoundTagAt( x );
+				final IAEFluidStack gs = AEFluidStack.fromNBT(resultFluidTag);
+
+				if( !resultFluidTag.hasNoTags() && gs.getFluid() == null )
+				{
+					throw new IllegalArgumentException( "No pattern here!" );
+				}
+
+				if( gs.getFluid() != null)
+				{
+					inFluids.add( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createStack( gs ) );
+				}
+			}
+
+			for(int x = 0; x < outFluidsTag.tagCount(); x++)
+			{
+				NBTTagCompound resultFluidTag = outFluidsTag.getCompoundTagAt( x );
+				final IAEFluidStack gs = AEFluidStack.fromNBT(resultFluidTag);
+
+				if( !resultFluidTag.hasNoTags() && gs.getFluid() == null )
+				{
+					throw new IllegalArgumentException( "No pattern here!" );
+				}
+
+				if( gs.getFluid() != null)
+				{
+					outFluids.add( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createStack( gs ) );
+				}
+			}
+
 		}
 
 		this.outputs = out.toArray( new IAEItemStack[out.size()] );
 		this.inputs = in.toArray( new IAEItemStack[in.size()] );
+		this.inputFluids = inFluids.toArray( new IAEFluidStack[inFluids.size()] );
+		this.outputFluids = outFluids.toArray( new IAEFluidStack[outFluids.size()] );
 
 		final Map<IAEItemStack, IAEItemStack> tmpOutputs = new HashMap<>();
 
@@ -189,7 +235,7 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 			}
 		}
 
-		if( tmpOutputs.isEmpty() || tmpInputs.isEmpty() )
+		if( ( tmpOutputs.isEmpty() && outFluids.isEmpty() ) || ( tmpInputs.isEmpty() && inFluids.isEmpty() ) )
 		{
 			throw new IllegalStateException( "No pattern here!" );
 		}
@@ -320,6 +366,18 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 	public IAEItemStack[] getOutputs()
 	{
 		return this.outputs;
+	}
+
+	@Override
+	public IAEFluidStack[] getInputFluids()
+	{
+		return this.inputFluids;
+	}
+
+	@Override
+	public IAEFluidStack[] getOutputFluids()
+	{
+		return this.outputFluids;
 	}
 
 	@Override

@@ -19,6 +19,8 @@
 package appeng.container.slot;
 
 
+import appeng.core.Api;
+import appeng.fluids.items.FluidDummyItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Items;
@@ -26,6 +28,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraft.world.World;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.oredict.OreDictionary;
 
@@ -248,8 +251,13 @@ public class SlotRestrictedInput extends AppEngSlot
 			if( !is.isEmpty() && is.getItem() instanceof ItemEncodedPattern )
 			{
 				final ItemEncodedPattern iep = (ItemEncodedPattern) is.getItem();
-				final ItemStack out = iep.getOutput( is );
+				ItemStack out = iep.getOutput( is );
 				if( !out.isEmpty() )
+				{
+					return out;
+				}
+				out = iep.getOutputFluidDummyStack( is );
+				if(out != null)
 				{
 					return out;
 				}

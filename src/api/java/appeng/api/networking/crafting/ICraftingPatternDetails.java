@@ -24,6 +24,7 @@
 package appeng.api.networking.crafting;
 
 
+import appeng.api.storage.data.IAEFluidStack;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
@@ -78,6 +79,10 @@ public interface ICraftingPatternDetails
 	 * @return a list of the outputs, will include nulls.
 	 */
 	IAEItemStack[] getOutputs();
+
+	IAEFluidStack[] getInputFluids();
+
+	IAEFluidStack[] getOutputFluids();
 
 	/**
 	 * @return if this pattern is enabled to support substitutions.

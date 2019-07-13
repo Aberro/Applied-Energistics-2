@@ -7,8 +7,11 @@ import java.util.List;
 import javax.annotation.Nullable;
 import javax.vecmath.Matrix4f;
 
+import appeng.core.Api;
+import appeng.fluids.items.FluidDummyItem;
 import com.google.common.collect.ImmutableMap;
 
+import net.minecraftforge.fluids.FluidStack;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.input.Keyboard;
 
@@ -227,6 +230,8 @@ class ItemEncodedPatternBakedModel implements IBakedModel
 			{
 				ItemEncodedPattern iep = (ItemEncodedPattern) stack.getItem();
 				ItemStack output = iep.getOutput( stack );
+				if(output.isEmpty())
+					output = iep.getOutputFluidDummyStack( stack );
 				if( !output.isEmpty() )
 				{
 					IBakedModel realModel = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel( output );

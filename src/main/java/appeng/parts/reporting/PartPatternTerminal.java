@@ -21,6 +21,10 @@ package appeng.parts.reporting;
 
 import java.util.List;
 
+import appeng.api.storage.data.IAEFluidStack;
+import appeng.core.Api;
+import appeng.fluids.container.slots.IMEFluidSlot;
+import appeng.fluids.items.FluidDummyItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -55,6 +59,8 @@ public class PartPatternTerminal extends AbstractPartTerminal
 	private final AppEngInternalInventory crafting = new AppEngInternalInventory( this, 9 );
 	private final AppEngInternalInventory output = new AppEngInternalInventory( this, 3 );
 	private final AppEngInternalInventory pattern = new AppEngInternalInventory( this, 2 );
+	private final AppEngInternalInventory inputFluids = new AppEngInternalInventory( this, 3 );
+	private final AppEngInternalInventory outputFluids = new AppEngInternalInventory( this, 3 );
 
 	private boolean craftingMode = true;
 	private boolean substitute = false;
@@ -86,6 +92,8 @@ public class PartPatternTerminal extends AbstractPartTerminal
 		this.pattern.readFromNBT( data, "pattern" );
 		this.output.readFromNBT( data, "outputList" );
 		this.crafting.readFromNBT( data, "craftingGrid" );
+		this.inputFluids.readFromNBT(data, "inFluids");
+		this.outputFluids.readFromNBT(data, "outFluids");
 	}
 
 	@Override
@@ -97,6 +105,8 @@ public class PartPatternTerminal extends AbstractPartTerminal
 		this.pattern.writeToNBT( data, "pattern" );
 		this.output.writeToNBT( data, "outputList" );
 		this.crafting.writeToNBT( data, "craftingGrid" );
+		this.inputFluids.writeToNBT(data, "inFluids");
+		this.outputFluids.writeToNBT(data, "outFluids");
 	}
 
 	@Override
@@ -133,17 +143,51 @@ public class PartPatternTerminal extends AbstractPartTerminal
 				{
 					this.setCraftingRecipe( details.isCraftable() );
 					this.setSubstitution( details.canSubstitute() );
+					IAEItemStack[] inputs = details.getInputs();
+					IAEItemStack[] outputs = details.getOutputs();
+					IAEFluidStack[] inputFluids = details.getInputFluids();
+					IAEFluidStack[] outputFluids = details.getOutputFluids();
 
-					for( int x = 0; x < this.crafting.getSlots() && x < details.getInputs().length; x++ )
+					for( int x = 0; x < this.crafting.getSlots() && x < inputs.length; x++ )
 					{
-						final IAEItemStack item = details.getInputs()[x];
+						final IAEItemStack item = inputs[x];
 						this.crafting.setStackInSlot( x, item == null ? ItemStack.EMPTY : item.createItemStack() );
 					}
 
-					for( int x = 0; x < this.output.getSlots() && x < details.getOutputs().length; x++ )
+					for( int x = 0; x < this.output.getSlots() && x < outputs.length; x++ )
 					{
-						final IAEItemStack item = details.getOutputs()[x];
+						final IAEItemStack item = outputs[x];
 						this.output.setStackInSlot( x, item == null ? ItemStack.EMPTY : item.createItemStack() );
+					}
+
+					for(int x = 0; x < this.inputFluids.getSlots() && x < inputFluids.length; x++)
+					{
+						final IAEFluidStack fluid = inputFluids[x];
+
+						if(fluid == null)
+							this.inputFluids.setStackInSlot( x, ItemStack.EMPTY );
+						else
+						{
+							ItemStack stack = Api.INSTANCE.definitions().items().dummyFluidItem().maybeStack( 1 ).get();
+							FluidDummyItem item = (FluidDummyItem) stack.getItem();
+							item.setFluidStack( stack, fluid.getFluidStack() );
+							this.inputFluids.setStackInSlot(x, stack);
+						}
+					}
+
+					for(int x = 0; x < this.outputFluids.getSlots() && x < outputFluids.length; x++)
+					{
+						final IAEFluidStack fluid = outputFluids[x];
+
+						if(fluid == null)
+							this.outputFluids.setStackInSlot( x, ItemStack.EMPTY );
+						else
+						{
+							ItemStack stack = Api.INSTANCE.definitions().items().dummyFluidItem().maybeStack( 1 ).get();
+							FluidDummyItem item = (FluidDummyItem) stack.getItem();
+							item.setFluidStack( stack, fluid.getFluidStack() );
+							this.outputFluids.setStackInSlot(x, stack);
+						}
 					}
 				}
 			}
@@ -195,22 +239,20 @@ public class PartPatternTerminal extends AbstractPartTerminal
 	@Override
 	public IItemHandler getInventoryByName( final String name )
 	{
-		if( name.equals( "crafting" ) )
-		{
-			return this.crafting;
+		switch (name) {
+			case "crafting":
+				return this.crafting;
+			case "output":
+				return this.output;
+			case "pattern":
+				return this.pattern;
+			case "inFluids":
+				return this.inputFluids;
+			case "outFluids":
+				return this.outputFluids;
+			default:
+				return super.getInventoryByName(name);
 		}
-
-		if( name.equals( "output" ) )
-		{
-			return this.output;
-		}
-
-		if( name.equals( "pattern" ) )
-		{
-			return this.pattern;
-		}
-
-		return super.getInventoryByName( name );
 	}
 
 	@Override

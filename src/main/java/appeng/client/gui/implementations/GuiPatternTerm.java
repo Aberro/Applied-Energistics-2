@@ -111,27 +111,27 @@ public class GuiPatternTerm extends GuiMEMonitorable
 	{
 		super.initGui();
 
-		this.tabCraftButton = new GuiTabButton( this.guiLeft + 173, this.guiTop + this.ySize - 177, new ItemStack( Blocks.CRAFTING_TABLE ), GuiText.CraftingPattern
+		this.tabCraftButton = new GuiTabButton( this.guiLeft + 194, this.guiTop + this.ySize - 163, new ItemStack( Blocks.CRAFTING_TABLE ), GuiText.CraftingPattern
 				.getLocal(), this.itemRender );
 		this.buttonList.add( this.tabCraftButton );
 
-		this.tabProcessButton = new GuiTabButton( this.guiLeft + 173, this.guiTop + this.ySize - 177, new ItemStack( Blocks.FURNACE ), GuiText.ProcessingPattern
+		this.tabProcessButton = new GuiTabButton( this.guiLeft + 194, this.guiTop + this.ySize - 163, new ItemStack( Blocks.FURNACE ), GuiText.ProcessingPattern
 				.getLocal(), this.itemRender );
 		this.buttonList.add( this.tabProcessButton );
 
-		this.substitutionsEnabledBtn = new GuiImgButton( this.guiLeft + 84, this.guiTop + this.ySize - 163, Settings.ACTIONS, ItemSubstitution.ENABLED );
+		this.substitutionsEnabledBtn = new GuiImgButton( this.guiLeft + 72, this.guiTop + this.ySize - 158, Settings.ACTIONS, ItemSubstitution.ENABLED );
 		this.substitutionsEnabledBtn.setHalfSize( true );
 		this.buttonList.add( this.substitutionsEnabledBtn );
 
-		this.substitutionsDisabledBtn = new GuiImgButton( this.guiLeft + 84, this.guiTop + this.ySize - 163, Settings.ACTIONS, ItemSubstitution.DISABLED );
+		this.substitutionsDisabledBtn = new GuiImgButton( this.guiLeft + 72, this.guiTop + this.ySize - 158, Settings.ACTIONS, ItemSubstitution.DISABLED );
 		this.substitutionsDisabledBtn.setHalfSize( true );
 		this.buttonList.add( this.substitutionsDisabledBtn );
 
-		this.clearBtn = new GuiImgButton( this.guiLeft + 74, this.guiTop + this.ySize - 163, Settings.ACTIONS, ActionItems.CLOSE );
+		this.clearBtn = new GuiImgButton( this.guiLeft + 153, this.guiTop + this.ySize - 165, Settings.ACTIONS, ActionItems.CLOSE );
 		this.clearBtn.setHalfSize( true );
 		this.buttonList.add( this.clearBtn );
 
-		this.encodeBtn = new GuiImgButton( this.guiLeft + 147, this.guiTop + this.ySize - 142, Settings.ACTIONS, ActionItems.ENCODE );
+		this.encodeBtn = new GuiImgButton( this.guiLeft + 165, this.guiTop + this.ySize - 142, Settings.ACTIONS, ActionItems.ENCODE );
 		this.buttonList.add( this.encodeBtn );
 	}
 
