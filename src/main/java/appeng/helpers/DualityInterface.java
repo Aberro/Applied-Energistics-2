@@ -118,7 +118,7 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 	public static final int NUMBER_OF_PATTERN_SLOTS = 9;
 
 	private static final Collection<Block> BAD_BLOCKS = new HashSet<>( 100 );
-	private final IAEItemStack[] requireWork = { null, null, null, null, null, null, null, null, null };
+	private final IAEStack[] requireWork = { null, null, null, null, null, null, null, null, null };
 	private final MultiCraftingTracker craftingTracker;
 	private final AENetworkProxy gridProxy;
 	private final IInterfaceHost iHost;
@@ -128,10 +128,10 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 	private final AppEngInternalAEInventory config = new AppEngInternalAEInventory( this, NUMBER_OF_CONFIG_SLOTS );
 	private final AppEngInternalInventory storage = new AppEngInternalInventory( this, NUMBER_OF_STORAGE_SLOTS );
 	private final AppEngInternalInventory patterns = new AppEngInternalInventory( this, NUMBER_OF_PATTERN_SLOTS );
-	private final MEMonitorPassThrough<IAEItemStack> items = new MEMonitorPassThrough<>( new NullInventory<IAEItemStack>(), AEApi.instance()
+	private final MEMonitorPassThrough items = new MEMonitorPassThrough( new NullInventory<IAEItemStack>(), AEApi.instance()
 			.storage()
 			.getStorageChannel( IItemStorageChannel.class ) );
-	private final MEMonitorPassThrough<IAEFluidStack> fluids = new MEMonitorPassThrough<>( new NullInventory<IAEFluidStack>(), AEApi.instance()
+	private final MEMonitorPassThrough fluids = new MEMonitorPassThrough( new NullInventory<IAEFluidStack>(), AEApi.instance()
 			.storage()
 			.getStorageChannel( IFluidStorageChannel.class ) );
 	private final UpgradeInventory upgrades;
@@ -139,7 +139,7 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 	private int priority;
 	private List<ICraftingPatternDetails> craftingList = null;
 	private List<ItemStack> waitingToSend = null;
-	private IMEInventory<IAEItemStack> destination;
+	private IMEInventory destination;
 	private int isWorking = -1;
 	private final Accessor accessor = new Accessor();
 
@@ -394,7 +394,7 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 		}
 		else
 		{
-			for( final IAEItemStack requiredWork : this.requireWork )
+			for( final IAEStack requiredWork : this.requireWork )
 			{
 				if( requiredWork != null )
 				{
@@ -507,7 +507,7 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 	@Override
 	public boolean canInsert( final ItemStack stack )
 	{
-		final IAEItemStack out = this.destination.injectItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( stack ),
+		final IAEStack out = this.destination.injectItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( stack ),
 				Actionable.SIMULATE, null );
 		if( out == null )
 		{
@@ -655,7 +655,7 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 		return didSomething;
 	}
 
-	private boolean usePlan( final int x, final IAEItemStack itemStack )
+	private boolean usePlan( final int x, final IAEStack itemStack )
 	{
 		final InventoryAdaptor adaptor = this.getAdaptor( x );
 		this.isWorking = x;
@@ -673,13 +673,13 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 			else if( itemStack.getStackSize() > 0 )
 			{
 				// make sure strange things didn't happen...
-				if( !adaptor.simulateAdd( itemStack.createItemStack() ).isEmpty() )
+				if( !adaptor.simulateAdd( ((IAEItemStack)itemStack).createItemStack() ).isEmpty() )
 				{
 					changed = true;
 					throw new GridAccessException();
 				}
 
-				final IAEItemStack acquired = Platform.poweredExtraction( src, this.destination, itemStack, this.interfaceRequestSource );
+				final IAEItemStack acquired = (IAEItemStack)Platform.poweredExtraction( src, this.destination, itemStack, this.interfaceRequestSource );
 				if( acquired != null )
 				{
 					changed = true;
@@ -696,7 +696,7 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 			}
 			else if( itemStack.getStackSize() < 0 )
 			{
-				IAEItemStack toStore = itemStack.copy();
+				IAEItemStack toStore = (IAEItemStack)itemStack.copy();
 				toStore.setStackSize( -toStore.getStackSize() );
 
 				long diff = toStore.getStackSize();
@@ -753,7 +753,7 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 		return new AdaptorItemHandler( new RangedWrapper( this.storage, slot, slot + 1 ) );
 	}
 
-	private boolean handleCrafting( final int x, final InventoryAdaptor d, final IAEItemStack itemStack )
+	private boolean handleCrafting( final int x, final InventoryAdaptor d, final IAEStack itemStack )
 	{
 		try
 		{
@@ -788,16 +788,16 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 	}
 
 	@Override
-	public <T extends IAEStack<T>> IMEMonitor<T> getInventory( IStorageChannel<T> channel )
+	public <T extends IAEStack> IMEMonitor getInventory( IStorageChannel<T> channel )
 	{
 		if( channel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
 		{
 			if( this.hasConfig() )
 			{
-				return (IMEMonitor<T>) new InterfaceInventory( this );
+				return new InterfaceInventory( this );
 			}
 
-			return (IMEMonitor<T>) this.items;
+			return this.items;
 		}
 		else if( channel == AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) )
 		{
@@ -806,7 +806,7 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 				return null;
 			}
 
-			return (IMEMonitor<T>) this.fluids;
+			return this.fluids;
 		}
 
 		return null;
@@ -882,11 +882,11 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 		{
 
 			@Override
-			public <T extends IAEStack<T>> IMEMonitor<T> getInventory( IStorageChannel<T> channel )
+			public <T extends IAEStack> IMEMonitor getInventory( IStorageChannel<T> channel )
 			{
 				if( channel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
 				{
-					return (IMEMonitor<T>) new InterfaceInventory( di );
+					return new InterfaceInventory( di );
 				}
 				return null;
 			}

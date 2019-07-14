@@ -24,6 +24,7 @@ import java.nio.BufferOverflowException;
 
 import javax.annotation.Nonnull;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -77,10 +78,10 @@ import appeng.util.Platform;
  * @version rv6 - 12/05/2018
  * @since rv6 12/05/2018
  */
-public class ContainerFluidTerminal extends AEBaseContainer implements IConfigManagerHost, IConfigurableObject, IMEMonitorHandlerReceiver<IAEFluidStack>
+public class ContainerFluidTerminal extends AEBaseContainer implements IConfigManagerHost, IConfigurableObject, IMEMonitorHandlerReceiver
 {
 	private final IConfigManager clientCM;
-	private final IMEMonitor<IAEFluidStack> monitor;
+	private final IMEMonitor monitor;
 	private final IItemList<IAEFluidStack> fluids = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
 	@GuiSync( 99 )
 	public boolean hasPower = false;
@@ -155,11 +156,12 @@ public class ContainerFluidTerminal extends AEBaseContainer implements IConfigMa
 	}
 
 	@Override
-	public void postChange( IBaseMonitor<IAEFluidStack> monitor, Iterable<IAEFluidStack> change, IActionSource actionSource )
+	public void postChange(IBaseMonitor monitor, Iterable<IAEStack> change, IActionSource actionSource )
 	{
-		for( final IAEFluidStack is : change )
+		for( final IAEStack is : change )
 		{
-			this.fluids.add( is );
+			if(is.getChannel() == this.monitor.getChannel())
+				this.fluids.add( (IAEFluidStack) is );
 		}
 	}
 
@@ -197,20 +199,22 @@ public class ContainerFluidTerminal extends AEBaseContainer implements IConfigMa
 			try
 			{
 				PacketMEFluidInventoryUpdate piu = new PacketMEFluidInventoryUpdate();
-				final IItemList<IAEFluidStack> monitorCache = this.monitor.getStorageList();
+				final IItemList<IAEStack> monitorCache = this.monitor.getStorageList(this.monitor.getChannel());
 
-				for( final IAEFluidStack send : monitorCache )
+				for( final IAEStack send : monitorCache )
 				{
+					if(send.getChannel() != this.monitor.getChannel())
+						continue;
 					try
 					{
-						piu.appendFluid( send );
+						piu.appendFluid( (IAEFluidStack)send );
 					}
 					catch( final BufferOverflowException boe )
 					{
 						NetworkHandler.instance().sendTo( piu, (EntityPlayerMP) c );
 
 						piu = new PacketMEFluidInventoryUpdate();
-						piu.appendFluid( send );
+						piu.appendFluid( (IAEFluidStack)send );
 					}
 				}
 
@@ -300,13 +304,15 @@ public class ContainerFluidTerminal extends AEBaseContainer implements IConfigMa
 			{
 				try
 				{
-					final IItemList<IAEFluidStack> monitorCache = this.monitor.getStorageList();
+					final IItemList<IAEStack> monitorCache = this.monitor.getStorageList(this.monitor.getChannel());
 
 					final PacketMEFluidInventoryUpdate piu = new PacketMEFluidInventoryUpdate();
 
 					for( final IAEFluidStack is : this.fluids )
 					{
-						final IAEFluidStack send = monitorCache.findPrecise( is );
+						if(is.getChannel() != this.monitor.getChannel())
+							continue;
+						final IAEFluidStack send = (IAEFluidStack)monitorCache.findPrecise( is );
 						if( send == null )
 						{
 							is.setStackSize( 0 );

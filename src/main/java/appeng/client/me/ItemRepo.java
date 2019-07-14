@@ -58,7 +58,7 @@ public class ItemRepo
 	private int rowSize = 9;
 
 	private String searchString = "";
-	private IPartitionList<IAEItemStack> myPartitionList;
+	private IPartitionList myPartitionList;
 	private String innerSearch = "";
 	private boolean hasPower;
 

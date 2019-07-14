@@ -27,8 +27,8 @@ import java.util.Map;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
-
 
 public final class FluidList implements IItemList<IAEFluidStack>
 {

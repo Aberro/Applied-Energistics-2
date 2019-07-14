@@ -29,7 +29,7 @@ import appeng.api.networking.storage.IBaseMonitor;
 import appeng.api.storage.data.IAEItemStack;
 
 
-public interface ICraftingCPU extends IBaseMonitor<IAEItemStack>
+public interface ICraftingCPU extends IBaseMonitor
 {
 
 	/**

@@ -71,7 +71,7 @@ public class ApiStorage implements IStorageHelper
 	}
 
 	@Override
-	public <T extends IAEStack<T>, C extends IStorageChannel<T>> void registerStorageChannel( Class<C> channel, C factory )
+	public <T extends IAEStack, C extends IStorageChannel<T>> void registerStorageChannel( Class<C> channel, C factory )
 	{
 		Preconditions.checkNotNull( channel );
 		Preconditions.checkNotNull( factory );
@@ -82,7 +82,7 @@ public class ApiStorage implements IStorageHelper
 	}
 
 	@Override
-	public <T extends IAEStack<T>, C extends IStorageChannel<T>> C getStorageChannel( Class<C> channel )
+	public <T extends IAEStack, C extends IStorageChannel<T>> C getStorageChannel( Class<C> channel )
 	{
 		Preconditions.checkNotNull( channel );
 
@@ -94,7 +94,7 @@ public class ApiStorage implements IStorageHelper
 	}
 
 	@Override
-	public Collection<IStorageChannel<? extends IAEStack<?>>> storageChannels()
+	public Collection<IStorageChannel<? extends IAEStack>> storageChannels()
 	{
 		return Collections.unmodifiableCollection( this.channels.values() );
 	}
@@ -109,13 +109,13 @@ public class ApiStorage implements IStorageHelper
 	}
 
 	@Override
-	public <T extends IAEStack<T>> T poweredInsert( IEnergySource energy, IMEInventory<T> inv, T input, IActionSource src, Actionable mode )
+	public <T extends IAEStack> T poweredInsert( IEnergySource energy, IMEInventory inv, T input, IActionSource src, Actionable mode )
 	{
 		return Platform.poweredInsert( energy, inv, input, src, mode );
 	}
 
 	@Override
-	public <T extends IAEStack<T>> T poweredExtraction( IEnergySource energy, IMEInventory<T> inv, T request, IActionSource src, Actionable mode )
+	public <T extends IAEStack> T poweredExtraction( IEnergySource energy, IMEInventory inv, T request, IActionSource src, Actionable mode )
 	{
 		return Platform.poweredExtraction( energy, inv, request, src, mode );
 	}
@@ -133,6 +133,17 @@ public class ApiStorage implements IStorageHelper
 
 	private static final class ItemStorageChannel implements IItemStorageChannel
 	{
+
+		@Override
+		public IStorageChannel getChannelType() {
+			return this;
+		}
+
+		@Override
+		public String getPatternNBTInputTag() { return "in"; }
+
+		@Override
+		public String getPatternNBTOutputTag() { return "out"; }
 
 		@Override
 		public IItemList<IAEItemStack> createList()
@@ -171,6 +182,16 @@ public class ApiStorage implements IStorageHelper
 
 	private static final class FluidStorageChannel implements IFluidStorageChannel
 	{
+		@Override
+		public IStorageChannel getChannelType() {
+			return this;
+		}
+
+		@Override
+		public String getPatternNBTInputTag() { return "inFluids"; }
+
+		@Override
+		public String getPatternNBTOutputTag() { return "outFluids"; }
 
 		@Override
 		public int transferFactor()

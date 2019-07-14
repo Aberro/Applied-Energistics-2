@@ -48,9 +48,9 @@ public class ItemViewCell extends AEBaseItem implements ICellWorkbenchItem
 		this.setMaxStackSize( 1 );
 	}
 
-	public static IPartitionList<IAEItemStack> createFilter( final ItemStack[] list )
+	public static IPartitionList createFilter( final ItemStack[] list )
 	{
-		IPartitionList<IAEItemStack> myPartitionList = null;
+		IPartitionList myPartitionList = null;
 
 		final MergedPriorityList<IAEItemStack> myMergedList = new MergedPriorityList<>();
 

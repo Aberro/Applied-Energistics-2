@@ -27,6 +27,7 @@ import java.io.IOException;
 
 import javax.annotation.Nonnull;
 
+import appeng.api.storage.data.IAEStack;
 import io.netty.buffer.ByteBuf;
 
 import net.minecraft.item.ItemStack;
@@ -46,7 +47,7 @@ import appeng.util.Platform;
 import appeng.util.item.AEStack;
 
 
-public final class AEFluidStack extends AEStack<IAEFluidStack> implements IAEFluidStack, Comparable<AEFluidStack>
+public final class AEFluidStack extends AEStack implements IAEFluidStack, Comparable<AEFluidStack>
 {
 
 	private final Fluid fluid;
@@ -166,12 +167,10 @@ public final class AEFluidStack extends AEStack<IAEFluidStack> implements IAEFlu
 	}
 
 	@Override
-	public void add( final IAEFluidStack option )
+	public void add( final IAEStack option )
 	{
-		if( option == null )
-		{
+		if(option == null || !(option instanceof IAEFluidStack))
 			return;
-		}
 		this.incStackSize( option.getStackSize() );
 		this.setCountRequestable( this.getCountRequestable() + option.getCountRequestable() );
 		this.setCraftable( this.isCraftable() || option.isCraftable() );
@@ -197,9 +196,11 @@ public final class AEFluidStack extends AEStack<IAEFluidStack> implements IAEFlu
 	}
 
 	@Override
-	public boolean fuzzyComparison( final IAEFluidStack other, final FuzzyMode mode )
+	public boolean fuzzyComparison( final IAEStack other, final FuzzyMode mode )
 	{
-		return this.fluid == other.getFluid();
+		if(!(other instanceof IAEFluidStack))
+			return false;
+		return this.fluid == ((IAEFluidStack)other).getFluid();
 	}
 
 	@Override

@@ -24,7 +24,9 @@
 package appeng.api.networking.crafting;
 
 
+import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 
 
 /**
@@ -41,5 +43,5 @@ public interface ICraftingProviderHelper
 	/**
 	 * Set an item can Emitable
 	 */
-	void setEmitable( IAEItemStack what );
+	void setEmitable(IStorageChannel channel, IAEStack what );
 }

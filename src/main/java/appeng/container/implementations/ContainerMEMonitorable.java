@@ -24,6 +24,7 @@ import java.nio.BufferOverflowException;
 
 import javax.annotation.Nonnull;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -73,11 +74,11 @@ import appeng.util.IConfigManagerHost;
 import appeng.util.Platform;
 
 
-public class ContainerMEMonitorable extends AEBaseContainer implements IConfigManagerHost, IConfigurableObject, IMEMonitorHandlerReceiver<IAEItemStack>
+public class ContainerMEMonitorable extends AEBaseContainer implements IConfigManagerHost, IConfigurableObject, IMEMonitorHandlerReceiver
 {
 
 	private final SlotRestrictedInput[] cellView = new SlotRestrictedInput[5];
-	private final IMEMonitor<IAEItemStack> monitor;
+	private final IMEMonitor monitor;
 	private final IItemList<IAEItemStack> items = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
 	private final IConfigManager clientCM;
 	private final ITerminalHost host;
@@ -223,13 +224,13 @@ public class ContainerMEMonitorable extends AEBaseContainer implements IConfigMa
 			{
 				try
 				{
-					final IItemList<IAEItemStack> monitorCache = this.monitor.getStorageList();
+					final IItemList<IAEStack> monitorCache = this.monitor.getStorageList(AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ));
 
 					final PacketMEInventoryUpdate piu = new PacketMEInventoryUpdate();
 
 					for( final IAEItemStack is : this.items )
 					{
-						final IAEItemStack send = monitorCache.findPrecise( is );
+						final IAEStack send = monitorCache.findPrecise( is );
 						if( send == null )
 						{
 							is.setStackSize( 0 );
@@ -335,9 +336,9 @@ public class ContainerMEMonitorable extends AEBaseContainer implements IConfigMa
 			try
 			{
 				PacketMEInventoryUpdate piu = new PacketMEInventoryUpdate();
-				final IItemList<IAEItemStack> monitorCache = this.monitor.getStorageList();
+				final IItemList<IAEStack> monitorCache = this.monitor.getStorageList(AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ));
 
-				for( final IAEItemStack send : monitorCache )
+				for( final IAEStack send : monitorCache )
 				{
 					try
 					{
@@ -389,11 +390,12 @@ public class ContainerMEMonitorable extends AEBaseContainer implements IConfigMa
 	}
 
 	@Override
-	public void postChange( final IBaseMonitor<IAEItemStack> monitor, final Iterable<IAEItemStack> change, final IActionSource source )
+	public void postChange( final IBaseMonitor monitor, final Iterable<IAEStack> change, final IActionSource source )
 	{
-		for( final IAEItemStack is : change )
+		for( final IAEStack is : change )
 		{
-			this.items.add( is );
+			if(is instanceof IAEItemStack)
+				this.items.add( (IAEItemStack)is );
 		}
 	}
 

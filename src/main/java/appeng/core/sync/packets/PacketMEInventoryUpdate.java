@@ -30,6 +30,7 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.annotation.Nullable;
 
+import appeng.api.storage.data.IAEStack;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -191,7 +192,7 @@ public class PacketMEInventoryUpdate extends AppEngPacket
 		return null;
 	}
 
-	public void appendItem( final IAEItemStack is ) throws IOException, BufferOverflowException
+	public void appendItem( final IAEStack is ) throws IOException, BufferOverflowException
 	{
 		final ByteBuf tmp = Unpooled.buffer( OPERATION_BYTE_LIMIT );
 		is.writeToPacket( tmp );

@@ -40,11 +40,11 @@ import appeng.util.item.AEItemStack;
 public class IMEAdaptor extends InventoryAdaptor
 {
 
-	private final IMEInventory<IAEItemStack> target;
+	private final IMEInventory target;
 	private final IActionSource src;
 	private int maxSlots = 0;
 
-	public IMEAdaptor( final IMEInventory<IAEItemStack> input, final IActionSource src )
+	public IMEAdaptor( final IMEInventory input, final IActionSource src )
 	{
 		this.target = input;
 		this.src = src;

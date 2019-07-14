@@ -43,7 +43,7 @@ import appeng.util.ConfigManager;
 import appeng.util.Platform;
 
 
-public class PortableCellViewer extends MEMonitorHandler<IAEItemStack> implements IPortableCell, IInventorySlotAware
+public class PortableCellViewer extends MEMonitorHandler implements IPortableCell, IInventorySlotAware
 {
 
 	private final ItemStack target;
@@ -84,11 +84,11 @@ public class PortableCellViewer extends MEMonitorHandler<IAEItemStack> implement
 	}
 
 	@Override
-	public <T extends IAEStack<T>> IMEMonitor<T> getInventory( IStorageChannel<T> channel )
+	public <T extends IAEStack> IMEMonitor getInventory( IStorageChannel<T> channel )
 	{
 		if( channel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
 		{
-			return (IMEMonitor<T>) this;
+			return this;
 		}
 		return null;
 	}

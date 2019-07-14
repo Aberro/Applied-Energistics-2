@@ -15,7 +15,7 @@ import appeng.core.localization.GuiText;
 public class ApiClientHelper implements IClientHelper
 {
 	@Override
-	public <T extends IAEStack<T>> void addCellInformation( ICellInventoryHandler<T> handler, List<String> lines )
+	public <T extends IAEStack> void addCellInformation( ICellInventoryHandler<T> handler, List<String> lines )
 	{
 		if( handler == null )
 		{

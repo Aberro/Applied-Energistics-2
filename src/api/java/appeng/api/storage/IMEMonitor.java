@@ -25,11 +25,13 @@ package appeng.api.storage;
 
 
 import appeng.api.networking.storage.IBaseMonitor;
+import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 
 
-public interface IMEMonitor<T extends IAEStack<T>> extends IMEInventoryHandler<T>, IBaseMonitor<T>
+public interface IMEMonitor extends IMEInventoryHandler, IBaseMonitor
 {
 
 	/**
@@ -37,12 +39,12 @@ public interface IMEMonitor<T extends IAEStack<T>> extends IMEInventoryHandler<T
 	 */
 	@Override
 	@Deprecated
-	IItemList<T> getAvailableItems( IItemList<T> out );
+	IItemList<IAEStack> getAvailableItems(IStorageChannel channel, IItemList<IAEStack> out );
 
 	/**
 	 * Get access to the full item list of the network, preferred over {@link IMEInventory} .getAvailableItems(...)
 	 *
 	 * @return full storage list.
 	 */
-	IItemList<T> getStorageList();
+	IItemList<IAEStack> getStorageList(IStorageChannel channel);
 }

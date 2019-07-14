@@ -20,7 +20,7 @@ import appeng.core.AELog;
 import appeng.util.item.AEStack;
 
 
-public class BasicCellInventory<T extends IAEStack<T>> extends AbstractCellInventory<T>
+public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventory<T>
 {
 	private final IStorageChannel<T> channel;
 
@@ -30,7 +30,7 @@ public class BasicCellInventory<T extends IAEStack<T>> extends AbstractCellInven
 		this.channel = cellType.getChannel();
 	}
 
-	public static <T extends IAEStack<T>> ICellInventory<T> createInventory( final ItemStack o, final ISaveProvider container )
+	public static <T extends IAEStack> ICellInventory<T> createInventory( final ItemStack o, final ISaveProvider container )
 	{
 		try
 		{
@@ -109,31 +109,28 @@ public class BasicCellInventory<T extends IAEStack<T>> extends AbstractCellInven
 	{
 		if( inv != null )
 		{
-			return inv.getAvailableItems( inv.getChannel().createList() ).isEmpty();
+			IStorageChannel channel = inv.getChannel();
+			return inv.getAvailableItems( channel, channel.createList() ).isEmpty();
 		}
 		return true;
 	}
 
 	@Override
-	public T injectItems( T input, Actionable mode, IActionSource src )
+	public IAEStack injectItems( IAEStack input, Actionable mode, IActionSource src )
 	{
 		if( input == null )
-		{
 			return null;
-		}
 		if( input.getStackSize() == 0 )
-		{
 			return null;
-		}
-
-		if( this.cellType.isBlackListed( this.getItemStack(), input ) )
-		{
+		if(input.getChannel() != this.getChannel())
 			return input;
-		}
+
+		if( this.cellType.isBlackListed( this.getItemStack(), (T)input ) )
+			return input;
 		// This is slightly hacky as it expects a read-only access, but fine for now.
 		// TODO: Guarantee a read-only access. E.g. provide an isEmpty() method and ensure CellInventory does not write
 		// any NBT data for empty cells instead of relying on an empty IItemContainer
-		if( this.isStorageCell( input ) )
+		if( this.isStorageCell( (T)input ) )
 		{
 			final ICellInventory<?> meInventory = createInventory( ( (IAEItemStack) input ).createItemStack(), null );
 			if( !isCellEmpty( meInventory ) )
@@ -142,7 +139,7 @@ public class BasicCellInventory<T extends IAEStack<T>> extends AbstractCellInven
 			}
 		}
 
-		final T l = this.getCellItems().findPrecise( input );
+		final T l = this.getCellItems().findPrecise( (T)input );
 		if( l != null )
 		{
 			final long remainingItemCount = this.getRemainingItemCount();
@@ -153,7 +150,7 @@ public class BasicCellInventory<T extends IAEStack<T>> extends AbstractCellInven
 
 			if( input.getStackSize() > remainingItemCount )
 			{
-				final T r = input.copy();
+				final T r = (T)input.copy();
 				r.setStackSize( r.getStackSize() - remainingItemCount );
 				if( mode == Actionable.MODULATE )
 				{
@@ -180,11 +177,11 @@ public class BasicCellInventory<T extends IAEStack<T>> extends AbstractCellInven
 			{
 				if( input.getStackSize() > remainingItemCount )
 				{
-					final T toReturn = input.copy();
+					final T toReturn = (T)input.copy();
 					toReturn.setStackSize( input.getStackSize() - remainingItemCount );
 					if( mode == Actionable.MODULATE )
 					{
-						final T toWrite = input.copy();
+						final T toWrite = (T)input.copy();
 						toWrite.setStackSize( remainingItemCount );
 
 						this.cellItems.add( toWrite );
@@ -195,7 +192,7 @@ public class BasicCellInventory<T extends IAEStack<T>> extends AbstractCellInven
 
 				if( mode == Actionable.MODULATE )
 				{
-					this.cellItems.add( input );
+					this.cellItems.add( (T)input );
 					this.saveChanges();
 				}
 
@@ -207,21 +204,21 @@ public class BasicCellInventory<T extends IAEStack<T>> extends AbstractCellInven
 	}
 
 	@Override
-	public T extractItems( T request, Actionable mode, IActionSource src )
+	public IAEStack extractItems( IAEStack request, Actionable mode, IActionSource src )
 	{
 		if( request == null )
-		{
 			return null;
-		}
+		if( request.getChannel() != this.getChannel())
+			return null;
 
 		final long size = Math.min( Integer.MAX_VALUE, request.getStackSize() );
 
 		T Results = null;
 
-		final T l = this.getCellItems().findPrecise( request );
+		final T l = this.getCellItems().findPrecise( (T)request );
 		if( l != null )
 		{
-			Results = l.copy();
+			Results = (T)l.copy();
 
 			if( l.getStackSize() <= size )
 			{

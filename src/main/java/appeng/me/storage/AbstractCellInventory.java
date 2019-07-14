@@ -19,6 +19,7 @@
 package appeng.me.storage;
 
 
+import appeng.api.storage.IStorageChannel;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.items.IItemHandler;
@@ -37,7 +38,7 @@ import appeng.util.Platform;
  * @version rv6 - 2018-01-17
  * @since rv6 2018-01-17
  */
-public abstract class AbstractCellInventory<T extends IAEStack<T>> implements ICellInventory<T>
+public abstract class AbstractCellInventory<T extends IAEStack> implements ICellInventory<T>
 {
 	private static final int MAX_ITEM_TYPES = 63;
 	private static final String ITEM_TYPE_TAG = "it";
@@ -97,7 +98,7 @@ public abstract class AbstractCellInventory<T extends IAEStack<T>> implements IC
 	{
 		if( this.cellItems == null )
 		{
-			this.cellItems = this.getChannel().createList();
+			this.cellItems = this.<T>getChannel().createList();
 			this.loadCellItems();
 		}
 
@@ -186,7 +187,7 @@ public abstract class AbstractCellInventory<T extends IAEStack<T>> implements IC
 	{
 		if( this.cellItems == null )
 		{
-			this.cellItems = this.getChannel().createList();
+			this.cellItems = this.<T>getChannel().createList();
 		}
 
 		this.cellItems.resetStatus(); // clears totals and stuff.
@@ -217,8 +218,10 @@ public abstract class AbstractCellInventory<T extends IAEStack<T>> implements IC
 	protected abstract boolean loadCellItem( NBTTagCompound compoundTag, int stackSize );
 
 	@Override
-	public IItemList<T> getAvailableItems( final IItemList<T> out )
+	public IItemList<IAEStack> getAvailableItems(IStorageChannel channel, final IItemList<IAEStack> out )
 	{
+		if( channel != this.getChannel())
+			return out;
 		for( final T item : this.getCellItems() )
 		{
 			out.add( item );

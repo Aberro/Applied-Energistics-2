@@ -91,7 +91,7 @@ public abstract class AEBaseContainer extends Container
 	private boolean isContainerValid = true;
 	private String customName;
 	private ContainerOpenContext openContext;
-	private IMEInventoryHandler<IAEItemStack> cellInv;
+	private IMEInventoryHandler cellInv;
 	private IEnergySource powerSrc;
 	private boolean sentCustomName;
 	private int ticksSinceCheck = 900;
@@ -921,7 +921,7 @@ public abstract class AEBaseContainer extends Container
 						IAEItemStack ais = slotItem.copy();
 						final long maxSize = ais.getDefinition().getMaxStackSize();
 						ais.setStackSize( maxSize );
-						ais = this.getCellInventory().extractItems( ais, Actionable.SIMULATE, this.getActionSource() );
+						ais = (IAEItemStack)this.getCellInventory().extractItems( ais, Actionable.SIMULATE, this.getActionSource() );
 
 						if( ais != null )
 						{
@@ -1206,12 +1206,12 @@ public abstract class AEBaseContainer extends Container
 		return true;
 	}
 
-	public IMEInventoryHandler<IAEItemStack> getCellInventory()
+	public IMEInventoryHandler getCellInventory()
 	{
 		return this.cellInv;
 	}
 
-	public void setCellInventory( final IMEInventoryHandler<IAEItemStack> cellInv )
+	public void setCellInventory( final IMEInventoryHandler cellInv )
 	{
 		this.cellInv = cellInv;
 	}

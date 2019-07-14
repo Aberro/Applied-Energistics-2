@@ -43,7 +43,7 @@ import appeng.api.storage.data.IAEStack;
  *
  * The standard AE implementation only provides 1-63 Types
  */
-public interface IStorageCell<T extends IAEStack<T>> extends ICellWorkbenchItem
+public interface IStorageCell<T extends IAEStack> extends ICellWorkbenchItem
 {
 
 	/**

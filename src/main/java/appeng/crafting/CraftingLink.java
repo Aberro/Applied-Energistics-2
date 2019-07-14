@@ -19,6 +19,7 @@
 package appeng.crafting;
 
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.nbt.NBTTagCompound;
 
 import appeng.api.config.Actionable;
@@ -175,7 +176,7 @@ public class CraftingLink implements ICraftingLink
 		}
 	}
 
-	public IAEItemStack injectItems( final IAEItemStack input, final Actionable mode )
+	public IAEStack injectItems(final IAEStack input, final Actionable mode )
 	{
 		if( this.tie == null || this.tie.getRequest() == null || this.tie.getRequest().getRequester() == null )
 		{

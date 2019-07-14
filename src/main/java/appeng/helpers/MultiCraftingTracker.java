@@ -22,6 +22,7 @@ package appeng.helpers;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import appeng.api.storage.data.IAEStack;
 import com.google.common.collect.ImmutableSet;
 
 import net.minecraft.nbt.NBTTagCompound;
@@ -81,9 +82,9 @@ public class MultiCraftingTracker
 		}
 	}
 
-	public boolean handleCrafting( final int x, final long itemToCraft, final IAEItemStack ais, final InventoryAdaptor d, final World w, final IGrid g, final ICraftingGrid cg, final IActionSource mySrc )
+	public boolean handleCrafting(final int x, final long itemToCraft, final IAEStack ais, final InventoryAdaptor d, final World w, final IGrid g, final ICraftingGrid cg, final IActionSource mySrc )
 	{
-		if( ais != null && d.simulateAdd( ais.createItemStack() ).isEmpty() )
+		if( ais != null && d.simulateAdd( ais ).isEmpty() )
 		{
 			final Future<ICraftingJob> craftingJob = this.getJob( x );
 
@@ -129,7 +130,7 @@ public class MultiCraftingTracker
 			{
 				if( this.getLink( x ) == null )
 				{
-					final IAEItemStack aisC = ais.copy();
+					final IAEStack aisC = ais.copy();
 					aisC.setStackSize( itemToCraft );
 
 					this.setJob( x, cg.beginCraftingJob( w, g, mySrc, aisC, null ) );

@@ -39,9 +39,9 @@ import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 
 
-public interface IStorageChannel<T extends IAEStack<T>>
+public interface IStorageChannel<T extends IAEStack>
 {
-
+	IStorageChannel getChannelType();
 	/**
 	 * Can be used as factor for transferring stacks of a channel.
 	 * 
@@ -65,6 +65,11 @@ public interface IStorageChannel<T extends IAEStack<T>>
 	{
 		return 8;
 	}
+
+	@Nonnull
+	String getPatternNBTInputTag();
+	@Nonnull
+	String getPatternNBTOutputTag();
 
 	/**
 	 * Create a new {@link IItemList} of the specific type.

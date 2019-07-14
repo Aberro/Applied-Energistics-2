@@ -33,7 +33,7 @@ import appeng.api.storage.data.IAEItemStack;
 /**
  * Obtained via {@link IGuiItem} getGuiObject
  */
-public interface IPortableCell extends ITerminalHost, IMEMonitor<IAEItemStack>, IEnergySource, IGuiItemObject
+public interface IPortableCell extends ITerminalHost, IMEMonitor, IEnergySource, IGuiItemObject
 {
 
 }

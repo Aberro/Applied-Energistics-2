@@ -21,6 +21,8 @@ package appeng.container.implementations;
 
 import java.io.IOException;
 
+import appeng.api.storage.data.IAEStack;
+import appeng.util.item.MixedList;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -50,10 +52,10 @@ import appeng.tile.crafting.TileCraftingTile;
 import appeng.util.Platform;
 
 
-public class ContainerCraftingCPU extends AEBaseContainer implements IMEMonitorHandlerReceiver<IAEItemStack>, ICustomNameObject
+public class ContainerCraftingCPU extends AEBaseContainer implements IMEMonitorHandlerReceiver, ICustomNameObject
 {
 
-	private final IItemList<IAEItemStack> list = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+	private final IItemList<IAEStack> list = new MixedList();
 	private IGrid network;
 	private CraftingCPUCluster monitor = null;
 	private String cpuName = null;
@@ -176,7 +178,7 @@ public class ContainerCraftingCPU extends AEBaseContainer implements IMEMonitorH
 				final PacketMEInventoryUpdate b = new PacketMEInventoryUpdate( (byte) 1 );
 				final PacketMEInventoryUpdate c = new PacketMEInventoryUpdate( (byte) 2 );
 
-				for( final IAEItemStack out : this.list )
+				for( final IAEStack out : this.list )
 				{
 					a.appendItem( this.getMonitor().getItemStack( out, CraftingItemList.STORAGE ) );
 					b.appendItem( this.getMonitor().getItemStack( out, CraftingItemList.ACTIVE ) );
@@ -221,9 +223,9 @@ public class ContainerCraftingCPU extends AEBaseContainer implements IMEMonitorH
 	}
 
 	@Override
-	public void postChange( final IBaseMonitor<IAEItemStack> monitor, final Iterable<IAEItemStack> change, final IActionSource actionSource )
+	public void postChange( final IBaseMonitor monitor, final Iterable<IAEStack> change, final IActionSource actionSource )
 	{
-		for( IAEItemStack is : change )
+		for( IAEStack is : change )
 		{
 			is = is.copy();
 			is.setStackSize( 1 );

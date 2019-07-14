@@ -35,15 +35,14 @@ import appeng.api.config.FuzzyMode;
 import appeng.api.storage.IStorageChannel;
 
 
-public interface IAEStack<T extends IAEStack<T>>
+public interface IAEStack
 {
-
 	/**
 	 * add two stacks together
 	 *
 	 * @param is added item
 	 */
-	void add( T is );
+	void add( IAEStack is );
 
 	/**
 	 * number of items in the stack.
@@ -57,7 +56,7 @@ public interface IAEStack<T extends IAEStack<T>>
 	 *
 	 * @param stackSize , ItemStack.stackSize = N
 	 */
-	T setStackSize( long stackSize );
+	IAEStack setStackSize( long stackSize );
 
 	/**
 	 * Same as getStackSize, but for requestable items. ( LP )
@@ -71,7 +70,9 @@ public interface IAEStack<T extends IAEStack<T>>
 	 *
 	 * @return basically itemStack.stackSize = N but for setStackSize items.
 	 */
-	T setCountRequestable( long countRequestable );
+	IAEStack setCountRequestable( long countRequestable );
+
+	boolean isEmpty();
 
 	/**
 	 * true, if the item can be crafted.
@@ -85,12 +86,12 @@ public interface IAEStack<T extends IAEStack<T>>
 	 *
 	 * @param isCraftable can item be crafted
 	 */
-	T setCraftable( boolean isCraftable );
+	IAEStack setCraftable( boolean isCraftable );
 
 	/**
 	 * clears, requestable, craftable, and stack sizes.
 	 */
-	T reset();
+	IAEStack reset();
 
 	/**
 	 * returns true, if the item can be crafted, requested, or extracted.
@@ -156,7 +157,7 @@ public interface IAEStack<T extends IAEStack<T>>
 	 *
 	 * @return true if two stacks are equal based on AE Fuzzy Comparison.
 	 */
-	boolean fuzzyComparison( T other, FuzzyMode mode );
+	boolean fuzzyComparison( IAEStack other, FuzzyMode mode );
 
 	/**
 	 * Slower for disk saving, but smaller/more efficient for packets.
@@ -172,14 +173,14 @@ public interface IAEStack<T extends IAEStack<T>>
 	 *
 	 * @return a new Stack, which is copied from the original.
 	 */
-	T copy();
+	IAEStack copy();
 
 	/**
 	 * create an empty stack.
 	 *
 	 * @return a new stack, which represents an empty copy of the original.
 	 */
-	T empty();
+	IAEStack empty();
 
 	/**
 	 * @return true if the stack is a {@link IAEItemStack}
@@ -194,7 +195,7 @@ public interface IAEStack<T extends IAEStack<T>>
 	/**
 	 * @return ITEM or FLUID
 	 */
-	IStorageChannel<T> getChannel();
+	IStorageChannel getChannel();
 
 	/**
 	 * Returns itemstack for display and similar purposes. Always has a count of 1.

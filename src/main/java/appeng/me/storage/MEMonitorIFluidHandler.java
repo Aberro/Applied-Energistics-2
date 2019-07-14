@@ -27,6 +27,8 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import appeng.api.storage.data.IAEStack;
+import appeng.util.item.MixedList;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
@@ -45,11 +47,11 @@ import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IItemList;
 
 
-public class MEMonitorIFluidHandler implements IMEMonitor<IAEFluidStack>, ITickingMonitor
+public class MEMonitorIFluidHandler implements IMEMonitor, ITickingMonitor
 {
 	private final IFluidHandler handler;
 	private final IItemList<IAEFluidStack> list = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
-	private final HashMap<IMEMonitorHandlerReceiver<IAEFluidStack>, Object> listeners = new HashMap<>();
+	private final HashMap<IMEMonitorHandlerReceiver, Object> listeners = new HashMap<>();
 	private final NavigableMap<Integer, CachedFluidStack> memory;
 	private IActionSource mySource;
 	private StorageFilter mode = StorageFilter.EXTRACTABLE_ONLY;
@@ -61,21 +63,23 @@ public class MEMonitorIFluidHandler implements IMEMonitor<IAEFluidStack>, ITicki
 	}
 
 	@Override
-	public void addListener( final IMEMonitorHandlerReceiver<IAEFluidStack> l, final Object verificationToken )
+	public void addListener( final IMEMonitorHandlerReceiver l, final Object verificationToken )
 	{
 		this.listeners.put( l, verificationToken );
 	}
 
 	@Override
-	public void removeListener( final IMEMonitorHandlerReceiver<IAEFluidStack> l )
+	public void removeListener( final IMEMonitorHandlerReceiver l )
 	{
 		this.listeners.remove( l );
 	}
 
 	@Override
-	public IAEFluidStack injectItems( final IAEFluidStack input, final Actionable type, final IActionSource src )
+	public IAEStack injectItems( final IAEStack input, final Actionable type, final IActionSource src )
 	{
-		final int filled = this.handler.fill( input.getFluidStack(), type == Actionable.MODULATE );
+		if(input.getChannel() != this.getChannel())
+			return input;
+		final int filled = this.handler.fill( ((IAEFluidStack)input).getFluidStack(), type == Actionable.MODULATE );
 
 		if( filled == 0 )
 		{
@@ -92,15 +96,17 @@ public class MEMonitorIFluidHandler implements IMEMonitor<IAEFluidStack>, ITicki
 			return null;
 		}
 
-		final IAEFluidStack o = input.copy();
+		final IAEFluidStack o = (IAEFluidStack)input.copy();
 		o.setStackSize( input.getStackSize() - filled );
 		return o;
 	}
 
 	@Override
-	public IAEFluidStack extractItems( final IAEFluidStack request, final Actionable type, final IActionSource src )
+	public IAEStack extractItems(final IAEStack request, final Actionable type, final IActionSource src )
 	{
-		final FluidStack removed = this.handler.drain( request.getFluidStack(), type == Actionable.MODULATE );
+		if(request.getChannel() != this.getChannel())
+			return  null;
+		final FluidStack removed = this.handler.drain( ((IAEFluidStack)request).getFluidStack(), type == Actionable.MODULATE );
 
 		if( removed == null || removed.amount == 0 )
 		{
@@ -112,7 +118,7 @@ public class MEMonitorIFluidHandler implements IMEMonitor<IAEFluidStack>, ITicki
 			this.onTick();
 		}
 
-		final IAEFluidStack o = request.copy();
+		final IAEFluidStack o = (IAEFluidStack)request.copy();
 		o.setStackSize( removed.amount );
 		return o;
 	}
@@ -126,7 +132,7 @@ public class MEMonitorIFluidHandler implements IMEMonitor<IAEFluidStack>, ITicki
 	@Override
 	public TickRateModulation onTick()
 	{
-		final List<IAEFluidStack> changes = new ArrayList<>();
+		final List<IAEStack> changes = new ArrayList<>();
 
 		this.list.resetStatus();
 		int high = 0;
@@ -231,15 +237,15 @@ public class MEMonitorIFluidHandler implements IMEMonitor<IAEFluidStack>, ITicki
 		return !a.getFluid().equals( b.getFluid() );
 	}
 
-	private void postDifference( final Iterable<IAEFluidStack> a )
+	private void postDifference( final Iterable<IAEStack> a )
 	{
 		if( a != null )
 		{
-			final Iterator<Entry<IMEMonitorHandlerReceiver<IAEFluidStack>, Object>> i = this.listeners.entrySet().iterator();
+			final Iterator<Entry<IMEMonitorHandlerReceiver, Object>> i = this.listeners.entrySet().iterator();
 			while( i.hasNext() )
 			{
-				final Entry<IMEMonitorHandlerReceiver<IAEFluidStack>, Object> l = i.next();
-				final IMEMonitorHandlerReceiver<IAEFluidStack> key = l.getKey();
+				final Entry<IMEMonitorHandlerReceiver, Object> l = i.next();
+				final IMEMonitorHandlerReceiver key = l.getKey();
 				if( key.isValid( l.getValue() ) )
 				{
 					key.postChange( this, a, this.getActionSource() );
@@ -259,15 +265,15 @@ public class MEMonitorIFluidHandler implements IMEMonitor<IAEFluidStack>, ITicki
 	}
 
 	@Override
-	public boolean isPrioritized( final IAEFluidStack input )
+	public boolean isPrioritized( final IAEStack input )
 	{
 		return false;
 	}
 
 	@Override
-	public boolean canAccept( final IAEFluidStack input )
+	public boolean canAccept( final IAEStack input )
 	{
-		return true;
+		return input.getChannel() == this.getChannel();
 	}
 
 	@Override
@@ -289,7 +295,7 @@ public class MEMonitorIFluidHandler implements IMEMonitor<IAEFluidStack>, ITicki
 	}
 
 	@Override
-	public IItemList<IAEFluidStack> getAvailableItems( final IItemList out )
+	public IItemList<IAEStack> getAvailableItems( IStorageChannel channel, final IItemList<IAEStack> out )
 	{
 		for( final CachedFluidStack is : this.memory.values() )
 		{
@@ -300,9 +306,16 @@ public class MEMonitorIFluidHandler implements IMEMonitor<IAEFluidStack>, ITicki
 	}
 
 	@Override
-	public IItemList<IAEFluidStack> getStorageList()
+	public IItemList<IAEStack> getStorageList(IStorageChannel channel)
 	{
-		return this.list;
+		//TODO: optimize it
+		if(channel == this.getChannel()) {
+			MixedList result = new MixedList();
+			for( IAEStack stack : this.list)
+				result.add(stack);
+			return result;
+		}
+		return new MixedList();
 	}
 
 	private StorageFilter getMode()

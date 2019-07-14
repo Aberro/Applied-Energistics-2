@@ -38,7 +38,7 @@ import net.minecraft.item.ItemStack;
  *
  * Construct with AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class).createStack( ItemStack )
  */
-public interface IAEItemStack extends IAEStack<IAEItemStack>
+public interface IAEItemStack extends IAEStack
 {
 
 	/**
@@ -61,7 +61,7 @@ public interface IAEItemStack extends IAEStack<IAEItemStack>
 	 * @param option to add to the current one.
 	 */
 	@Override
-	void add( IAEItemStack option );
+	void add( IAEStack option );
 
 	/**
 	 * create a AE Item clone

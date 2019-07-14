@@ -22,7 +22,7 @@ import appeng.util.Platform;
 public class BasicItemCellGuiHandler implements ICellGuiHandler
 {
 	@Override
-	public <T extends IAEStack<T>> boolean isHandlerFor( final IStorageChannel<T> channel )
+	public <T extends IAEStack> boolean isHandlerFor( final IStorageChannel<T> channel )
 	{
 		return channel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}

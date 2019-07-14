@@ -32,34 +32,34 @@ import appeng.util.prioritylist.DefaultPriorityList;
 import appeng.util.prioritylist.IPartitionList;
 
 
-public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHandler<T>
+public class MEInventoryHandler implements IMEInventoryHandler
 {
 
-	private final IMEInventoryHandler<T> internal;
+	private final IMEInventoryHandler internal;
 	private int myPriority;
 	private IncludeExclude myWhitelist;
 	private AccessRestriction myAccess;
-	private IPartitionList<T> myPartitionList;
+	private IPartitionList myPartitionList;
 
 	private AccessRestriction cachedAccessRestriction;
 	private boolean hasReadAccess;
 	private boolean hasWriteAccess;
 
-	public MEInventoryHandler( final IMEInventory<T> i, final IStorageChannel<T> channel )
+	public MEInventoryHandler( final IMEInventory i, final IStorageChannel channel )
 	{
 		if( i instanceof IMEInventoryHandler )
 		{
-			this.internal = (IMEInventoryHandler<T>) i;
+			this.internal = (IMEInventoryHandler) i;
 		}
 		else
 		{
-			this.internal = new MEPassThrough<>( i, channel );
+			this.internal = new MEPassThrough( i, channel );
 		}
 
 		this.myPriority = 0;
 		this.myWhitelist = IncludeExclude.WHITELIST;
 		this.setBaseAccess( AccessRestriction.READ_WRITE );
-		this.myPartitionList = new DefaultPriorityList<>();
+		this.myPartitionList = new DefaultPriorityList();
 	}
 
 	IncludeExclude getWhitelist()
@@ -85,18 +85,18 @@ public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHa
 		this.hasWriteAccess = this.cachedAccessRestriction.hasPermission( AccessRestriction.WRITE );
 	}
 
-	IPartitionList<T> getPartitionList()
+	IPartitionList getPartitionList()
 	{
 		return this.myPartitionList;
 	}
 
-	public void setPartitionList( final IPartitionList<T> myPartitionList )
+	public void setPartitionList( final IPartitionList myPartitionList )
 	{
 		this.myPartitionList = myPartitionList;
 	}
 
 	@Override
-	public T injectItems( final T input, final Actionable type, final IActionSource src )
+	public IAEStack injectItems( final IAEStack input, final Actionable type, final IActionSource src )
 	{
 		if( !this.canAccept( input ) )
 		{
@@ -107,7 +107,7 @@ public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHa
 	}
 
 	@Override
-	public T extractItems( final T request, final Actionable type, final IActionSource src )
+	public IAEStack extractItems( final IAEStack request, final Actionable type, final IActionSource src )
 	{
 		if( !this.hasReadAccess )
 		{
@@ -118,18 +118,18 @@ public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHa
 	}
 
 	@Override
-	public IItemList<T> getAvailableItems( final IItemList<T> out )
+	public IItemList<IAEStack> getAvailableItems(IStorageChannel channel, final IItemList<IAEStack> out )
 	{
 		if( !this.hasReadAccess )
 		{
 			return out;
 		}
 
-		return this.internal.getAvailableItems( out );
+		return this.internal.getAvailableItems( channel, out );
 	}
 
 	@Override
-	public IStorageChannel<T> getChannel()
+	public IStorageChannel getChannel()
 	{
 		return this.internal.getChannel();
 	}
@@ -141,7 +141,7 @@ public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHa
 	}
 
 	@Override
-	public boolean isPrioritized( final T input )
+	public boolean isPrioritized( final IAEStack input )
 	{
 		if( this.myWhitelist == IncludeExclude.WHITELIST )
 		{
@@ -151,7 +151,7 @@ public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHa
 	}
 
 	@Override
-	public boolean canAccept( final T input )
+	public boolean canAccept( final IAEStack input )
 	{
 		if( !this.hasWriteAccess )
 		{
@@ -192,7 +192,7 @@ public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHa
 		return true;
 	}
 
-	public IMEInventory<T> getInternal()
+	public IMEInventory getInternal()
 	{
 		return this.internal;
 	}

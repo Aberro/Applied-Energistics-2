@@ -250,14 +250,14 @@ public class TileChest extends AENetworkPowerTile implements IMEChest, ITerminal
 		}
 	}
 
-	private <T extends IAEStack<T>> ChestMonitorHandler<T> wrap( final IMEInventoryHandler<T> h )
+	private <T extends IAEStack> ChestMonitorHandler<T> wrap( final IMEInventoryHandler h )
 	{
 		if( h == null )
 		{
 			return null;
 		}
 
-		final MEInventoryHandler<T> ih = new MEInventoryHandler<T>( h, h.getChannel() );
+		final MEInventoryHandler ih = new MEInventoryHandler( h, h.getChannel() );
 		ih.setPriority( this.priority );
 
 		final ChestMonitorHandler<T> g = new ChestMonitorHandler<T>( ih );
@@ -466,7 +466,7 @@ public class TileChest extends AENetworkPowerTile implements IMEChest, ITerminal
 
 	@SuppressWarnings( "unchecked" )
 	@Override
-	public <T extends IAEStack<T>> IMEMonitor<T> getInventory( IStorageChannel<T> channel )
+	public <T extends IAEStack> IMEMonitor getInventory( IStorageChannel<T> channel )
 	{
 		this.updateHandler();
 
@@ -668,7 +668,7 @@ public class TileChest extends AENetworkPowerTile implements IMEChest, ITerminal
 		this.world.markChunkDirty( this.pos, this );
 	}
 
-	private class ChestNetNotifier<T extends IAEStack<T>> implements IMEMonitorHandlerReceiver<T>
+	private class ChestNetNotifier<T extends IAEStack> implements IMEMonitorHandlerReceiver
 	{
 
 		private final IStorageChannel<T> chan;
@@ -690,7 +690,7 @@ public class TileChest extends AENetworkPowerTile implements IMEChest, ITerminal
 		}
 
 		@Override
-		public void postChange( final IBaseMonitor<T> monitor, final Iterable<T> change, final IActionSource source )
+		public void postChange( final IBaseMonitor monitor, final Iterable<IAEStack> change, final IActionSource source )
 		{
 			if( source == TileChest.this.mySrc || source.machine().map( machine -> machine == TileChest.this ).orElse( false ) )
 			{
@@ -717,26 +717,26 @@ public class TileChest extends AENetworkPowerTile implements IMEChest, ITerminal
 		}
 	}
 
-	private class ChestMonitorHandler<T extends IAEStack<T>> extends MEMonitorHandler<T>
+	private class ChestMonitorHandler<T extends IAEStack> extends MEMonitorHandler
 	{
 
-		public ChestMonitorHandler( final IMEInventoryHandler<T> t )
+		public ChestMonitorHandler( final IMEInventoryHandler t )
 		{
 			super( t );
 		}
 
 		private ICellInventoryHandler<T> getInternalHandler()
 		{
-			final IMEInventoryHandler<T> h = this.getHandler();
+			final IMEInventoryHandler h = this.getHandler();
 			if( h instanceof MEInventoryHandler )
 			{
-				return (ICellInventoryHandler<T>) ( (MEInventoryHandler<T>) h ).getInternal();
+				return (ICellInventoryHandler<T>) ( (MEInventoryHandler) h ).getInternal();
 			}
 			return (ICellInventoryHandler<T>) this.getHandler();
 		}
 
 		@Override
-		public T injectItems( final T input, final Actionable mode, final IActionSource src )
+		public IAEStack injectItems( final IAEStack input, final Actionable mode, final IActionSource src )
 		{
 			if( src.player().map( player -> !this.securityCheck( player, SecurityPermissions.INJECT ) ).orElse( false ) )
 			{
@@ -780,7 +780,7 @@ public class TileChest extends AENetworkPowerTile implements IMEChest, ITerminal
 		}
 
 		@Override
-		public T extractItems( final T request, final Actionable mode, final IActionSource src )
+		public IAEStack extractItems( final IAEStack request, final Actionable mode, final IActionSource src )
 		{
 			if( src.player().map( player -> !this.securityCheck( player, SecurityPermissions.EXTRACT ) ).orElse( false ) )
 			{

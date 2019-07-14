@@ -29,20 +29,20 @@ import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 
 
-class CondenserVoidInventory<T extends IAEStack<T>> implements IMEMonitor<T>
+class CondenserVoidInventory implements IMEMonitor
 {
 
 	private final TileCondenser target;
-	private final IStorageChannel<T> channel;
+	private final IStorageChannel channel;
 
-	CondenserVoidInventory( final TileCondenser te, final IStorageChannel<T> channel )
+	CondenserVoidInventory( final TileCondenser te, final IStorageChannel channel )
 	{
 		this.target = te;
 		this.channel = channel;
 	}
 
 	@Override
-	public T injectItems( final T input, final Actionable mode, final IActionSource src )
+	public IAEStack injectItems( final IAEStack input, final Actionable mode, final IActionSource src )
 	{
 		if( mode == Actionable.SIMULATE )
 		{
@@ -57,25 +57,25 @@ class CondenserVoidInventory<T extends IAEStack<T>> implements IMEMonitor<T>
 	}
 
 	@Override
-	public T extractItems( final T request, final Actionable mode, final IActionSource src )
+	public IAEStack extractItems( final IAEStack request, final Actionable mode, final IActionSource src )
 	{
 		return null;
 	}
 
 	@Override
-	public IItemList<T> getAvailableItems( final IItemList<T> out )
+	public IItemList<IAEStack> getAvailableItems( IStorageChannel channel, final IItemList<IAEStack> out )
 	{
 		return out;
 	}
 
 	@Override
-	public IItemList<T> getStorageList()
+	public IItemList<IAEStack> getStorageList(IStorageChannel channel)
 	{
 		return this.channel.createList();
 	}
 
 	@Override
-	public IStorageChannel<T> getChannel()
+	public IStorageChannel<IAEStack> getChannel()
 	{
 		return this.channel;
 	}
@@ -87,13 +87,13 @@ class CondenserVoidInventory<T extends IAEStack<T>> implements IMEMonitor<T>
 	}
 
 	@Override
-	public boolean isPrioritized( final T input )
+	public boolean isPrioritized( final IAEStack input )
 	{
 		return false;
 	}
 
 	@Override
-	public boolean canAccept( final T input )
+	public boolean canAccept( final IAEStack input )
 	{
 		return true;
 	}
@@ -117,13 +117,13 @@ class CondenserVoidInventory<T extends IAEStack<T>> implements IMEMonitor<T>
 	}
 
 	@Override
-	public void addListener( IMEMonitorHandlerReceiver<T> l, Object verificationToken )
+	public void addListener( IMEMonitorHandlerReceiver l, Object verificationToken )
 	{
 		// Not implemented since the Condenser automatically voids everything, and there are no updates
 	}
 
 	@Override
-	public void removeListener( IMEMonitorHandlerReceiver<T> l )
+	public void removeListener( IMEMonitorHandlerReceiver l )
 	{
 		// Not implemented since we don't remember registered listeners anyway
 	}

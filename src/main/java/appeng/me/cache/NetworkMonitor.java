@@ -46,47 +46,47 @@ import appeng.api.storage.data.IItemList;
 import appeng.me.storage.ItemWatcher;
 
 
-public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
+public class NetworkMonitor implements IMEMonitor
 {
 	@Nonnull
-	private static final Deque<NetworkMonitor<?>> GLOBAL_DEPTH = Queues.newArrayDeque();
+	private static final Deque<NetworkMonitor> GLOBAL_DEPTH = Queues.newArrayDeque();
 
 	@Nonnull
 	private final GridStorageCache myGridCache;
 	@Nonnull
-	private final IStorageChannel<T> myChannel;
+	private final IStorageChannel myChannel;
 	@Nonnull
-	private final IItemList<T> cachedList;
+	private final Map<IStorageChannel, IItemList<IAEStack>> cachedList;
 	@Nonnull
-	private final Map<IMEMonitorHandlerReceiver<T>, Object> listeners;
+	private final Map<IMEMonitorHandlerReceiver, Object> listeners;
 
 	private boolean sendEvent = false;
 	private boolean hasChanged = false;
 	@Nonnegative
 	private int localDepthSemaphore = 0;
 
-	public NetworkMonitor( final GridStorageCache cache, final IStorageChannel<T> chan )
+	public NetworkMonitor( final GridStorageCache cache, final IStorageChannel chan )
 	{
 		this.myGridCache = cache;
 		this.myChannel = chan;
-		this.cachedList = chan.createList();
+		this.cachedList = new HashMap<>();
 		this.listeners = new HashMap<>();
 	}
 
 	@Override
-	public void addListener( final IMEMonitorHandlerReceiver<T> l, final Object verificationToken )
+	public void addListener( final IMEMonitorHandlerReceiver l, final Object verificationToken )
 	{
 		this.listeners.put( l, verificationToken );
 	}
 
 	@Override
-	public boolean canAccept( final T input )
+	public boolean canAccept( final IAEStack input )
 	{
 		return this.getHandler().canAccept( input );
 	}
 
 	@Override
-	public T extractItems( final T request, final Actionable mode, final IActionSource src )
+	public IAEStack extractItems( final IAEStack request, final Actionable mode, final IActionSource src )
 	{
 		if( mode == Actionable.SIMULATE )
 		{
@@ -94,7 +94,7 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 		}
 
 		this.localDepthSemaphore++;
-		final T leftover = this.getHandler().extractItems( request, mode, src );
+		final IAEStack leftover = this.getHandler().extractItems( request, mode, src );
 		this.localDepthSemaphore--;
 
 		if( this.localDepthSemaphore == 0 )
@@ -112,13 +112,13 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 	}
 
 	@Override
-	public IItemList<T> getAvailableItems( final IItemList<T> out )
+	public IItemList<IAEStack> getAvailableItems( IStorageChannel channel, final IItemList<IAEStack> out )
 	{
-		return this.getHandler().getAvailableItems( out );
+		return this.getHandler().getAvailableItems( channel, out );
 	}
 
 	@Override
-	public IStorageChannel<T> getChannel()
+	public IStorageChannel getChannel()
 	{
 		return this.getHandler().getChannel();
 	}
@@ -137,20 +137,22 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 
 	@Nonnull
 	@Override
-	public IItemList<T> getStorageList()
+	public IItemList<IAEStack> getStorageList(IStorageChannel channel)
 	{
 		if( this.hasChanged )
 		{
 			this.hasChanged = false;
-			this.cachedList.resetStatus();
-			return this.getAvailableItems( this.cachedList );
+			IItemList<IAEStack> list = this.cachedList.get(channel);
+			if(list != null)
+				list.resetStatus();
+			return this.getAvailableItems( channel, list );
 		}
 
-		return this.cachedList;
+		return this.cachedList.get(channel);
 	}
 
 	@Override
-	public T injectItems( final T input, final Actionable mode, final IActionSource src )
+	public IAEStack injectItems( final IAEStack input, final Actionable mode, final IActionSource src )
 	{
 		if( mode == Actionable.SIMULATE )
 		{
@@ -158,7 +160,7 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 		}
 
 		this.localDepthSemaphore++;
-		final T leftover = this.getHandler().injectItems( input, mode, src );
+		final IAEStack leftover = this.getHandler().injectItems( input, mode, src );
 		this.localDepthSemaphore--;
 
 		if( this.localDepthSemaphore == 0 )
@@ -170,13 +172,13 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 	}
 
 	@Override
-	public boolean isPrioritized( final T input )
+	public boolean isPrioritized( final IAEStack input )
 	{
 		return this.getHandler().isPrioritized( input );
 	}
 
 	@Override
-	public void removeListener( final IMEMonitorHandlerReceiver<T> l )
+	public void removeListener( final IMEMonitorHandlerReceiver l )
 	{
 		this.listeners.remove( l );
 	}
@@ -188,19 +190,19 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 	}
 
 	@Nullable
-	private IMEInventoryHandler<T> getHandler()
+	private IMEInventoryHandler getHandler()
 	{
 		return this.myGridCache.getInventoryHandler( this.myChannel );
 	}
 
-	private Iterator<Entry<IMEMonitorHandlerReceiver<T>, Object>> getListeners()
+	private Iterator<Entry<IMEMonitorHandlerReceiver, Object>> getListeners()
 	{
 		return this.listeners.entrySet().iterator();
 	}
 
-	private T monitorDifference( final IAEStack<T> original, final T leftOvers, final boolean extraction, final IActionSource src )
+	private IAEStack monitorDifference( final IAEStack original, final IAEStack leftOvers, final boolean extraction, final IActionSource src )
 	{
-		final T diff = original.copy();
+		final IAEStack diff = original.copy();
 
 		if( extraction )
 		{
@@ -219,15 +221,15 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 		return leftOvers;
 	}
 
-	private void notifyListenersOfChange( final Iterable<T> diff, final IActionSource src )
+	private void notifyListenersOfChange( final Iterable<IAEStack> diff, final IActionSource src )
 	{
 		this.hasChanged = true;
-		final Iterator<Entry<IMEMonitorHandlerReceiver<T>, Object>> i = this.getListeners();
+		final Iterator<Entry<IMEMonitorHandlerReceiver, Object>> i = this.getListeners();
 
 		while( i.hasNext() )
 		{
-			final Entry<IMEMonitorHandlerReceiver<T>, Object> o = i.next();
-			final IMEMonitorHandlerReceiver<T> receiver = o.getKey();
+			final Entry<IMEMonitorHandlerReceiver, Object> o = i.next();
+			final IMEMonitorHandlerReceiver receiver = o.getKey();
 			if( receiver.isValid( o.getValue() ) )
 			{
 				receiver.postChange( this, diff, src );
@@ -239,12 +241,12 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 		}
 	}
 
-	private void postChangesToListeners( final Iterable<T> changes, final IActionSource src )
+	private void postChangesToListeners( final Iterable<IAEStack> changes, final IActionSource src )
 	{
 		this.postChange( true, changes, src );
 	}
 
-	protected void postChange( final boolean add, final Iterable<T> changes, final IActionSource src )
+	protected void postChange( final boolean add, final Iterable<IAEStack> changes, final IActionSource src )
 	{
 		if( this.localDepthSemaphore > 0 || GLOBAL_DEPTH.contains( this ) )
 		{
@@ -258,9 +260,9 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 
 		this.notifyListenersOfChange( changes, src );
 
-		for( final T changedItem : changes )
+		for( final IAEStack changedItem : changes )
 		{
-			T difference = changedItem;
+			IAEStack difference = changedItem;
 
 			if( !add && changedItem != null )
 			{
@@ -274,7 +276,7 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 
 				if( !list.isEmpty() )
 				{
-					IAEStack<T> fullStack = this.getStorageList().findPrecise( changedItem );
+					IAEStack fullStack = this.getStorageList(changedItem.getChannel()).findPrecise( changedItem );
 
 					if( fullStack == null )
 					{
@@ -286,7 +288,7 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 
 					for( final ItemWatcher iw : list )
 					{
-						iw.getHost().onStackChange( this.getStorageList(), fullStack, difference, src, this.getChannel() );
+						iw.getHost().onStackChange( this.getStorageList(changedItem.getChannel()), fullStack, difference, src, this.getChannel() );
 					}
 
 					this.myGridCache.getInterestManager().disableTransactions();
@@ -294,7 +296,7 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 			}
 		}
 
-		final NetworkMonitor<?> last = GLOBAL_DEPTH.pop();
+		final NetworkMonitor last = GLOBAL_DEPTH.pop();
 		this.localDepthSemaphore--;
 
 		if( last != this )
@@ -307,11 +309,11 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T>
 	{
 		this.hasChanged = true;
 
-		final Iterator<Entry<IMEMonitorHandlerReceiver<T>, Object>> i = this.getListeners();
+		final Iterator<Entry<IMEMonitorHandlerReceiver, Object>> i = this.getListeners();
 		while( i.hasNext() )
 		{
-			final Entry<IMEMonitorHandlerReceiver<T>, Object> o = i.next();
-			final IMEMonitorHandlerReceiver<T> receiver = o.getKey();
+			final Entry<IMEMonitorHandlerReceiver, Object> o = i.next();
+			final IMEMonitorHandlerReceiver receiver = o.getKey();
 
 			if( receiver.isValid( o.getValue() ) )
 			{

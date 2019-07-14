@@ -22,6 +22,7 @@ package appeng.crafting;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import appeng.api.storage.data.IAEStack;
 import com.google.common.base.Stopwatch;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -61,7 +62,7 @@ public class CraftingJob implements Runnable, ICraftingJob
 	private final Object monitor = new Object();
 	private final Stopwatch watch = Stopwatch.createUnstarted();
 	private CraftingTreeNode tree;
-	private final IAEItemStack output;
+	private final IAEStack output;
 	private boolean simulate = false;
 	private MECraftingInventory availableCheck;
 	private long bytes = 0;
@@ -77,7 +78,7 @@ public class CraftingJob implements Runnable, ICraftingJob
 		return w;
 	}
 
-	public CraftingJob( final World w, final IGrid grid, final IActionSource actionSrc, final IAEItemStack what, final ICraftingCallback callback )
+	public CraftingJob(final World w, final IGrid grid, final IActionSource actionSrc, final IAEStack what, final ICraftingCallback callback )
 	{
 		this.world = this.wrapWorld( w );
 		this.output = what.copy();
@@ -93,7 +94,7 @@ public class CraftingJob implements Runnable, ICraftingJob
 		this.availableCheck = null;
 	}
 
-	private CraftingTreeNode getCraftingTree( final ICraftingGrid cc, final IAEItemStack what )
+	private CraftingTreeNode getCraftingTree( final ICraftingGrid cc, final IAEStack what )
 	{
 		return new CraftingTreeNode( cc, this, what, null, -1, 0 );
 	}
@@ -103,7 +104,7 @@ public class CraftingJob implements Runnable, ICraftingJob
 		this.availableCheck.injectItems( o, Actionable.MODULATE, this.actionSrc );
 	}
 
-	IAEItemStack checkUse( final IAEItemStack available )
+	IAEStack checkUse( final IAEStack available )
 	{
 		return this.availableCheck.extractItems( available, Actionable.MODULATE, this.actionSrc );
 	}
@@ -294,7 +295,7 @@ public class CraftingJob implements Runnable, ICraftingJob
 	}
 
 	@Override
-	public IAEItemStack getOutput()
+	public IAEStack getOutput()
 	{
 		return this.output;
 	}

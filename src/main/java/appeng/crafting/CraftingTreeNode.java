@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import appeng.api.storage.data.IAEStack;
 import com.google.common.collect.Lists;
 
 import net.minecraft.world.World;
@@ -50,7 +51,7 @@ public class CraftingTreeNode
 	private final CraftingTreeProcess parent;
 	private final World world;
 	// what item is this?
-	private final IAEItemStack what;
+	private final IAEStack what;
 	// what are the crafting patterns for this?
 	private final ArrayList<CraftingTreeProcess> nodes = new ArrayList<>();
 	private int bytes = 0;
@@ -61,7 +62,7 @@ public class CraftingTreeNode
 
 	private boolean sim;
 
-	public CraftingTreeNode( final ICraftingGrid cc, final CraftingJob job, final IAEItemStack wat, final CraftingTreeProcess par, final int slot, final int depth )
+	public CraftingTreeNode(final ICraftingGrid cc, final CraftingJob job, final IAEStack wat, final CraftingTreeProcess par, final int slot, final int depth )
 	{
 		this.what = wat;
 		this.parent = par;

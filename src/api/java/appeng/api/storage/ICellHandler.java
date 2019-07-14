@@ -55,7 +55,7 @@ public interface ICellHandler
 	 *
 	 * @return a new IMEHandler for the provided item
 	 */
-	<T extends IAEStack<T>> ICellInventoryHandler<T> getCellInventory( ItemStack is, ISaveProvider host, IStorageChannel<T> channel );
+	<T extends IAEStack> ICellInventoryHandler<T> getCellInventory( ItemStack is, ISaveProvider host, IStorageChannel<T> channel );
 
 	/**
 	 * 0 - cell is missing.
@@ -71,7 +71,7 @@ public interface ICellHandler
 	 *
 	 * @return get the status of the cell based on its contents.
 	 */
-	default <T extends IAEStack<T>> int getStatusForCell( ItemStack is, ICellInventoryHandler<T> handler )
+	default <T extends IAEStack> int getStatusForCell( ItemStack is, ICellInventoryHandler<T> handler )
 	{
 		if( handler.getCellInv() != null )
 		{
@@ -90,7 +90,7 @@ public interface ICellHandler
 	/**
 	 * @return the ae/t to drain for this storage cell inside a chest/drive.
 	 */
-	default <T extends IAEStack<T>> double cellIdleDrain( ItemStack is, ICellInventoryHandler<T> handler )
+	default <T extends IAEStack> double cellIdleDrain( ItemStack is, ICellInventoryHandler<T> handler )
 	{
 		if( handler.getCellInv() != null )
 		{

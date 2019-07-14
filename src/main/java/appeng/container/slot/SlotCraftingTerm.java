@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.Item;
@@ -107,7 +108,7 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 			return;
 		}
 
-		final IMEMonitor<IAEItemStack> inv = this.storage.getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+		final IMEMonitor inv = this.storage.getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
 		final int howManyPerCraft = this.getStack().getCount();
 		int maxTimesToCraft = 0;
 
@@ -146,7 +147,7 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 		{
 			if( ia.simulateAdd( rs ).isEmpty() )
 			{
-				final IItemList<IAEItemStack> all = inv.getStorageList();
+				final IItemList<IAEStack> all = inv.getStorageList( AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class) );
 				final ItemStack extra = ia.addItems( this.craftItem( who, rs, inv, all ) );
 				if( !extra.isEmpty() )
 				{
@@ -199,7 +200,7 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 		return maxTimesToCraft;
 	}
 
-	private ItemStack craftItem( final EntityPlayer p, final ItemStack request, final IMEMonitor<IAEItemStack> inv, final IItemList all )
+	private ItemStack craftItem( final EntityPlayer p, final ItemStack request, final IMEMonitor inv, final IItemList all )
 	{
 		// update crafting matrix...
 		ItemStack is = this.getStack();
@@ -281,7 +282,7 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 		return ItemStack.EMPTY;
 	}
 
-	private boolean preCraft( final EntityPlayer p, final IMEMonitor<IAEItemStack> inv, final ItemStack[] set, final ItemStack result )
+	private boolean preCraft( final EntityPlayer p, final IMEMonitor inv, final ItemStack[] set, final ItemStack result )
 	{
 		return true;
 	}
@@ -291,7 +292,7 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 		super.onTake( p, is );
 	}
 
-	private void postCraft( final EntityPlayer p, final IMEMonitor<IAEItemStack> inv, final ItemStack[] set, final ItemStack result )
+	private void postCraft( final EntityPlayer p, final IMEMonitor inv, final ItemStack[] set, final ItemStack result )
 	{
 		final List<ItemStack> drops = new ArrayList<>();
 
@@ -308,10 +309,10 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 				else if( !set[x].isEmpty() )
 				{
 					// eek! put it back!
-					final IAEItemStack fail = inv.injectItems( AEItemStack.fromItemStack( set[x] ), Actionable.MODULATE, this.mySrc );
+					final IAEStack fail = inv.injectItems( AEItemStack.fromItemStack( set[x] ), Actionable.MODULATE, this.mySrc );
 					if( fail != null )
 					{
-						drops.add( fail.createItemStack() );
+						drops.add( ((IAEItemStack)fail).createItemStack() );
 					}
 				}
 			}

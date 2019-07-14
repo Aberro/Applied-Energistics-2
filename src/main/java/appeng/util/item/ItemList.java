@@ -26,13 +26,13 @@ import java.util.Iterator;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraftforge.oredict.OreDictionary;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.util.item.AESharedItemStack.Bounds;
-
 
 public final class ItemList implements IItemList<IAEItemStack>
 {

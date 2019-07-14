@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
@@ -63,7 +64,7 @@ public class PartFluidFormationPlane extends PartAbstractFormationPlane<IAEFluid
 		return MODELS.getModels();
 	}
 
-	private final MEInventoryHandler<IAEFluidStack> myHandler = new MEInventoryHandler<>( this, AEApi.instance()
+	private final MEInventoryHandler myHandler = new MEInventoryHandler( this, AEApi.instance()
 			.storage()
 			.getStorageChannel( IFluidStorageChannel.class ) );
 	private final AEFluidInventory config = new AEFluidInventory( this, 63 );
@@ -105,7 +106,7 @@ public class PartFluidFormationPlane extends PartAbstractFormationPlane<IAEFluid
 	}
 
 	@Override
-	public IAEFluidStack injectItems( IAEFluidStack input, Actionable type, IActionSource src )
+	public IAEStack injectItems(IAEStack input, Actionable type, IActionSource src )
 	{
 		if( this.blocked || input == null || input.getStackSize() < Fluid.BUCKET_VOLUME )
 		{
@@ -123,7 +124,7 @@ public class PartFluidFormationPlane extends PartAbstractFormationPlane<IAEFluid
 		{
 			if( type == Actionable.MODULATE )
 			{
-				final FluidStack fs = input.getFluidStack();
+				final FluidStack fs = ((IAEFluidStack)input).getFluidStack();
 				fs.amount = Fluid.BUCKET_VOLUME;
 
 				final FluidTank tank = new FluidTank( fs, Fluid.BUCKET_VOLUME );
@@ -132,7 +133,7 @@ public class PartFluidFormationPlane extends PartAbstractFormationPlane<IAEFluid
 					return input;
 				}
 			}
-			final IAEFluidStack ret = input.copy();
+			final IAEFluidStack ret = (IAEFluidStack) input.copy();
 			ret.setStackSize( input.getStackSize() - Fluid.BUCKET_VOLUME );
 			return ret.getStackSize() == 0 ? null : ret;
 		}

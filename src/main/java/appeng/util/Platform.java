@@ -32,6 +32,7 @@ import java.util.WeakHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import appeng.util.item.MixedList;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -1165,12 +1166,12 @@ public class Platform
 		return pos;
 	}
 
-	public static <T extends IAEStack<T>> T poweredExtraction( final IEnergySource energy, final IMEInventory<T> cell, final T request, final IActionSource src )
+	public static <T extends IAEStack> T poweredExtraction( final IEnergySource energy, final IMEInventory cell, final T request, final IActionSource src )
 	{
 		return poweredExtraction( energy, cell, request, src, Actionable.MODULATE );
 	}
 
-	public static <T extends IAEStack<T>> T poweredExtraction( final IEnergySource energy, final IMEInventory<T> cell, final T request, final IActionSource src, final Actionable mode )
+	public static <T extends IAEStack> T poweredExtraction( final IEnergySource energy, final IMEInventory cell, final T request, final IActionSource src, final Actionable mode )
 	{
 		Preconditions.checkNotNull( energy );
 		Preconditions.checkNotNull( cell );
@@ -1178,7 +1179,7 @@ public class Platform
 		Preconditions.checkNotNull( src );
 		Preconditions.checkNotNull( mode );
 
-		final T possible = cell.extractItems( request.copy(), Actionable.SIMULATE, src );
+		final T possible = (T)cell.extractItems( request.copy(), Actionable.SIMULATE, src );
 
 		long retrieved = 0;
 		if( possible != null )
@@ -1196,7 +1197,7 @@ public class Platform
 			{
 				energy.extractAEPower( retrieved / energyFactor, Actionable.MODULATE, PowerMultiplier.CONFIG );
 				possible.setStackSize( itemToExtract );
-				final T ret = cell.extractItems( possible, Actionable.MODULATE, src );
+				final T ret = (T)cell.extractItems( possible, Actionable.MODULATE, src );
 
 				if( ret != null )
 				{
@@ -1206,19 +1207,19 @@ public class Platform
 			}
 			else
 			{
-				return possible.setStackSize( itemToExtract );
+				return (T)possible.setStackSize( itemToExtract );
 			}
 		}
 
 		return null;
 	}
 
-	public static <T extends IAEStack<T>> T poweredInsert( final IEnergySource energy, final IMEInventory<T> cell, final T input, final IActionSource src )
+	public static <T extends IAEStack> T poweredInsert( final IEnergySource energy, final IMEInventory cell, final T input, final IActionSource src )
 	{
 		return poweredInsert( energy, cell, input, src, Actionable.MODULATE );
 	}
 
-	public static <T extends IAEStack<T>> T poweredInsert( final IEnergySource energy, final IMEInventory<T> cell, final T input, final IActionSource src, final Actionable mode )
+	public static <T extends IAEStack> T poweredInsert( final IEnergySource energy, final IMEInventory cell, final T input, final IActionSource src, final Actionable mode )
 	{
 		Preconditions.checkNotNull( energy );
 		Preconditions.checkNotNull( cell );
@@ -1226,7 +1227,7 @@ public class Platform
 		Preconditions.checkNotNull( src );
 		Preconditions.checkNotNull( mode );
 
-		final T possible = cell.injectItems( input.copy(), Actionable.SIMULATE, src );
+		final T possible = (T)cell.injectItems( input.copy(), Actionable.SIMULATE, src );
 
 		long stored = input.getStackSize();
 		if( possible != null )
@@ -1246,7 +1247,7 @@ public class Platform
 				if( itemToAdd < input.getStackSize() )
 				{
 					final long original = input.getStackSize();
-					final T split = input.copy();
+					final T split = (T)input.copy();
 					split.decStackSize( itemToAdd );
 					input.setStackSize( itemToAdd );
 					split.add( cell.injectItems( input, Actionable.MODULATE, src ) );
@@ -1260,7 +1261,7 @@ public class Platform
 					return split;
 				}
 
-				final T ret = cell.injectItems( input, Actionable.MODULATE, src );
+				final T ret = (T)cell.injectItems( input, Actionable.MODULATE, src );
 
 				src.player().ifPresent( player ->
 				{
@@ -1272,7 +1273,7 @@ public class Platform
 			}
 			else
 			{
-				final T ret = input.copy().setStackSize( input.getStackSize() - itemToAdd );
+				final T ret = (T)input.copy().setStackSize( input.getStackSize() - itemToAdd );
 				return ( ret != null && ret.getStackSize() > 0 ) ? ret : null;
 			}
 		}
@@ -1285,14 +1286,14 @@ public class Platform
 	{
 		for( final IStorageChannel<?> chan : AEApi.instance().storage().storageChannels() )
 		{
-			final IItemList<?> myChanges = chan.createList();
+			final IItemList<IAEStack> myChanges = new MixedList();
 
 			if( !removed.isEmpty() )
 			{
 				final IMEInventory myInv = AEApi.instance().registries().cell().getCellInventory( removed, null, chan );
 				if( myInv != null )
 				{
-					myInv.getAvailableItems( myChanges );
+					myInv.getAvailableItems( chan, myChanges );
 					for( final IAEStack is : myChanges )
 					{
 						is.setStackSize( -is.getStackSize() );
@@ -1304,7 +1305,7 @@ public class Platform
 				final IMEInventory myInv = AEApi.instance().registries().cell().getCellInventory( added, null, chan );
 				if( myInv != null )
 				{
-					myInv.getAvailableItems( myChanges );
+					myInv.getAvailableItems( chan, myChanges );
 				}
 
 			}
@@ -1312,9 +1313,9 @@ public class Platform
 		}
 	}
 
-	public static <T extends IAEStack<T>> void postListChanges( final IItemList<T> before, final IItemList<T> after, final IMEMonitorHandlerReceiver<T> meMonitorPassthrough, final IActionSource source )
+	public static <T extends IAEStack> void postListChanges( final IItemList<T> before, final IItemList<T> after, final IMEMonitorHandlerReceiver<T> meMonitorPassthrough, final IActionSource source )
 	{
-		final List<T> changes = new ArrayList<>();
+		final List<IAEStack> changes = new ArrayList<>();
 
 		for( final T is : before )
 		{
@@ -1485,7 +1486,7 @@ public class Platform
 		}
 	}
 
-	public static ItemStack extractItemsByRecipe( final IEnergySource energySrc, final IActionSource mySrc, final IMEMonitor<IAEItemStack> src, final World w, final IRecipe r, final ItemStack output, final InventoryCrafting ci, final ItemStack providedTemplate, final int slot, final IItemList<IAEItemStack> items, final Actionable realForFake, final IPartitionList<IAEItemStack> filter )
+	public static ItemStack extractItemsByRecipe( final IEnergySource energySrc, final IActionSource mySrc, final IMEMonitor src, final World w, final IRecipe r, final ItemStack output, final InventoryCrafting ci, final ItemStack providedTemplate, final int slot, final IItemList<IAEStack> items, final Actionable realForFake, final IPartitionList filter )
 	{
 		if( energySrc.extractAEPower( 1, Actionable.SIMULATE, PowerMultiplier.CONFIG ) > 0.9 )
 		{
@@ -1499,7 +1500,7 @@ public class Platform
 
 			if( filter == null || filter.isListed( ae_req ) )
 			{
-				final IAEItemStack ae_ext = src.extractItems( ae_req, realForFake, mySrc );
+				final IAEStack ae_ext = src.extractItems( ae_req, realForFake, mySrc );
 				if( ae_ext != null )
 				{
 					final ItemStack extracted = ae_ext.createItemStack();
@@ -1516,7 +1517,7 @@ public class Platform
 
 			if( items != null && checkFuzzy )
 			{
-				for( final IAEItemStack x : items )
+				for( final IAEStack x : items )
 				{
 					final ItemStack sh = x.getDefinition();
 					if( ( Platform.itemComparisons().isEqualItemType( providedTemplate, sh ) || ae_req.sameOre( x ) ) && !ItemStack.areItemsEqual( sh,

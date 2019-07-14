@@ -25,32 +25,40 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.storage.IMEInventory;
 import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.channels.IFluidStorageChannel;
 import appeng.api.storage.channels.IItemStorageChannel;
+import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.util.inv.ItemListIgnoreCrafting;
+import appeng.util.item.MixedList;
+import com.sun.org.apache.bcel.internal.generic.ISTORE;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
-public class MECraftingInventory implements IMEInventory<IAEItemStack>
+public class MECraftingInventory implements IMEInventory
 {
 
 	private final MECraftingInventory par;
 
-	private final IMEInventory<IAEItemStack> target;
-	private final IItemList<IAEItemStack> localCache;
+	private final IMEInventory target;
+	private final Map<IStorageChannel, IItemList<IAEStack>> localCache;
 
 	private final boolean logExtracted;
-	private final IItemList<IAEItemStack> extractedCache;
+	private final Map<IStorageChannel, IItemList<IAEStack>> extractedCache;
 
 	private final boolean logInjections;
-	private final IItemList<IAEItemStack> injectedCache;
+	private final Map<IStorageChannel, IItemList<IAEStack>> injectedCache;
 
 	private final boolean logMissing;
-	private final IItemList<IAEItemStack> missingCache;
+	private final Map<IStorageChannel, IItemList<IAEStack>> missingCache;
 
 	public MECraftingInventory()
 	{
-		this.localCache = new ItemListIgnoreCrafting<>( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList() );
+		this.localCache = new HashMap<>();
 		this.extractedCache = null;
 		this.injectedCache = null;
 		this.missingCache = null;
@@ -67,10 +75,11 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 		this.logExtracted = parent.logExtracted;
 		this.logInjections = parent.logInjections;
 		this.logMissing = parent.logMissing;
+		this.localCache = new HashMap<>();
 
 		if( this.logMissing )
 		{
-			this.missingCache = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+			this.missingCache = new HashMap<>();
 		}
 		else
 		{
@@ -79,7 +88,7 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 
 		if( this.logExtracted )
 		{
-			this.extractedCache = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+			this.extractedCache = new HashMap<>();
 		}
 		else
 		{
@@ -88,20 +97,20 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 
 		if( this.logInjections )
 		{
-			this.injectedCache = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+			this.injectedCache = new HashMap<>();
 		}
 		else
 		{
 			this.injectedCache = null;
 		}
 
-		this.localCache = this.target
-				.getAvailableItems( new ItemListIgnoreCrafting<>( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList() ) );
+		for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
+			this.localCache.put(channel, this.target.getAvailableItems( channel, new ItemListIgnoreCrafting<>( channel.createList() ) ) );
 
 		this.par = parent;
 	}
 
-	public MECraftingInventory( final IMEMonitor<IAEItemStack> target, final IActionSource src, final boolean logExtracted, final boolean logInjections, final boolean logMissing )
+	public MECraftingInventory( final IMEMonitor target, final IActionSource src, final boolean logExtracted, final boolean logInjections, final boolean logMissing )
 	{
 		this.target = target;
 		this.logExtracted = logExtracted;
@@ -110,7 +119,7 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 
 		if( logMissing )
 		{
-			this.missingCache = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+			this.missingCache = new HashMap<>();
 		}
 		else
 		{
@@ -119,7 +128,7 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 
 		if( logExtracted )
 		{
-			this.extractedCache = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+			this.extractedCache = new HashMap<>();
 		}
 		else
 		{
@@ -128,23 +137,27 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 
 		if( logInjections )
 		{
-			this.injectedCache = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+			this.injectedCache = new HashMap<>();
 		}
 		else
 		{
 			this.injectedCache = null;
 		}
 
-		this.localCache = new ItemListIgnoreCrafting<>( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList() );
-		for( final IAEItemStack is : target.getStorageList() )
+		this.localCache = new HashMap<>();
+		for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
 		{
-			this.localCache.add( target.extractItems( is, Actionable.SIMULATE, src ) );
+			ItemListIgnoreCrafting list = new ItemListIgnoreCrafting<>(channel.createList());
+			for( final IAEStack is : target.getStorageList(channel) )
+			{
+				IAEStack result = target.extractItems( is, Actionable.SIMULATE, src );
+			}
+			this.localCache.put(channel, list);
 		}
-
 		this.par = null;
 	}
 
-	public MECraftingInventory( final IMEInventory<IAEItemStack> target, final boolean logExtracted, final boolean logInjections, final boolean logMissing )
+	public MECraftingInventory( final IMEInventory target, final boolean logExtracted, final boolean logInjections, final boolean logMissing )
 	{
 		this.target = target;
 		this.logExtracted = logExtracted;
@@ -153,7 +166,7 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 
 		if( logMissing )
 		{
-			this.missingCache = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+			this.missingCache = new HashMap<>();
 		}
 		else
 		{
@@ -162,7 +175,7 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 
 		if( logExtracted )
 		{
-			this.extractedCache = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+			this.extractedCache = new HashMap<>();
 		}
 		else
 		{
@@ -171,19 +184,22 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 
 		if( logInjections )
 		{
-			this.injectedCache = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+			this.injectedCache = new HashMap<>();
 		}
 		else
 		{
 			this.injectedCache = null;
 		}
 
-		this.localCache = target.getAvailableItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList() );
+		this.localCache = new HashMap<>();
+		for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
+			this.localCache.put( channel, target.getAvailableItems( channel, channel.createList() ) );
+
 		this.par = null;
 	}
 
 	@Override
-	public IAEItemStack injectItems( final IAEItemStack input, final Actionable mode, final IActionSource src )
+	public IAEStack injectItems(final IAEStack input, final Actionable mode, final IActionSource src )
 	{
 		if( input == null )
 		{
@@ -192,25 +208,38 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 
 		if( mode == Actionable.MODULATE )
 		{
+			IStorageChannel channel = input.getChannel();
 			if( this.logInjections )
 			{
-				this.injectedCache.add( input );
+				IItemList<IAEStack> injCache = this.injectedCache.get(channel);
+				if(injCache  == null)
+					this.injectedCache.put(channel, injCache  = channel.createList());
+				injCache .add( input );
 			}
-			this.localCache.add( input );
+
+			IItemList<IAEStack> locCache = this.localCache.get(channel);
+			if(locCache == null)
+				this.localCache.put(channel, locCache = channel.createList());
+			locCache.add(input);
 		}
 
 		return null;
 	}
 
 	@Override
-	public IAEItemStack extractItems( final IAEItemStack request, final Actionable mode, final IActionSource src )
+	public IAEStack extractItems( final IAEStack request, final Actionable mode, final IActionSource src )
 	{
 		if( request == null )
 		{
 			return null;
 		}
 
-		final IAEItemStack list = this.localCache.findPrecise( request );
+		IStorageChannel channel = request.getChannel();
+		IItemList<IAEStack> locCache = this.localCache.get(channel);
+		IAEStack list = null;
+		if(locCache != null)
+			list = locCache.findPrecise(request);
+
 		if( list == null || list.getStackSize() == 0 )
 		{
 			return null;
@@ -223,14 +252,17 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 				list.decStackSize( request.getStackSize() );
 				if( this.logExtracted )
 				{
-					this.extractedCache.add( request );
+					IItemList<IAEStack> extCache = this.extractedCache.get(channel);
+					if(extCache == null)
+						this.extractedCache.put(channel, extCache = channel.createList());
+					extCache.add( request );
 				}
 			}
 
 			return request;
 		}
 
-		final IAEItemStack ret = request.copy();
+		final IAEStack ret = request.copy();
 		ret.setStackSize( list.getStackSize() );
 
 		if( mode == Actionable.MODULATE )
@@ -238,7 +270,10 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 			list.reset();
 			if( this.logExtracted )
 			{
-				this.extractedCache.add( ret );
+				IItemList<IAEStack> extCache = this.extractedCache.get(channel);
+				if(extCache == null)
+					this.extractedCache.put(channel, extCache = channel.createList());
+				extCache.add( ret );
 			}
 		}
 
@@ -246,12 +281,15 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 	}
 
 	@Override
-	public IItemList<IAEItemStack> getAvailableItems( final IItemList<IAEItemStack> out )
+	public  IItemList<IAEStack> getAvailableItems(IStorageChannel channel, final IItemList<IAEStack> out )
 	{
-		for( final IAEItemStack is : this.localCache )
-		{
-			out.add( is );
-		}
+
+		IItemList<IAEStack> locCache = this.localCache.get(channel);
+		if(locCache != null)
+			for( final IAEStack is : locCache)
+			{
+				out.add( is );
+			}
 
 		return out;
 	}
@@ -262,35 +300,36 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}
 
-	public IItemList<IAEItemStack> getItemList()
+	public IItemList<IAEStack> getItemList(IStorageChannel channel)
 	{
-		return this.localCache;
+		return this.localCache.get(channel);
 	}
 
 	public boolean commit( final IActionSource src )
 	{
-		final IItemList<IAEItemStack> added = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
-		final IItemList<IAEItemStack> pulled = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+		final IItemList<IAEStack> added = new MixedList();
+		final IItemList<IAEStack> pulled = new MixedList();
 		boolean failed = false;
 
 		if( this.logInjections )
 		{
-			for( final IAEItemStack inject : this.injectedCache )
-			{
-				IAEItemStack result = null;
-				added.add( result = this.target.injectItems( inject, Actionable.MODULATE, src ) );
-
-				if( result != null )
+			for( IStorageChannel channel : this.injectedCache.keySet())
+				for( final IAEStack inject : this.injectedCache.get(channel) )
 				{
-					failed = true;
-					break;
+					IAEStack result = null;
+					added.add( result = this.target.injectItems( inject, Actionable.MODULATE, src ) );
+
+					if( result != null )
+					{
+						failed = true;
+						break;
+					}
 				}
-			}
 		}
 
 		if( failed )
 		{
-			for( final IAEItemStack is : added )
+			for( final IAEStack is : added )
 			{
 				this.target.extractItems( is, Actionable.MODULATE, src );
 			}
@@ -300,27 +339,28 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 
 		if( this.logExtracted )
 		{
-			for( final IAEItemStack extra : this.extractedCache )
-			{
-				IAEItemStack result = null;
-				pulled.add( result = this.target.extractItems( extra, Actionable.MODULATE, src ) );
-
-				if( result == null || result.getStackSize() != extra.getStackSize() )
+			for( IStorageChannel channel : this.extractedCache.keySet())
+				for( final IAEStack extra : this.extractedCache.get(channel) )
 				{
-					failed = true;
-					break;
+					IAEStack result = null;
+					pulled.add( result = this.target.extractItems( extra, Actionable.MODULATE, src ) );
+
+					if( result == null || result.getStackSize() != extra.getStackSize() )
+					{
+						failed = true;
+						break;
+					}
 				}
-			}
 		}
 
 		if( failed )
 		{
-			for( final IAEItemStack is : added )
+			for( final IAEStack is : added )
 			{
 				this.target.extractItems( is, Actionable.MODULATE, src );
 			}
 
-			for( final IAEItemStack is : pulled )
+			for( final IAEStack is : pulled )
 			{
 				this.target.injectItems( is, Actionable.MODULATE, src );
 			}
@@ -330,26 +370,37 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack>
 
 		if( this.logMissing && this.par != null )
 		{
-			for( final IAEItemStack extra : this.missingCache )
-			{
-				this.par.addMissing( extra );
-			}
+
+			for(IStorageChannel channel : this.missingCache.keySet())
+				for( final IAEStack extra : this.missingCache.get(channel) )
+				{
+					this.par.addMissing( extra );
+				}
 		}
 
 		return true;
 	}
 
-	private void addMissing( final IAEItemStack extra )
+	private void addMissing( final IAEStack extra )
 	{
-		this.missingCache.add( extra );
+		IStorageChannel channel = extra.getChannel();
+		IItemList<IAEStack> misCache = this.missingCache.get(channel);
+		if(misCache == null)
+			this.missingCache.put(channel, misCache = channel.createList());
+		misCache.add( extra );
 	}
 
-	void ignore( final IAEItemStack what )
+	void ignore( final IAEStack what )
 	{
-		final IAEItemStack list = this.localCache.findPrecise( what );
-		if( list != null )
+		IStorageChannel channel = what.getChannel();
+		IItemList locCache = this.localCache.get(channel);
+		if(locCache != null)
 		{
-			list.setStackSize( 0 );
+			final IAEStack list = locCache.findPrecise( what );
+			if( list != null )
+			{
+				list.setStackSize( 0 );
+			}
 		}
 	}
 }

@@ -59,7 +59,7 @@ public class WirelessTerminalGuiObject implements IPortableCell, IActionHost, II
 	private final EntityPlayer myPlayer;
 	private IGrid targetGrid;
 	private IStorageGrid sg;
-	private IMEMonitor<IAEItemStack> itemStorage;
+	private IMEMonitor itemStorage;
 	private IWirelessAccessPoint myWap;
 	private double sqRange = Double.MAX_VALUE;
 	private double myRange = Double.MAX_VALUE;
@@ -109,13 +109,13 @@ public class WirelessTerminalGuiObject implements IPortableCell, IActionHost, II
 	}
 
 	@Override
-	public <T extends IAEStack<T>> IMEMonitor<T> getInventory( IStorageChannel<T> channel )
+	public <T extends IAEStack> IMEMonitor getInventory( IStorageChannel<T> channel )
 	{
 		return this.sg.getInventory( channel );
 	}
 
 	@Override
-	public void addListener( final IMEMonitorHandlerReceiver<IAEItemStack> l, final Object verificationToken )
+	public void addListener( final IMEMonitorHandlerReceiver l, final Object verificationToken )
 	{
 		if( this.itemStorage != null )
 		{
@@ -124,7 +124,7 @@ public class WirelessTerminalGuiObject implements IPortableCell, IActionHost, II
 	}
 
 	@Override
-	public void removeListener( final IMEMonitorHandlerReceiver<IAEItemStack> l )
+	public void removeListener( final IMEMonitorHandlerReceiver l )
 	{
 		if( this.itemStorage != null )
 		{
@@ -133,21 +133,21 @@ public class WirelessTerminalGuiObject implements IPortableCell, IActionHost, II
 	}
 
 	@Override
-	public IItemList<IAEItemStack> getAvailableItems( final IItemList<IAEItemStack> out )
+	public IItemList<IAEStack> getAvailableItems( IStorageChannel channel, final IItemList<IAEStack> out )
 	{
 		if( this.itemStorage != null )
 		{
-			return this.itemStorage.getAvailableItems( out );
+			return this.itemStorage.getAvailableItems( channel, out );
 		}
 		return out;
 	}
 
 	@Override
-	public IItemList<IAEItemStack> getStorageList()
+	public IItemList<IAEStack> getStorageList(IStorageChannel channel)
 	{
 		if( this.itemStorage != null )
 		{
-			return this.itemStorage.getStorageList();
+			return this.itemStorage.getStorageList(channel);
 		}
 		return null;
 	}
@@ -163,7 +163,7 @@ public class WirelessTerminalGuiObject implements IPortableCell, IActionHost, II
 	}
 
 	@Override
-	public boolean isPrioritized( final IAEItemStack input )
+	public boolean isPrioritized( final IAEStack input )
 	{
 		if( this.itemStorage != null )
 		{
@@ -173,7 +173,7 @@ public class WirelessTerminalGuiObject implements IPortableCell, IActionHost, II
 	}
 
 	@Override
-	public boolean canAccept( final IAEItemStack input )
+	public boolean canAccept( final IAEStack input )
 	{
 		if( this.itemStorage != null )
 		{
@@ -209,7 +209,7 @@ public class WirelessTerminalGuiObject implements IPortableCell, IActionHost, II
 	}
 
 	@Override
-	public IAEItemStack injectItems( final IAEItemStack input, final Actionable type, final IActionSource src )
+	public IAEStack injectItems( final IAEStack input, final Actionable type, final IActionSource src )
 	{
 		if( this.itemStorage != null )
 		{
@@ -219,7 +219,7 @@ public class WirelessTerminalGuiObject implements IPortableCell, IActionHost, II
 	}
 
 	@Override
-	public IAEItemStack extractItems( final IAEItemStack request, final Actionable mode, final IActionSource src )
+	public IAEStack extractItems( final IAEStack request, final Actionable mode, final IActionSource src )
 	{
 		if( this.itemStorage != null )
 		{

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -90,7 +91,7 @@ public class PartFormationPlane extends PartAbstractFormationPlane<IAEItemStack>
 		return MODELS.getModels();
 	}
 
-	private final MEInventoryHandler<IAEItemStack> myHandler = new MEInventoryHandler<>( this, AEApi.instance()
+	private final MEInventoryHandler myHandler = new MEInventoryHandler( this, AEApi.instance()
 			.storage()
 			.getStorageChannel( IItemStorageChannel.class ) );
 	private final AppEngInternalAEInventory Config = new AppEngInternalAEInventory( this, 63 );
@@ -216,19 +217,22 @@ public class PartFormationPlane extends PartAbstractFormationPlane<IAEItemStack>
 	}
 
 	@Override
-	public IAEItemStack injectItems( final IAEItemStack input, final Actionable type, final IActionSource src )
+	public IAEStack injectItems(final IAEStack input, final Actionable type, final IActionSource src )
 	{
-		if( this.blocked || input == null || input.getStackSize() <= 0 )
-		{
+		if(input.getChannel() != this.getChannel())
 			return input;
+		IAEItemStack itemInput = (IAEItemStack)input;
+		if( this.blocked || itemInput == null || itemInput.getStackSize() <= 0 )
+		{
+			return itemInput;
 		}
 
 		final YesNo placeBlock = (YesNo) this.getConfigManager().getSetting( Settings.PLACE_BLOCK );
 
-		final ItemStack is = input.createItemStack();
+		final ItemStack is = itemInput.createItemStack();
 		final Item i = is.getItem();
 
-		long maxStorage = Math.min( input.getStackSize(), is.getMaxStackSize() );
+		long maxStorage = Math.min( itemInput.getStackSize(), is.getMaxStackSize() );
 		boolean worked = false;
 
 		final TileEntity te = this.getHost().getTile();
@@ -348,7 +352,7 @@ public class PartFormationPlane extends PartAbstractFormationPlane<IAEItemStack>
 
 		if( worked )
 		{
-			final IAEItemStack out = input.copy();
+			final IAEItemStack out = itemInput.copy();
 			out.decStackSize( maxStorage );
 			if( out.getStackSize() == 0 )
 			{
@@ -357,7 +361,7 @@ public class PartFormationPlane extends PartAbstractFormationPlane<IAEItemStack>
 			return out;
 		}
 
-		return input;
+		return itemInput;
 	}
 
 	@Override

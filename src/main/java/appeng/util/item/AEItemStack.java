@@ -26,6 +26,7 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import appeng.api.storage.data.IAEStack;
 import io.netty.buffer.ByteBuf;
 
 import net.minecraft.item.Item;
@@ -45,7 +46,7 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.util.Platform;
 
 
-public final class AEItemStack extends AEStack<IAEItemStack> implements IAEItemStack
+public final class AEItemStack extends AEStack implements IAEItemStack
 {
 	private AESharedItemStack sharedStack;
 	private Optional<OreReference> oreReference;
@@ -150,7 +151,7 @@ public final class AEItemStack extends AEStack<IAEItemStack> implements IAEItemS
 	}
 
 	@Override
-	public void add( final IAEItemStack option )
+	public void add( final IAEStack option )
 	{
 		if( option == null )
 		{
@@ -163,15 +164,18 @@ public final class AEItemStack extends AEStack<IAEItemStack> implements IAEItemS
 	}
 
 	@Override
-	public boolean fuzzyComparison( final IAEItemStack other, final FuzzyMode mode )
+	public boolean fuzzyComparison( final IAEStack other, final FuzzyMode mode )
 	{
-		if( mode == FuzzyMode.IGNORE_ALL && OreHelper.INSTANCE.sameOre( this, other ) )
+		if(!(other instanceof IAEItemStack))
+			return false;
+		IAEItemStack otherItem = (IAEItemStack)other;
+		if( mode == FuzzyMode.IGNORE_ALL && OreHelper.INSTANCE.sameOre( this, otherItem  ) )
 		{
 			return true;
 		}
 
 		final ItemStack itemStack = this.getDefinition();
-		final ItemStack otherStack = other.getDefinition();
+		final ItemStack otherStack = otherItem.getDefinition();
 
 		return this.fuzzyItemStackComparison( itemStack, otherStack, mode );
 	}
@@ -205,6 +209,9 @@ public final class AEItemStack extends AEStack<IAEItemStack> implements IAEItemS
 	{
 		return ItemHandlerHelper.copyStackWithSize( this.getDefinition(), (int) Math.min( Integer.MAX_VALUE, this.getStackSize() ) );
 	}
+
+	@Override
+	public boolean isEmpty() {return this.getStackSize() == 0; }
 
 	@Override
 	public Item getItem()

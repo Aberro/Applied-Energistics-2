@@ -22,6 +22,7 @@ package appeng.tile.crafting;
 import java.io.IOException;
 import java.util.Optional;
 
+import appeng.api.storage.data.IAEStack;
 import io.netty.buffer.ByteBuf;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -47,7 +48,7 @@ public class TileCraftingMonitorTile extends TileCraftingTile implements IColora
 	@SideOnly( Side.CLIENT )
 	private boolean updateList;
 
-	private IAEItemStack dspPlay;
+	private IAEStack dspPlay;
 	private AEColor paintedColor = AEColor.TRANSPARENT;
 
 	@Override
@@ -119,7 +120,7 @@ public class TileCraftingMonitorTile extends TileCraftingTile implements IColora
 		return true;
 	}
 
-	public void setJob( final IAEItemStack is )
+	public void setJob( final IAEStack is )
 	{
 		if( ( is == null ) != ( this.dspPlay == null ) )
 		{
@@ -136,7 +137,7 @@ public class TileCraftingMonitorTile extends TileCraftingTile implements IColora
 		}
 	}
 
-	public IAEItemStack getJobProgress()
+	public IAEStack getJobProgress()
 	{
 		return this.dspPlay; // AEItemStack.create( new ItemStack( Items.DIAMOND, 64 ) );
 	}

@@ -2,6 +2,9 @@
 package appeng.parts.automation;
 
 
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEItemStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -25,7 +28,7 @@ import appeng.api.util.IConfigManager;
 import appeng.helpers.IPriorityHost;
 
 
-public abstract class PartAbstractFormationPlane<T extends IAEStack<T>> extends PartUpgradeable implements ICellContainer, IPriorityHost, IMEInventory<T>
+public abstract class PartAbstractFormationPlane<T extends IAEStack> extends PartUpgradeable implements ICellContainer, IPriorityHost, IMEInventory
 {
 
 	private boolean wasActive = false;
@@ -212,13 +215,13 @@ public abstract class PartAbstractFormationPlane<T extends IAEStack<T>> extends 
 	}
 
 	@Override
-	public T extractItems( final T request, final Actionable mode, final IActionSource src )
+	public IAEStack extractItems( final IAEStack request, final Actionable mode, final IActionSource src )
 	{
 		return null;
 	}
 
 	@Override
-	public IItemList<T> getAvailableItems( final IItemList<T> out )
+	public IItemList<IAEStack> getAvailableItems(IStorageChannel channel, final IItemList<IAEStack> out )
 	{
 		return out;
 	}

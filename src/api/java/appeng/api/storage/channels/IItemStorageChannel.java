@@ -26,6 +26,7 @@ package appeng.api.storage.channels;
 
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 
 
 public interface IItemStorageChannel extends IStorageChannel<IAEItemStack>

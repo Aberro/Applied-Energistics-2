@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.container.slot.*;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -503,9 +504,9 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 				return;
 			}
 
-			final IMEMonitor<IAEItemStack> storage = this.getPatternTerminal()
+			final IMEMonitor storage = this.getPatternTerminal()
 					.getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
-			final IItemList<IAEItemStack> all = storage.getStorageList();
+			final IItemList<IAEStack> all = storage.getStorageList(AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ));
 
 			final ItemStack is = r.getCraftingResult( ic );
 

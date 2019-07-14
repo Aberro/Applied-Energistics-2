@@ -50,7 +50,7 @@ import appeng.util.IConfigManagerHost;
 import appeng.util.Platform;
 
 
-public class PartFluidLevelEmitter extends PartUpgradeable implements IStackWatcherHost, IConfigManagerHost, IAEFluidInventory, IMEMonitorHandlerReceiver<IAEFluidStack>
+public class PartFluidLevelEmitter extends PartUpgradeable implements IStackWatcherHost, IConfigManagerHost, IAEFluidInventory, IMEMonitorHandlerReceiver
 {
 	@PartModels
 	public static final ResourceLocation MODEL_BASE_OFF = new ResourceLocation( AppEng.MOD_ID, "part/level_emitter_base_off" );
@@ -110,7 +110,7 @@ public class PartFluidLevelEmitter extends PartUpgradeable implements IStackWatc
 	}
 
 	@Override
-	public void onStackChange( IItemList<?> o, IAEStack<?> fullStack, IAEStack<?> diffStack, IActionSource src, IStorageChannel<?> chan )
+	public void onStackChange( IItemList<?> o, IAEStack fullStack, IAEStack diffStack, IActionSource src, IStorageChannel<?> chan )
 	{
 		if( chan == AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) && fullStack.equals( this.config.getFluidInSlot( 0 ) ) )
 		{
@@ -169,9 +169,9 @@ public class PartFluidLevelEmitter extends PartUpgradeable implements IStackWatc
 	}
 
 	@Override
-	public void postChange( final IBaseMonitor<IAEFluidStack> monitor, final Iterable<IAEFluidStack> change, final IActionSource actionSource )
+	public void postChange( final IBaseMonitor monitor, final Iterable<IAEStack> change, final IActionSource actionSource )
 	{
-		this.updateReportingValue( (IMEMonitor<IAEFluidStack>) monitor );
+		this.updateReportingValue( (IMEMonitor) monitor );
 	}
 
 	@Override
@@ -180,7 +180,7 @@ public class PartFluidLevelEmitter extends PartUpgradeable implements IStackWatc
 		try
 		{
 			final IStorageChannel<IAEFluidStack> channel = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class );
-			final IMEMonitor<IAEFluidStack> inventory = this.getProxy().getStorage().getInventory( channel );
+			final IMEMonitor inventory = this.getProxy().getStorage().getInventory( channel );
 
 			this.updateReportingValue( inventory );
 		}
@@ -228,7 +228,7 @@ public class PartFluidLevelEmitter extends PartUpgradeable implements IStackWatc
 							.addListener( this, this.getProxy().getGrid() );
 				}
 
-				final IMEMonitor<IAEFluidStack> inventory = this.getProxy().getStorage().getInventory( channel );
+				final IMEMonitor inventory = this.getProxy().getStorage().getInventory( channel );
 
 				this.updateReportingValue( inventory );
 			}
@@ -239,21 +239,21 @@ public class PartFluidLevelEmitter extends PartUpgradeable implements IStackWatc
 		}
 	}
 
-	private void updateReportingValue( final IMEMonitor<IAEFluidStack> monitor )
+	private void updateReportingValue( final IMEMonitor monitor )
 	{
 		final IAEFluidStack myStack = this.config.getFluidInSlot( 0 );
 
 		if( myStack == null )
 		{
 			this.lastReportedValue = 0;
-			for( final IAEFluidStack st : monitor.getStorageList() )
+			for( final IAEStack st : monitor.getStorageList() )
 			{
 				this.lastReportedValue += st.getStackSize();
 			}
 		}
 		else
 		{
-			final IAEFluidStack r = monitor.getStorageList().findPrecise( myStack );
+			final IAEStack r = monitor.getStorageList().findPrecise( myStack );
 			if( r == null )
 			{
 				this.lastReportedValue = 0;

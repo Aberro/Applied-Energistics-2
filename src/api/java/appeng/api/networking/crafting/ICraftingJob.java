@@ -25,6 +25,7 @@ package appeng.api.networking.crafting;
 
 
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 
 
@@ -53,5 +54,5 @@ public interface ICraftingJob
 	/**
 	 * @return the final output of the job.
 	 */
-	IAEItemStack getOutput();
+	IAEStack getOutput();
 }

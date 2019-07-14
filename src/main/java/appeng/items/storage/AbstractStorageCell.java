@@ -22,6 +22,7 @@ package appeng.items.storage;
 import java.util.List;
 import java.util.Set;
 
+import appeng.util.item.MixedList;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -62,7 +63,7 @@ import appeng.util.Platform;
  * @version rv6 - 2018-01-17
  * @since rv6 2018-01-17
  */
-public abstract class AbstractStorageCell<T extends IAEStack<T>> extends AEBaseItem implements IStorageCell<T>, IItemGroup
+public abstract class AbstractStorageCell<T extends IAEStack> extends AEBaseItem implements IStorageCell<T>, IItemGroup
 {
 	protected final MaterialType component;
 	protected final int totalBytes;
@@ -178,7 +179,7 @@ public abstract class AbstractStorageCell<T extends IAEStack<T>> extends AEBaseI
 			if( inv != null && playerInventory.getCurrentItem() == stack )
 			{
 				final InventoryAdaptor ia = InventoryAdaptor.getAdaptor( player );
-				final IItemList<IAEItemStack> list = inv.getAvailableItems( this.getChannel().createList() );
+				final IItemList<IAEStack> list = inv.getAvailableItems( this.getChannel(), new MixedList());
 				if( list.isEmpty() && ia != null )
 				{
 					playerInventory.setInventorySlotContents( playerInventory.currentItem, ItemStack.EMPTY );

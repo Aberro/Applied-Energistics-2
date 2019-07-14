@@ -26,6 +26,8 @@ package appeng.api.storage;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 
@@ -40,7 +42,7 @@ import appeng.api.storage.data.IItemList;
  * If you want to request a stack of an item, you should should determine that prior to requesting the stack from the
  * inventory.
  */
-public interface IMEInventory<T extends IAEStack<T>>
+public interface IMEInventory
 {
 
 	/**
@@ -52,7 +54,7 @@ public interface IMEInventory<T extends IAEStack<T>>
 	 *
 	 * @return returns the number of items not added.
 	 */
-	T injectItems( T input, Actionable type, IActionSource src );
+	IAEStack injectItems( IAEStack input, Actionable type, IActionSource src );
 
 	/**
 	 * Extract the specified item from the ME Inventory
@@ -62,7 +64,7 @@ public interface IMEInventory<T extends IAEStack<T>>
 	 *
 	 * @return returns the number of items extracted, null
 	 */
-	T extractItems( T request, Actionable mode, IActionSource src );
+	IAEStack extractItems( IAEStack request, Actionable mode, IActionSource src );
 
 	/**
 	 * request a full report of all available items, storage.
@@ -71,19 +73,10 @@ public interface IMEInventory<T extends IAEStack<T>>
 	 *
 	 * @return returns same list that was passed in, is passed out
 	 */
-	IItemList<T> getAvailableItems( IItemList<T> out );
-
-	/**
-	 * request a full report of all available fluids, storage.
-	 *
-	 * @param out the IItemList the results will be written too
-	 *
-	 * @return returns same list that was passed in, is passed out
-	 */
-	IItemList<T> getAvailableFluids( IItemList<T> out );
+	IItemList<IAEStack> getAvailableItems(IStorageChannel channel, IItemList<IAEStack> out );
 
 	/**
 	 * @return the type of channel your handler should be part of
 	 */
-	IStorageChannel<T> getChannel();
+	<T extends IAEStack> IStorageChannel<T> getChannel();
 }

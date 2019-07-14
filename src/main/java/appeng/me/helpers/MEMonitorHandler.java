@@ -26,7 +26,7 @@ package appeng.me.helpers;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map.Entry;
+import java.util.Map;
 
 import com.google.common.collect.ImmutableList;
 
@@ -45,45 +45,43 @@ import appeng.api.storage.data.IItemList;
  * Common implementation of a simple class that monitors injection/extraction of a inventory to send events to a list of
  * listeners.
  *
- * @param <T>
- *
  * TODO: Needs to be redesigned to solve performance issues.
  */
-public class MEMonitorHandler<T extends IAEStack<T>> implements IMEMonitor<T>
+public class MEMonitorHandler implements IMEMonitor
 {
 
-	private final IMEInventoryHandler<T> internalHandler;
-	private final IItemList<T> cachedList;
-	private final HashMap<IMEMonitorHandlerReceiver<T>, Object> listeners = new HashMap<>();
+	private final IMEInventoryHandler internalHandler;
+	private final IItemList cachedList;
+	private final HashMap<IMEMonitorHandlerReceiver, Object> listeners = new HashMap<>();
 
 	protected boolean hasChanged = true;
 
-	public MEMonitorHandler( final IMEInventoryHandler<T> t )
+	public MEMonitorHandler( final IMEInventoryHandler t )
 	{
 		this.internalHandler = t;
 		this.cachedList = t.getChannel().createList();
 	}
 
-	public MEMonitorHandler( final IMEInventoryHandler<T> t, final IStorageChannel<T> chan )
+	public MEMonitorHandler( final IMEInventoryHandler t, final IStorageChannel chan )
 	{
 		this.internalHandler = t;
 		this.cachedList = chan.createList();
 	}
 
 	@Override
-	public void addListener( final IMEMonitorHandlerReceiver<T> l, final Object verificationToken )
+	public void addListener( final IMEMonitorHandlerReceiver l, final Object verificationToken )
 	{
 		this.listeners.put( l, verificationToken );
 	}
 
 	@Override
-	public void removeListener( final IMEMonitorHandlerReceiver<T> l )
+	public void removeListener( final IMEMonitorHandlerReceiver l )
 	{
 		this.listeners.remove( l );
 	}
 
 	@Override
-	public T injectItems( final T input, final Actionable mode, final IActionSource src )
+	public IAEStack injectItems( final IAEStack input, final Actionable mode, final IActionSource src )
 	{
 		if( mode == Actionable.SIMULATE )
 		{
@@ -92,14 +90,14 @@ public class MEMonitorHandler<T extends IAEStack<T>> implements IMEMonitor<T>
 		return this.monitorDifference( input.copy(), this.getHandler().injectItems( input, mode, src ), false, src );
 	}
 
-	protected IMEInventoryHandler<T> getHandler()
+	protected IMEInventoryHandler getHandler()
 	{
 		return this.internalHandler;
 	}
 
-	private T monitorDifference( final T original, final T leftOvers, final boolean extraction, final IActionSource src )
+	private IAEStack monitorDifference( final IAEStack original, final IAEStack leftOvers, final boolean extraction, final IActionSource src )
 	{
-		final T diff = original.copy();
+		final IAEStack diff = original.copy();
 
 		if( extraction )
 		{
@@ -118,19 +116,19 @@ public class MEMonitorHandler<T extends IAEStack<T>> implements IMEMonitor<T>
 		return leftOvers;
 	}
 
-	protected void postChangesToListeners( final Iterable<T> changes, final IActionSource src )
+	protected void postChangesToListeners( final Iterable<IAEStack> changes, final IActionSource src )
 	{
 		this.notifyListenersOfChange( changes, src );
 	}
 
-	protected void notifyListenersOfChange( final Iterable<T> diff, final IActionSource src )
+	protected void notifyListenersOfChange( final Iterable<IAEStack> diff, final IActionSource src )
 	{
 		this.hasChanged = true;// need to update the cache.
-		final Iterator<Entry<IMEMonitorHandlerReceiver<T>, Object>> i = this.getListeners();
+		final Iterator<Map.Entry<IMEMonitorHandlerReceiver, Object>> i = this.getListeners();
 		while( i.hasNext() )
 		{
-			final Entry<IMEMonitorHandlerReceiver<T>, Object> o = i.next();
-			final IMEMonitorHandlerReceiver<T> receiver = o.getKey();
+			final Map.Entry<IMEMonitorHandlerReceiver, Object> o = i.next();
+			final IMEMonitorHandlerReceiver receiver = o.getKey();
 			if( receiver.isValid( o.getValue() ) )
 			{
 				receiver.postChange( this, diff, src );
@@ -142,13 +140,13 @@ public class MEMonitorHandler<T extends IAEStack<T>> implements IMEMonitor<T>
 		}
 	}
 
-	protected Iterator<Entry<IMEMonitorHandlerReceiver<T>, Object>> getListeners()
+	protected Iterator<Map.Entry<IMEMonitorHandlerReceiver, Object>> getListeners()
 	{
 		return this.listeners.entrySet().iterator();
 	}
 
 	@Override
-	public T extractItems( final T request, final Actionable mode, final IActionSource src )
+	public IAEStack extractItems( final IAEStack request, final Actionable mode, final IActionSource src )
 	{
 		if( mode == Actionable.SIMULATE )
 		{
@@ -158,7 +156,7 @@ public class MEMonitorHandler<T extends IAEStack<T>> implements IMEMonitor<T>
 	}
 
 	@Override
-	public IStorageChannel<T> getChannel()
+	public IStorageChannel getChannel()
 	{
 		return this.getHandler().getChannel();
 	}
@@ -170,34 +168,34 @@ public class MEMonitorHandler<T extends IAEStack<T>> implements IMEMonitor<T>
 	}
 
 	@Override
-	public IItemList<T> getStorageList()
+	public IItemList<IAEStack> getStorageList(IStorageChannel channel)
 	{
 		if( this.hasChanged )
 		{
 			this.hasChanged = false;
 			this.cachedList.resetStatus();
-			return this.getAvailableItems( this.cachedList );
+			return this.getAvailableItems( channel, this.cachedList );
 		}
 
 		return this.cachedList;
 	}
 
 	@Override
-	public boolean isPrioritized( final T input )
+	public boolean isPrioritized( final IAEStack input )
 	{
 		return this.getHandler().isPrioritized( input );
 	}
 
 	@Override
-	public boolean canAccept( final T input )
+	public boolean canAccept( final IAEStack input )
 	{
 		return this.getHandler().canAccept( input );
 	}
 
 	@Override
-	public IItemList<T> getAvailableItems( final IItemList<T> out )
+	public IItemList<IAEStack> getAvailableItems( IStorageChannel channel, final IItemList<IAEStack> out )
 	{
-		return this.getHandler().getAvailableItems( out );
+		return this.getHandler().getAvailableItems( channel, out );
 	}
 
 	@Override

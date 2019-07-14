@@ -86,14 +86,14 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 	private final IStorageMonitorableAccessor accessor = this::getMonitorable;
 	private final AEFluidInventory tanks = new AEFluidInventory( this, NUMBER_OF_TANKS, TANK_CAPACITY );
 	private final AEFluidInventory config = new AEFluidInventory( this, NUMBER_OF_TANKS );
-	private final IAEFluidStack[] requireWork;
+	private final IAEStack[] requireWork;
 	private int isWorking = -1;
 	private int priority;
 
-	private final MEMonitorPassThrough<IAEItemStack> items = new MEMonitorPassThrough<>( new NullInventory<IAEItemStack>(), AEApi.instance()
+	private final MEMonitorPassThrough items = new MEMonitorPassThrough( new NullInventory<IAEItemStack>(), AEApi.instance()
 			.storage()
 			.getStorageChannel( IItemStorageChannel.class ) );
-	private final MEMonitorPassThrough<IAEFluidStack> fluids = new MEMonitorPassThrough<>( new NullInventory<IAEFluidStack>(), AEApi.instance()
+	private final MEMonitorPassThrough fluids = new MEMonitorPassThrough( new NullInventory<IAEFluidStack>(), AEApi.instance()
 			.storage()
 			.getStorageChannel( IFluidStorageChannel.class ) );
 
@@ -130,7 +130,7 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 	}
 
 	@Override
-	public <T extends IAEStack<T>> IMEMonitor<T> getInventory( IStorageChannel<T> channel )
+	public <T extends IAEStack> IMEMonitor getInventory( IStorageChannel<T> channel )
 	{
 		if( channel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
 		{
@@ -139,16 +139,16 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 				return null;
 			}
 
-			return (IMEMonitor<T>) this.items;
+			return (IMEMonitor) this.items;
 		}
 		else if( channel == AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) )
 		{
 			if( this.hasConfig() )
 			{
-				return (IMEMonitor<T>) new InterfaceInventory( this );
+				return (IMEMonitor) new InterfaceInventory( this );
 			}
 
-			return (IMEMonitor<T>) this.fluids;
+			return (IMEMonitor) this.fluids;
 		}
 
 		return null;
@@ -312,7 +312,7 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 
 	private boolean hasWorkToDo()
 	{
-		for( final IAEFluidStack requiredWork : this.requireWork )
+		for( final IAEStack requiredWork : this.requireWork )
 		{
 			if( requiredWork != null )
 			{
@@ -365,13 +365,13 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 
 	private boolean usePlan( final int slot )
 	{
-		IAEFluidStack work = this.requireWork[slot];
+		IAEFluidStack work = (IAEFluidStack)this.requireWork[slot];
 		this.isWorking = slot;
 
 		boolean changed = false;
 		try
 		{
-			final IMEInventory<IAEFluidStack> dest = this.gridProxy.getStorage()
+			final IMEInventory dest = this.gridProxy.getStorage()
 					.getInventory( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) );
 			final IEnergySource src = this.gridProxy.getEnergy();
 
@@ -384,7 +384,7 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 				}
 				else
 				{
-					final IAEFluidStack acquired = Platform.poweredExtraction( src, dest, work, this.interfaceRequestSource );
+					final IAEFluidStack acquired = (IAEFluidStack)Platform.poweredExtraction( src, dest, work, this.interfaceRequestSource );
 					if( acquired != null )
 					{
 						changed = true;

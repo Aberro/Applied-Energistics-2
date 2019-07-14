@@ -17,7 +17,7 @@ public interface ICellGuiHandler
 	 * @param channel Storage channel
 	 * @return True if handled, else false.
 	 */
-	<T extends IAEStack<T>> boolean isHandlerFor( IStorageChannel<T> channel );
+	<T extends IAEStack> boolean isHandlerFor( IStorageChannel<T> channel );
 
 	/**
 	 * Return true to prioritize this handler for the provided {@link ItemStack}.
@@ -42,6 +42,6 @@ public interface ICellGuiHandler
 	 * @param is item
 	 * @param chan storage channel
 	 */
-	<T extends IAEStack<T>> void openChestGui( EntityPlayer player, IChestOrDrive chest, ICellHandler cellHandler, IMEInventoryHandler<T> inv, ItemStack is, IStorageChannel<T> chan );
+	<T extends IAEStack> void openChestGui( EntityPlayer player, IChestOrDrive chest, ICellHandler cellHandler, IMEInventoryHandler inv, ItemStack is, IStorageChannel<T> chan );
 
 }

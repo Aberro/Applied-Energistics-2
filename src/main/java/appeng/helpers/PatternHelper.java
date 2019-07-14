@@ -19,18 +19,17 @@
 package appeng.helpers;
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.channels.IFluidStorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.core.api.ApiStorage;
 import appeng.fluids.container.slots.IMEFluidSlot;
 import appeng.fluids.util.AEFluidStack;
+import com.google.common.collect.Iterables;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -51,6 +50,7 @@ import appeng.core.features.AEFeature;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import net.minecraftforge.fluids.FluidStack;
+import org.apache.commons.lang3.ArrayUtils;
 
 
 public class PatternHelper implements ICraftingPatternDetails, Comparable<PatternHelper>
@@ -59,14 +59,12 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 	private final ItemStack patternItem;
 	private final InventoryCrafting crafting = new InventoryCrafting( new ContainerNull(), 3, 3 );
 	private final InventoryCrafting testFrame = new InventoryCrafting( new ContainerNull(), 3, 3 );
-	private final ItemStack correctOutput;
+	private final ItemStack correctOutput; // This is for crafting mode only.
 	private final IRecipe standardRecipe;
-	private final IAEItemStack[] condensedInputs;
-	private final IAEItemStack[] condensedOutputs;
-	private final IAEItemStack[] inputs;
-	private final IAEItemStack[] outputs;
-	private final IAEFluidStack[] inputFluids;
-	private final IAEFluidStack[] outputFluids;
+	private final Map<IStorageChannel, IAEStack[]> inputs;
+	private final Map<IStorageChannel, IAEStack[]> outputs;
+	private final Map<IStorageChannel, IAEStack[]> condensedInputs;
+	private final Map<IStorageChannel, IAEStack[]> condensedOutputs;
 	private final boolean isCrafting;
 	private final boolean canSubstitute;
 	private final Set<TestLookup> failCache = new HashSet<>();
@@ -83,42 +81,71 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 			throw new IllegalArgumentException( "No pattern here!" );
 		}
 
-		final NBTTagList inTag = encodedValue.getTagList( "in", 10 );
-		final NBTTagList outTag = encodedValue.getTagList( "out", 10 );
-		final NBTTagList inFluidsTag = encodedValue.getTagList( "inFluids", 10);
-		final NBTTagList outFluidsTag = encodedValue.getTagList( "outFluids", 10);
 		this.isCrafting = encodedValue.getBoolean( "crafting" );
-
 		this.canSubstitute = this.isCrafting && encodedValue.getBoolean( "substitute" );
-		this.patternItem = is;
-		this.pattern = AEItemStack.fromItemStack( is );
 
-		final List<IAEItemStack> in = new ArrayList<>();
-		final List<IAEItemStack> out = new ArrayList<>();
-		final List<IAEFluidStack> inFluids = new ArrayList<>();
-		final List<IAEFluidStack> outFluids = new ArrayList<>();
+		inputs = new HashMap<>();
+		outputs = new HashMap<>();
 
-		for( int x = 0; x < inTag.tagCount(); x++ )
+		Collection<IStorageChannel<?>> channels = AEApi.instance().storage().storageChannels();
+		NBTTagList tagList;
+		for( IStorageChannel channel : channels)
 		{
-			NBTTagCompound ingredient = inTag.getCompoundTagAt( x );
-			final ItemStack gs = new ItemStack( ingredient );
-
-			if( !ingredient.hasNoTags() && gs.isEmpty() )
+			// Crafting recipes should read only item inputs, not even an output.
+			if(isCrafting && channel != AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class))
+				continue;
+			tagList = encodedValue.getTagList(channel.getPatternNBTInputTag(), 10);
+			if(tagList != null)
 			{
-				throw new IllegalArgumentException( "No pattern here!" );
+				List<IAEStack> in = new ArrayList<>();
+				for( int x = 0; x < tagList.tagCount(); x++ )
+				{
+					NBTTagCompound ingredient = tagList.getCompoundTagAt( x );
+
+					final IAEStack gs = channel.createFromNBT(ingredient);
+
+					if( !ingredient.hasNoTags() && gs == null || gs.isEmpty() )
+					{
+						throw new IllegalArgumentException( "No pattern here!" );
+					}
+					in.add( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( gs ) );
+					if(channel.getChannelType() == AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class))
+					{
+						ItemStack item = ((IAEItemStack)gs).createItemStack();
+						this.crafting.setInventorySlotContents(x, item);
+
+						if (!gs.isEmpty() && (!this.isCrafting || !item.hasTagCompound())) {
+							this.markItemAs(x, item, TestStatus.ACCEPT);
+						}
+
+						this.testFrame.setInventorySlotContents(x, item);
+					}
+				}
+				inputs.put(channel, in.toArray(new IAEStack[in.size()]));
 			}
+			// if it's crafting, skip reading outputs.
+			if(this.isCrafting)
+				continue;
+			tagList = encodedValue.getTagList(channel.getPatternNBTOutputTag(), 10);
+			if(tagList != null) {
+				List<IAEStack> out = new ArrayList<>();
+				for( int x = 0; x < tagList.tagCount(); x++)
+				{
+					NBTTagCompound ingredient = tagList.getCompoundTagAt( x );
+					final IAEStack gs = channel.createFromNBT(ingredient);
 
-			this.crafting.setInventorySlotContents( x, gs );
+					if( !ingredient.hasNoTags() && gs.isEmpty() )
+						throw new IllegalArgumentException( "No pattern here!" );
 
-			if( !gs.isEmpty() && ( !this.isCrafting || !gs.hasTagCompound() ) )
-			{
-				this.markItemAs( x, gs, TestStatus.ACCEPT );
+					out.add( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( gs ) );
+				}
+				outputs.put(channel, out.toArray(new IAEStack[out.size()]));
 			}
-
-			in.add( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( gs ) );
-			this.testFrame.setInventorySlotContents( x, gs );
 		}
 
+		this.patternItem = is;
+		this.pattern = AEItemStack.fromItemStack( is );
+		// If this is crafting, no IItemStorageChannel should be added into map at this point, so add it with correct output.
 		if( this.isCrafting )
 		{
 			this.standardRecipe = CraftingManager.findMatchingRecipe( this.crafting, w );
@@ -126,7 +153,7 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 			if( this.standardRecipe != null )
 			{
 				this.correctOutput = this.standardRecipe.getCraftingResult( this.crafting );
-				out.add( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( this.correctOutput ) );
+				outputs.put( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ), new IAEItemStack[] { AEItemStack.fromItemStack(this.correctOutput) } );
 			}
 			else
 			{
@@ -137,125 +164,62 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 		{
 			this.standardRecipe = null;
 			this.correctOutput = ItemStack.EMPTY;
-
-			for( int x = 0; x < outTag.tagCount(); x++ )
-			{
-				NBTTagCompound resultItemTag = outTag.getCompoundTagAt( x );
-				final ItemStack gs = new ItemStack( resultItemTag );
-
-				if( !resultItemTag.hasNoTags() && gs.isEmpty() )
-				{
-					throw new IllegalArgumentException( "No pattern here!" );
-				}
-
-				if( !gs.isEmpty() )
-				{
-					out.add( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( gs ) );
-				}
-			}
-
-			for(int x = 0; x < inFluidsTag.tagCount(); x++)
-			{
-				NBTTagCompound resultFluidTag = inFluidsTag.getCompoundTagAt( x );
-				final IAEFluidStack gs = AEFluidStack.fromNBT(resultFluidTag);
-
-				if( !resultFluidTag.hasNoTags() && gs.getFluid() == null )
-				{
-					throw new IllegalArgumentException( "No pattern here!" );
-				}
-
-				if( gs.getFluid() != null)
-				{
-					inFluids.add( gs );
-				}
-			}
-
-			for(int x = 0; x < outFluidsTag.tagCount(); x++)
-			{
-				NBTTagCompound resultFluidTag = outFluidsTag.getCompoundTagAt( x );
-				final IAEFluidStack gs = AEFluidStack.fromNBT(resultFluidTag);
-
-				if( !resultFluidTag.hasNoTags() && gs.getFluid() == null )
-				{
-					throw new IllegalArgumentException( "No pattern here!" );
-				}
-
-				if( gs.getFluid() != null)
-				{
-					outFluids.add( gs );
-				}
-			}
-
 		}
 
-		this.outputs = out.toArray( new IAEItemStack[out.size()] );
-		this.inputs = in.toArray( new IAEItemStack[in.size()] );
-		this.inputFluids = inFluids.toArray( new IAEFluidStack[inFluids.size()] );
-		this.outputFluids = outFluids.toArray( new IAEFluidStack[outFluids.size()] );
-
-		final Map<IAEItemStack, IAEItemStack> tmpOutputs = new HashMap<>();
-
-		for( final IAEItemStack io : this.outputs )
+		// Now, condense all inputs and outputs.
+		Map<IStorageChannel, Map<IAEStack, IAEStack>> tmpInputs = new HashMap<>();
+		Map<IStorageChannel, Map<IAEStack, IAEStack>> tmpOutputs = new HashMap<>();
+		this.condensedInputs = new HashMap<>();
+		this.condensedOutputs = new HashMap<>();
+		for( final IAEStack[] io : this.inputs.values() )
 		{
-			if( io == null )
-			{
-				continue;
-			}
+			for( final IAEStack item : io ) {
+				if (item == null || item.isEmpty()) {
+					continue;
+				}
+				Map<IAEStack, IAEStack> list = tmpInputs.get(item.getChannel());
+				if(list == null)
+					tmpInputs.put(item.getChannel(), list = new HashMap<>());
 
-			final IAEItemStack g = tmpOutputs.get( io );
-
-			if( g == null )
-			{
-				tmpOutputs.put( io, io.copy() );
+				IAEStack g = list.get(item);
+				if (g == null) {
+					list.put(item, item.copy());
+				} else {
+					g.add(item);
+				}
 			}
-			else
-			{
-				g.add( io );
+		}
+		for( final IAEStack[] io : this.outputs.values() )
+		{
+			for( final IAEStack item : io ) {
+				if (item == null || item.isEmpty()) {
+					continue;
+				}
+				Map<IAEStack, IAEStack> list = tmpOutputs.get(item.getChannel());
+				if(list == null)
+					tmpOutputs.put(item.getChannel(), list = new HashMap<>());
+
+				IAEStack g = list.get(item);
+				if (g == null) {
+					list.put(item, item.copy());
+				} else {
+					g.add(item);
+				}
 			}
 		}
 
-		final Map<IAEItemStack, IAEItemStack> tmpInputs = new HashMap<>();
-
-		for( final IAEItemStack io : this.inputs )
-		{
-			if( io == null )
-			{
-				continue;
-			}
-
-			final IAEItemStack g = tmpInputs.get( io );
-
-			if( g == null )
-			{
-				tmpInputs.put( io, io.copy() );
-			}
-			else
-			{
-				g.add( io );
-			}
-		}
-
-		if( ( tmpOutputs.isEmpty() && outFluids.isEmpty() ) || ( tmpInputs.isEmpty() && inFluids.isEmpty() ) )
-		{
+		if( tmpInputs.isEmpty() || tmpOutputs.isEmpty() )
 			throw new IllegalStateException( "No pattern here!" );
-		}
 
-		this.condensedInputs = new IAEItemStack[tmpInputs.size()];
-		int offset = 0;
-
-		for( final IAEItemStack io : tmpInputs.values() )
+		for( final IStorageChannel channel : tmpInputs.keySet() )
 		{
-			this.condensedInputs[offset] = io;
-			offset++;
+			Collection<IAEStack> values = tmpInputs.get(channel).values();
+			this.condensedInputs.put(channel, values.toArray(new IAEStack[0]));
 		}
-
-		offset = 0;
-		this.condensedOutputs = new IAEItemStack[tmpOutputs.size()];
-
-		for( final IAEItemStack io : tmpOutputs.values() )
+		for( final IStorageChannel channel : tmpOutputs.keySet() )
 		{
-			this.condensedOutputs[offset] = io;
-			offset++;
+			Collection<IAEStack> values = tmpOutputs.get(channel).values();
+			this.condensedOutputs.put(channel, values.toArray(new IAEStack[0]));
 		}
 	}
 
@@ -347,37 +311,48 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 	@Override
 	public IAEItemStack[] getInputs()
 	{
-		return this.inputs;
+		IAEStack[] result = getChannelInputs( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+		return Arrays.copyOf(result, result.length, IAEItemStack[].class);
+	}
+	@Override
+	public IAEItemStack getOutput()
+	{
+		IAEStack[] result = getChannelOutputs( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+		if(result != null && result.length > 0)
+			return (IAEItemStack)result[0];
+		return null;
 	}
 
 	@Override
-	public IAEItemStack[] getCondensedInputs()
+	public IAEStack[] getChannelInputs(IStorageChannel channel)
 	{
-		return this.condensedInputs;
+		return inputs.get(channel);
 	}
 
 	@Override
-	public IAEItemStack[] getCondensedOutputs()
+	public IAEStack[] getChannelOutputs(IStorageChannel channel)
 	{
-		return this.condensedOutputs;
+		return outputs.get(channel);
 	}
-
 	@Override
-	public IAEItemStack[] getOutputs()
+	public IAEStack[] getChannelCondensedInputs(IStorageChannel channel)
 	{
-		return this.outputs;
+		return condensedInputs.get(channel);
 	}
-
 	@Override
-	public IAEFluidStack[] getInputFluids()
+	public IAEStack[] getChannelCondensedOutputs(IStorageChannel channel)
 	{
-		return this.inputFluids;
+		return condensedOutputs.get(channel);
 	}
-
 	@Override
-	public IAEFluidStack[] getOutputFluids()
+	public IAEStack[] getAllCondensedInputs()
 	{
-		return this.outputFluids;
+		return this.condensedInputs.values().stream().flatMap(Arrays::stream).collect(Collectors.toList()).toArray(new IAEStack[0]);
+	}
+	@Override
+	public IAEStack[] getAllCondensedOutputs()
+	{
+		return this.condensedOutputs.values().stream().flatMap(Arrays::stream).collect(Collectors.toList()).toArray(new IAEStack[0]);
 	}
 
 	@Override
@@ -401,13 +376,9 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 				return ItemStack.EMPTY;
 			}
 		}
+		IAEItemStack output = this.getOutput();
 
-		if( this.outputs != null && this.outputs.length > 0 )
-		{
-			return this.outputs[0].createItemStack();
-		}
-
-		return ItemStack.EMPTY;
+		return output != null ? output.createItemStack() : ItemStack.EMPTY;
 	}
 
 	private TestStatus getStatus( final int slotIndex, final ItemStack i )

@@ -24,11 +24,11 @@ import java.util.Collections;
 import appeng.api.storage.data.IAEStack;
 
 
-public class DefaultPriorityList<T extends IAEStack<T>> implements IPartitionList<T>
+public class DefaultPriorityList implements IPartitionList
 {
 
 	@Override
-	public boolean isListed( final T input )
+	public boolean isListed( final IAEStack input )
 	{
 		return false;
 	}
@@ -40,7 +40,7 @@ public class DefaultPriorityList<T extends IAEStack<T>> implements IPartitionLis
 	}
 
 	@Override
-	public Iterable<T> getItems()
+	public Iterable getItems()
 	{
 		return Collections.emptyList();
 	}

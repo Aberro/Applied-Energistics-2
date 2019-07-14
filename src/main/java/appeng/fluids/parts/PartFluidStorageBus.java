@@ -25,6 +25,8 @@ import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
+import appeng.api.storage.data.IAEStack;
+import appeng.util.item.MixedList;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -87,7 +89,7 @@ import appeng.util.prioritylist.PrecisePriorityList;
  * @version rv6 - 22/05/2018
  * @since rv6 22/05/2018
  */
-public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMonitorHandlerReceiver<IAEFluidStack>, IAEFluidInventory
+public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMonitorHandlerReceiver, IAEFluidInventory
 {
 	public static final ResourceLocation MODEL_BASE = new ResourceLocation( AppEng.MOD_ID, "part/fluid_storage_bus_base" );
 	@PartModels
@@ -101,7 +103,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 	private final AEFluidInventory config = new AEFluidInventory( this, 63 );
 	private boolean cached = false;
 	private ITickingMonitor monitor = null;
-	private MEInventoryHandler<IAEFluidStack> handler = null;
+	private MEInventoryHandler handler = null;
 	private int handlerHash = 0;
 	private byte resetCacheLogic = 0;
 
@@ -114,7 +116,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 		this.source = new MachineSource( this );
 	}
 
-	private IMEInventory<IAEFluidStack> getInventoryWrapper( TileEntity target )
+	private IMEInventory getInventoryWrapper( TileEntity target )
 	{
 		EnumFacing targetSide = this.getSide().getFacing().getOpposite();
 		// Prioritize a handler to directly link to another ME network
@@ -166,11 +168,11 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 		final boolean fullReset = this.resetCacheLogic == 2;
 		this.resetCacheLogic = 0;
 
-		final IMEInventory<IAEFluidStack> in = this.getInternalHandler();
-		IItemList<IAEFluidStack> before = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
+		final IMEInventory in = this.getInternalHandler();
+		IItemList<IAEStack> before = new MixedList();
 		if( in != null )
 		{
-			before = in.getAvailableItems( before );
+			before = in.getAvailableItems( in.getChannel(), before );
 		}
 
 		this.cached = false;
@@ -179,14 +181,14 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 			this.handlerHash = 0;
 		}
 
-		final IMEInventory<IAEFluidStack> out = this.getInternalHandler();
+		final IMEInventory out = this.getInternalHandler();
 
 		if( in != out )
 		{
-			IItemList<IAEFluidStack> after = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
+			IItemList<IAEStack> after = new MixedList();
 			if( out != null )
 			{
-				after = out.getAvailableItems( after );
+				after = out.getAvailableItems( out.getChannel(), after );
 			}
 			Platform.postListChanges( before, after, this, this.source );
 		}
@@ -261,7 +263,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 	}
 
 	@Override
-	public void postChange( final IBaseMonitor<IAEFluidStack> monitor, final Iterable<IAEFluidStack> change, final IActionSource source )
+	public void postChange( final IBaseMonitor monitor, final Iterable<IAEStack> change, final IActionSource source )
 	{
 		try
 		{
@@ -278,7 +280,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 		}
 	}
 
-	public MEInventoryHandler<IAEFluidStack> getInternalHandler()
+	public MEInventoryHandler getInternalHandler()
 	{
 		if( this.cached )
 		{
@@ -302,7 +304,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 		this.monitor = null;
 		if( target != null )
 		{
-			IMEInventory<IAEFluidStack> inv = this.getInventoryWrapper( target );
+			IMEInventory inv = this.getInventoryWrapper( target );
 			if( inv instanceof ITickingMonitor )
 			{
 				this.monitor = (ITickingMonitor) inv;
@@ -313,7 +315,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 			{
 				this.checkInterfaceVsStorageBus( target, this.getSide().getOpposite() );
 
-				this.handler = new MEInventoryHandler<>( inv, AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) );
+				this.handler = new MEInventoryHandler( inv, AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) );
 
 				this.handler.setBaseAccess( (AccessRestriction) this.getConfigManager().getSetting( Settings.ACCESS ) );
 				this.handler.setWhitelist( this.getInstalledUpgrades( Upgrades.INVERTER ) > 0 ? IncludeExclude.BLACKLIST : IncludeExclude.WHITELIST );
@@ -343,7 +345,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 
 				if( inv instanceof IBaseMonitor )
 				{
-					( (IBaseMonitor<IAEFluidStack>) inv ).addListener( this, this.handler );
+					( (IBaseMonitor) inv ).addListener( this, this.handler );
 				}
 			}
 		}
@@ -413,7 +415,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 	{
 		if( channel == this.getStorageChannel() )
 		{
-			final IMEInventoryHandler<IAEFluidStack> out = this.getProxy().isActive() ? this.getInternalHandler() : null;
+			final IMEInventoryHandler out = this.getProxy().isActive() ? this.getInternalHandler() : null;
 			if( out != null )
 			{
 				return Collections.singletonList( out );

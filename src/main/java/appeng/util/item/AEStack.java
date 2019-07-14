@@ -24,7 +24,7 @@ import io.netty.buffer.ByteBuf;
 import appeng.api.storage.data.IAEStack;
 
 
-public abstract class AEStack<StackType extends IAEStack<StackType>> implements IAEStack<StackType>
+public abstract class AEStack<StackType extends IAEStack> implements IAEStack
 {
 
 	private boolean isCraftable;
@@ -107,7 +107,7 @@ public abstract class AEStack<StackType extends IAEStack<StackType>> implements 
 	@Override
 	public StackType empty()
 	{
-		final StackType dup = this.copy();
+		final StackType dup = (StackType) this.copy();
 		dup.reset();
 		return dup;
 	}

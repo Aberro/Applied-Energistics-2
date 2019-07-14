@@ -25,48 +25,54 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.storage.IMEInventory;
 import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 
 
-public class MEPassThrough<T extends IAEStack<T>> implements IMEInventoryHandler<T>
+public class MEPassThrough implements IMEInventoryHandler
 {
 
 	private final IStorageChannel wrappedChannel;
-	private IMEInventory<T> internal;
+	private IMEInventory internal;
 
-	public MEPassThrough( final IMEInventory<T> i, final IStorageChannel channel )
+	public MEPassThrough( final IMEInventory i, final IStorageChannel channel )
 	{
 		this.wrappedChannel = channel;
 		this.setInternal( i );
 	}
 
-	protected IMEInventory<T> getInternal()
+	protected IMEInventory getInternal()
 	{
 		return this.internal;
 	}
 
-	public void setInternal( final IMEInventory<T> i )
+	public void setInternal( final IMEInventory i )
 	{
 		this.internal = i;
 	}
 
 	@Override
-	public T injectItems( final T input, final Actionable type, final IActionSource src )
+	public IAEStack injectItems( final IAEStack input, final Actionable type, final IActionSource src )
 	{
-		return this.internal.injectItems( input, type, src );
+		if(input.getChannel() == wrappedChannel.getChannelType())
+			return this.internal.injectItems( input, type, src );
+		return input;
 	}
 
 	@Override
-	public T extractItems( final T request, final Actionable type, final IActionSource src )
+	public IAEStack extractItems( final IAEStack request, final Actionable type, final IActionSource src )
 	{
-		return this.internal.extractItems( request, type, src );
+		if(request.getChannel() == wrappedChannel.getChannelType())
+			return this.internal.extractItems( request, type, src );
+		return null;
 	}
 
 	@Override
-	public IItemList<T> getAvailableItems( final IItemList out )
+	public IItemList<IAEStack> getAvailableItems( IStorageChannel channel, final IItemList<IAEStack> out )
 	{
-		return this.internal.getAvailableItems( out );
+		return this.internal.getAvailableItems( channel, out );
 	}
 
 	@Override
@@ -82,15 +88,15 @@ public class MEPassThrough<T extends IAEStack<T>> implements IMEInventoryHandler
 	}
 
 	@Override
-	public boolean isPrioritized( final T input )
+	public boolean isPrioritized( final IAEStack input )
 	{
 		return false;
 	}
 
 	@Override
-	public boolean canAccept( final T input )
+	public boolean canAccept( final IAEStack input )
 	{
-		return true;
+		return input.getChannel() == wrappedChannel.getChannelType();
 	}
 
 	@Override

@@ -24,7 +24,11 @@
 package appeng.api.networking.crafting;
 
 
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.channels.IFluidStorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IItemList;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
@@ -61,28 +65,28 @@ public interface ICraftingPatternDetails
 	boolean isCraftable();
 
 	/**
+	 * used only for standard crafting recipies
 	 * @return a list of the inputs, will include nulls.
 	 */
+	@Deprecated
 	IAEItemStack[] getInputs();
 
 	/**
-	 * @return a list of the inputs, will be clean
-	 */
-	IAEItemStack[] getCondensedInputs();
-
-	/**
-	 * @return a list of the outputs, will be clean
-	 */
-	IAEItemStack[] getCondensedOutputs();
-
-	/**
+	 * used only for standard crafting recipies
 	 * @return a list of the outputs, will include nulls.
 	 */
-	IAEItemStack[] getOutputs();
+	@Deprecated
+	IAEItemStack getOutput();
 
-	IAEFluidStack[] getInputFluids();
+	IAEStack[] getChannelInputs(IStorageChannel channel);
+	IAEStack[] getChannelOutputs(IStorageChannel channel);
+	IAEStack[] getChannelCondensedInputs(IStorageChannel channel);
+	IAEStack[] getChannelCondensedOutputs(IStorageChannel channel);
+	IAEStack[] getAllCondensedInputs();
+	IAEStack[] getAllCondensedOutputs();
 
-	IAEFluidStack[] getOutputFluids();
+
+
 
 	/**
 	 * @return if this pattern is enabled to support substitutions.

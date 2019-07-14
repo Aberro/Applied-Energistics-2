@@ -26,6 +26,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import appeng.api.storage.channels.IItemStorageChannel;
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
@@ -46,6 +50,8 @@ import appeng.me.GridAccessException;
 import appeng.me.helpers.IGridProxyable;
 import appeng.me.storage.ITickingMonitor;
 
+import javax.naming.OperationNotSupportedException;
+
 
 /**
  * Wraps an Fluid Handler in such a way that it can be used as an IMEInventory for fluids.
@@ -54,9 +60,9 @@ import appeng.me.storage.ITickingMonitor;
  * @version rv6 - 22/05/2018
  * @since rv6 22/05/2018
  */
-public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMonitor<IAEFluidStack>, ITickingMonitor
+public class FluidHandlerAdapter implements IMEInventory, IBaseMonitor, ITickingMonitor
 {
-	private final Map<IMEMonitorHandlerReceiver<IAEFluidStack>, Object> listeners = new HashMap<>();
+	private final Map<IMEMonitorHandlerReceiver, Object> listeners = new HashMap<>();
 	private IActionSource source;
 	private final IFluidHandler fluidHandler;
 	private final IGridProxyable proxyable;
@@ -70,9 +76,11 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 	}
 
 	@Override
-	public IAEFluidStack injectItems( IAEFluidStack input, Actionable type, IActionSource src )
+	public IAEStack injectItems(IAEStack input, Actionable type, IActionSource src )
 	{
-		FluidStack fluidStack = input.getFluidStack();
+		if(!(input instanceof IAEFluidStack))
+			throw new IllegalArgumentException();
+		FluidStack fluidStack = ((IAEFluidStack)input).getFluidStack();
 
 		// Insert
 		int wasFillled = this.fluidHandler.fill( fluidStack, type != Actionable.SIMULATE );
@@ -101,9 +109,11 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 	}
 
 	@Override
-	public IAEFluidStack extractItems( IAEFluidStack request, Actionable mode, IActionSource src )
+	public IAEStack extractItems( IAEStack request, Actionable mode, IActionSource src )
 	{
-		FluidStack requestedFluidStack = request.getFluidStack();
+		if(!(request instanceof IAEFluidStack))
+			throw new IllegalArgumentException();
+		FluidStack requestedFluidStack = ((IAEFluidStack)request).getFluidStack();
 		final boolean doDrain = ( mode == Actionable.MODULATE );
 
 		// Drain the fluid from the tank
@@ -131,7 +141,7 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 	@Override
 	public TickRateModulation onTick()
 	{
-		List<IAEFluidStack> changes = this.cache.update();
+		List<IAEStack> changes = this.cache.update();
 		if( !changes.isEmpty() )
 		{
 			this.postDifference( changes );
@@ -144,7 +154,11 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 	}
 
 	@Override
-	public IItemList<IAEFluidStack> getAvailableItems( IItemList<IAEFluidStack> out )
+	public IItemList<IAEStack> getAvailableItems(IStorageChannel channel, IItemList<IAEStack> out )
+	{
+		return channel.createList();
+	}
+	public IItemList<IAEFluidStack> getAvailableFluids( IItemList<IAEFluidStack> out )
 	{
 		return this.cache.getAvailableItems( out );
 	}
@@ -162,24 +176,24 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 	}
 
 	@Override
-	public void addListener( final IMEMonitorHandlerReceiver<IAEFluidStack> l, final Object verificationToken )
+	public void addListener( final IMEMonitorHandlerReceiver l, final Object verificationToken )
 	{
 		this.listeners.put( l, verificationToken );
 	}
 
 	@Override
-	public void removeListener( final IMEMonitorHandlerReceiver<IAEFluidStack> l )
+	public void removeListener( final IMEMonitorHandlerReceiver l )
 	{
 		this.listeners.remove( l );
 	}
 
-	private void postDifference( Iterable<IAEFluidStack> a )
+	private void postDifference( Iterable<IAEStack> a )
 	{
-		final Iterator<Map.Entry<IMEMonitorHandlerReceiver<IAEFluidStack>, Object>> i = this.listeners.entrySet().iterator();
+		final Iterator<Map.Entry<IMEMonitorHandlerReceiver, Object>> i = this.listeners.entrySet().iterator();
 		while( i.hasNext() )
 		{
-			final Map.Entry<IMEMonitorHandlerReceiver<IAEFluidStack>, Object> l = i.next();
-			final IMEMonitorHandlerReceiver<IAEFluidStack> key = l.getKey();
+			final Map.Entry<IMEMonitorHandlerReceiver, Object> l = i.next();
+			final IMEMonitorHandlerReceiver key = l.getKey();
 			if( key.isValid( l.getValue() ) )
 			{
 				key.postChange( this, a, this.source );
@@ -201,9 +215,9 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 			this.fluidHandler = fluidHandler;
 		}
 
-		public List<IAEFluidStack> update()
+		public List<IAEStack> update()
 		{
-			final List<IAEFluidStack> changes = new ArrayList<>();
+			final List<IAEStack> changes = new ArrayList<>();
 			final IFluidTankProperties[] tankProperties = this.fluidHandler.getTankProperties();
 			final int slots = tankProperties.length;
 
@@ -248,7 +262,7 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 			return out;
 		}
 
-		private void handlePossibleSlotChanges( int slot, IAEFluidStack oldAeFS, FluidStack newFS, List<IAEFluidStack> changes )
+		private void handlePossibleSlotChanges( int slot, IAEFluidStack oldAeFS, FluidStack newFS, List<IAEStack> changes )
 		{
 			if( oldAeFS != null && oldAeFS.getFluidStack().isFluidEqual( newFS ) )
 			{
@@ -260,7 +274,7 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 			}
 		}
 
-		private void handleStackSizeChanged( int slot, IAEFluidStack oldAeFS, FluidStack newFS, List<IAEFluidStack> changes )
+		private void handleStackSizeChanged( int slot, IAEFluidStack oldAeFS, FluidStack newFS, List<IAEStack> changes )
 		{
 			// Still the same fluid, but amount might have changed
 			final long diff = newFS.amount - oldAeFS.getStackSize();
@@ -278,7 +292,7 @@ public class FluidHandlerAdapter implements IMEInventory<IAEFluidStack>, IBaseMo
 			}
 		}
 
-		private void handleFluidChanged( int slot, IAEFluidStack oldAeFS, FluidStack newFS, List<IAEFluidStack> changes )
+		private void handleFluidChanged( int slot, IAEFluidStack oldAeFS, FluidStack newFS, List<IAEStack> changes )
 		{
 			// Completely different fluid
 			this.cachedAeStacks[slot] = AEFluidStack.fromFluidStack( newFS );
