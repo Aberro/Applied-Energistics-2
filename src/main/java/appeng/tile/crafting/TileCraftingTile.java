@@ -27,6 +27,7 @@ import java.util.Optional;
 
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.data.IAEStack;
+import appeng.util.inv.ItemSlot;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -321,7 +322,7 @@ public class TileCraftingTile extends AENetworkTile implements IAEMultiBlock, IP
 				throw new IllegalStateException( this.cluster + " does not contain any kind of blocks, which were destroyed." );
 			}
 
-			IStorageChannel channel = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
+			IStorageChannel<IAEItemStack, ItemSlot, ItemStack> channel = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 			for( IAEStack ais : inv.getAvailableItems( channel, channel.createList() ) )
 			{
 				ais = ais.copy();

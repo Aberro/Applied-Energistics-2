@@ -25,9 +25,10 @@ import java.util.List;
 import appeng.api.networking.crafting.IInventoryCrafting;
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.channels.IItemStorageChannel;
+import appeng.api.util.*;
+import appeng.crafting.InventoryCrafting;
 import io.netty.buffer.ByteBuf;
 
-import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -57,10 +58,6 @@ import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.storage.data.IAEItemStack;
-import appeng.api.util.AECableType;
-import appeng.api.util.AEPartLocation;
-import appeng.api.util.DimensionalCoord;
-import appeng.api.util.IConfigManager;
 import appeng.container.ContainerNull;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketAssemblerAnimation;
@@ -84,7 +81,7 @@ import appeng.util.item.AEItemStack;
 
 public class TileMolecularAssembler extends AENetworkInvTile implements IUpgradeableHost, IConfigManagerHost, IGridTickable, ICraftingMachine, IPowerChannelState
 {
-	private final InventoryCrafting craftingInv;
+	private final IInventoryCrafting craftingInv;
 	private final AppEngInternalInventory gridInv = new AppEngInternalInventory( this, 9 + 1, 1 );
 	private final AppEngInternalInventory patternInv = new AppEngInternalInventory( this, 1, 1 );
 	private final IItemHandler gridInvExt = new WrapperFilteredItemHandler( this.gridInv, new CraftingGridFilter() );
@@ -108,7 +105,8 @@ public class TileMolecularAssembler extends AENetworkInvTile implements IUpgrade
 		this.settings.registerSetting( Settings.REDSTONE_CONTROLLED, RedstoneMode.IGNORE );
 		this.getProxy().setIdlePowerUsage( 0.0 );
 		this.upgrades = new DefinitionUpgradeInventory( assembler, this, this.getUpgradeSlots() );
-		this.craftingInv = new InventoryCrafting( new ContainerNull(), 3, 3 );
+		this.craftingInv = new InventoryCrafting( );
+		this.craftingInv.setSlotsCount(AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class), 9);
 
 	}
 
@@ -133,7 +131,7 @@ public class TileMolecularAssembler extends AENetworkInvTile implements IUpgrade
 
 				for(int x = 0; x < table.getSlotsCount( channel ); x++ )
 				{
-					this.gridInv.setStackInSlot( x, table.getStackInSlot( channel, x ) );
+					this.gridInv.setStackInSlot( x, (ItemStack)table.getStackInSlot( channel, x ).getStack() );
 				}
 
 				this.updateSleepiness();
@@ -180,9 +178,10 @@ public class TileMolecularAssembler extends AENetworkInvTile implements IUpgrade
 			return false;
 		}
 
-		for( int x = 0; x < this.craftingInv.getSizeInventory(); x++ )
+		IStorageChannel channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
+		for( int x = 0; x < this.craftingInv.getSlotsCount(channel); x++ )
 		{
-			this.craftingInv.setInventorySlotContents( x, this.gridInv.getStackInSlot( x ) );
+			this.craftingInv.setStackInSlot(channel, x, AEItemStack.fromItemStack( this.gridInv.getStackInSlot( x ) ) );
 		}
 
 		return !this.myPlan.getOutput( this.craftingInv, this.getWorld() ).isEmpty();
@@ -450,25 +449,25 @@ public class TileMolecularAssembler extends AENetworkInvTile implements IUpgrade
 				this.progress += this.userPower( ticksSinceLastCall, speed = 50, 5.0 );
 				break;
 		}
-
+		IStorageChannel channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
 		if( this.progress >= 100 )
 		{
-			for( int x = 0; x < this.craftingInv.getSizeInventory(); x++ )
+			for( int x = 0; x < this.craftingInv.getSlotsCount(channel); x++ )
 			{
-				this.craftingInv.setInventorySlotContents( x, this.gridInv.getStackInSlot( x ) );
+				this.craftingInv.setStackInSlot(channel, x, AEItemStack.fromItemStack( this.gridInv.getStackInSlot( x ) ) );
 			}
 
 			this.progress = 0;
 			final ItemStack output = this.myPlan.getOutput( this.craftingInv, this.getWorld() );
 			if( !output.isEmpty() )
 			{
-				FMLCommonHandler.instance().firePlayerCraftingEvent( Platform.getPlayer( (WorldServer) this.getWorld() ), output, this.craftingInv );
+				FMLCommonHandler.instance().firePlayerCraftingEvent( Platform.getPlayer( (WorldServer) this.getWorld() ), output, this.craftingInv.toMCInventoryCrafting() );
 
 				this.pushOut( output.copy() );
 
-				for( int x = 0; x < this.craftingInv.getSizeInventory(); x++ )
+				for( int x = 0; x < this.craftingInv.getSlotsCount(channel); x++ )
 				{
-					this.gridInv.setStackInSlot( x, Platform.getContainerItem( this.craftingInv.getStackInSlot( x ) ) );
+					this.gridInv.setStackInSlot( x, Platform.getContainerItem( (ItemStack)this.craftingInv.getStackInSlot(channel, x ).getStack() ) );
 				}
 
 				if( ItemHandlerUtil.isEmpty( this.patternInv ) )
@@ -573,7 +572,7 @@ public class TileMolecularAssembler extends AENetworkInvTile implements IUpgrade
 			return output;
 		}
 
-		final InventoryAdaptor adaptor = InventoryAdaptor.getAdaptor( te, d.getOpposite() );
+		final InventoryAdaptor adaptor = ItemInventoryAdaptor.getAdaptor( te, d.getOpposite() );
 
 		if( adaptor == null )
 		{
@@ -581,7 +580,7 @@ public class TileMolecularAssembler extends AENetworkInvTile implements IUpgrade
 		}
 
 		final int size = output.getCount();
-		output = adaptor.addItems( output );
+		output = (ItemStack)adaptor.addItems( AEItemStack.fromItemStack( output ) ).getStack();
 		final int newSize = output.isEmpty() ? 0 : output.getCount();
 
 		if( size != newSize )
