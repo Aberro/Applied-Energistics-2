@@ -25,6 +25,8 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import appeng.api.networking.crafting.IInventoryCrafting;
+import appeng.api.storage.data.IAEStack;
 import com.google.common.collect.ImmutableSet;
 
 import io.netty.buffer.ByteBuf;
@@ -213,7 +215,7 @@ public class TileInterface extends AENetworkInvTile implements IGridTickable, II
 	}
 
 	@Override
-	public boolean canInsert( final ItemStack stack )
+	public boolean canInsert( final IAEStack stack )
 	{
 		return this.duality.canInsert( stack );
 	}
@@ -277,7 +279,7 @@ public class TileInterface extends AENetworkInvTile implements IGridTickable, II
 	}
 
 	@Override
-	public boolean pushPattern( final ICraftingPatternDetails patternDetails, final InventoryCrafting table )
+	public boolean pushPattern( final ICraftingPatternDetails patternDetails, final IInventoryCrafting table )
 	{
 		return this.duality.pushPattern( patternDetails, table );
 	}
@@ -307,7 +309,7 @@ public class TileInterface extends AENetworkInvTile implements IGridTickable, II
 	}
 
 	@Override
-	public IAEItemStack injectCraftedItems( final ICraftingLink link, final IAEItemStack items, final Actionable mode )
+	public IAEStack injectCraftedItems(final ICraftingLink link, final IAEStack items, final Actionable mode )
 	{
 		return this.duality.injectCraftedItems( link, items, mode );
 	}

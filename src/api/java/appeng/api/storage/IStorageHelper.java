@@ -28,6 +28,7 @@ import java.util.Collection;
 
 import javax.annotation.Nonnull;
 
+import appeng.api.util.ISlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
@@ -64,7 +65,7 @@ public interface IStorageHelper
 	 * @param factory An instance implementing the channel, must be be an instance of channel
 	 */
 	@Nonnull
-	<T extends IAEStack, C extends IStorageChannel<T>> void registerStorageChannel( @Nonnull Class<C> channel, @Nonnull C factory );
+	<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack, C extends IStorageChannel<TAEStack, TSlot, TStack>> void registerStorageChannel(@Nonnull Class<C> channel, @Nonnull C factory );
 
 	/**
 	 * Fetch the factory instance for a specific storage channel.
@@ -76,7 +77,7 @@ public interface IStorageHelper
 	 * @return the factory instance
 	 */
 	@Nonnull
-	<T extends IAEStack, C extends IStorageChannel<T>> C getStorageChannel( @Nonnull Class<C> channel );
+	<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack, C extends IStorageChannel<TAEStack, TSlot, TStack>> C getStorageChannel( @Nonnull Class<C> channel );
 
 	/**
 	 * An unmodifiable collection of all registered factory instance.
@@ -84,7 +85,7 @@ public interface IStorageHelper
 	 * This is mainly used as helper to let storage grids construct their internal storage for each type.
 	 */
 	@Nonnull
-	Collection<IStorageChannel<? extends IAEStack>> storageChannels();
+	Collection<IStorageChannel<? extends IAEStack, ?, ?>> storageChannels();
 
 	/**
 	 * load a crafting link from nbt data.

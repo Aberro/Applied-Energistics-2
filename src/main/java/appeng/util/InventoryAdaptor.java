@@ -19,6 +19,9 @@
 package appeng.util;
 
 
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -39,45 +42,22 @@ import appeng.util.inv.ItemSlot;
  * actually monitoring an inventory. It is just for insertion and extraction, and is primarily used by import/export
  * buses.
  */
-public abstract class InventoryAdaptor implements Iterable<ItemSlot>
+public abstract class InventoryAdaptor implements Iterable<ISlot>
 {
-	public static InventoryAdaptor getAdaptor( final TileEntity te, final EnumFacing d )
-	{
-		if( te != null && te.hasCapability( CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, d ) )
-		{
-			// Attempt getting an IItemHandler for the given side via caps
-			IItemHandler itemHandler = te.getCapability( CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, d );
-			if( itemHandler != null )
-			{
-				return new AdaptorItemHandler( itemHandler );
-			}
-		}
-		return null;
-	}
+	// return what was extracted.
+	public abstract IAEStack removeItems( long amount, IAEStack filter, IInventoryDestination destination );
 
-	public static InventoryAdaptor getAdaptor( final EntityPlayer te )
-	{
-		if( te != null )
-		{
-			return new AdaptorItemHandlerPlayerInv( te );
-		}
-		return null;
-	}
+	public abstract IAEStack simulateRemove( long amount, IAEStack filter, IInventoryDestination destination );
 
 	// return what was extracted.
-	public abstract ItemStack removeItems( int amount, ItemStack filter, IInventoryDestination destination );
+	public abstract IAEStack removeSimilarItems( long amount, IAEStack filter, FuzzyMode fuzzyMode, IInventoryDestination destination );
 
-	public abstract ItemStack simulateRemove( int amount, ItemStack filter, IInventoryDestination destination );
-
-	// return what was extracted.
-	public abstract ItemStack removeSimilarItems( int amount, ItemStack filter, FuzzyMode fuzzyMode, IInventoryDestination destination );
-
-	public abstract ItemStack simulateSimilarRemove( int amount, ItemStack filter, FuzzyMode fuzzyMode, IInventoryDestination destination );
+	public abstract IAEStack simulateSimilarRemove( long amount, IAEStack filter, FuzzyMode fuzzyMode, IInventoryDestination destination );
 
 	// return what isn't used...
-	public abstract ItemStack addItems( ItemStack toBeAdded );
+	public abstract IAEStack addItems( IAEStack toBeAdded );
 
-	public abstract ItemStack simulateAdd( ItemStack toBeSimulated );
+	public abstract IAEStack simulateAdd( IAEStack toBeSimulated );
 
 	public abstract boolean containsItems();
 

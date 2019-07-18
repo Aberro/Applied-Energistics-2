@@ -26,6 +26,8 @@ package appeng.api.implementations.items;
 
 import javax.annotation.Nonnull;
 
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.util.ISlot;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.storage.ICellWorkbenchItem;
@@ -43,7 +45,7 @@ import appeng.api.storage.data.IAEStack;
  *
  * The standard AE implementation only provides 1-63 Types
  */
-public interface IStorageCell<T extends IAEStack> extends ICellWorkbenchItem
+public interface IStorageCell<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> extends ICellWorkbenchItem<TAEStack, TSlot, TStack>
 {
 
 	/**
@@ -85,7 +87,7 @@ public interface IStorageCell<T extends IAEStack> extends ICellWorkbenchItem
 	 *
 	 * @return true to preventAdditionOfItem
 	 */
-	boolean isBlackListed( @Nonnull ItemStack cellItem, @Nonnull T requestedAddition );
+	boolean isBlackListed( @Nonnull ItemStack cellItem, @Nonnull TAEStack requestedAddition );
 
 	/**
 	 * Allows you to specify if this storage cell can be stored inside other
@@ -117,5 +119,5 @@ public interface IStorageCell<T extends IAEStack> extends ICellWorkbenchItem
 	 * @return the type of channel your cell should be part of
 	 */
 	@Nonnull
-	IStorageChannel<T> getChannel();
+	IStorageChannel<TAEStack, TSlot, TStack> getChannel();
 }

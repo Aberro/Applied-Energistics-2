@@ -21,6 +21,7 @@ package appeng.integration.modules.waila.tile;
 
 import java.util.List;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
@@ -59,7 +60,7 @@ public final class CraftingMonitorWailaDataProvider extends BaseWailaDataProvide
 		if( te instanceof TileCraftingMonitorTile )
 		{
 			final TileCraftingMonitorTile monitor = (TileCraftingMonitorTile) te;
-			final IAEItemStack displayStack = monitor.getJobProgress();
+			final IAEStack displayStack = monitor.getJobProgress();
 
 			if( displayStack != null )
 			{

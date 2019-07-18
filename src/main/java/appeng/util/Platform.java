@@ -603,14 +603,14 @@ public class Platform
 		}
 	}
 
-	public static String getModId( final IAEItemStack is )
+	public static String getModId( final IAEStack is )
 	{
 		if( is == null )
 		{
 			return "** Null";
 		}
 
-		final String n = ( (AEItemStack) is ).getModID();
+		final String n = is.getModID();
 		return n == null ? "** Null" : n;
 	}
 
@@ -1187,7 +1187,7 @@ public class Platform
 			retrieved = possible.getStackSize();
 		}
 
-		final double energyFactor = Math.max( 1.0, cell.getChannel().transferFactor() );
+		final double energyFactor = Math.max( 1.0, request.getChannel().transferFactor() );
 		final double availablePower = energy.extractAEPower( retrieved / energyFactor, Actionable.SIMULATE, PowerMultiplier.CONFIG );
 		final long itemToExtract = Math.min( (long) ( ( availablePower * energyFactor ) + 0.9 ), retrieved );
 
@@ -1235,7 +1235,7 @@ public class Platform
 			stored -= possible.getStackSize();
 		}
 
-		final double energyFactor = Math.max( 1.0, cell.getChannel().transferFactor() );
+		final double energyFactor = Math.max( 1.0, input.getChannel().transferFactor() );
 		final double availablePower = energy.extractAEPower( stored / energyFactor, Actionable.SIMULATE, PowerMultiplier.CONFIG );
 		final long itemToAdd = Math.min( (long) ( ( availablePower * energyFactor ) + 0.9 ), stored );
 
@@ -1284,13 +1284,13 @@ public class Platform
 	@SuppressWarnings( { "rawtypes", "unchecked" } )
 	public static void postChanges( final IStorageGrid gs, final ItemStack removed, final ItemStack added, final IActionSource src )
 	{
-		for( final IStorageChannel<?> chan : AEApi.instance().storage().storageChannels() )
+		for( final IStorageChannel chan : AEApi.instance().storage().storageChannels() )
 		{
 			final IItemList<IAEStack> myChanges = new MixedList();
 
 			if( !removed.isEmpty() )
 			{
-				final IMEInventory myInv = AEApi.instance().registries().cell().getCellInventory( removed, null, chan );
+				final IMEInventory myInv = AEApi.instance().registries().cell().getCellInventory( removed, null );
 				if( myInv != null )
 				{
 					myInv.getAvailableItems( chan, myChanges );
@@ -1302,18 +1302,18 @@ public class Platform
 			}
 			if( !added.isEmpty() )
 			{
-				final IMEInventory myInv = AEApi.instance().registries().cell().getCellInventory( added, null, chan );
+				final IMEInventory myInv = AEApi.instance().registries().cell().getCellInventory( added, null );
 				if( myInv != null )
 				{
 					myInv.getAvailableItems( chan, myChanges );
 				}
 
 			}
-			gs.postAlterationOfStoredItems( chan, myChanges, src );
+			gs.postAlterationOfStoredItems( myChanges, src );
 		}
 	}
 
-	public static <T extends IAEStack> void postListChanges( final IItemList<T> before, final IItemList<T> after, final IMEMonitorHandlerReceiver<T> meMonitorPassthrough, final IActionSource source )
+	public static <T extends IAEStack> void postListChanges( final IItemList<T> before, final IItemList<T> after, final IMEMonitorHandlerReceiver meMonitorPassthrough, final IActionSource source )
 	{
 		final List<IAEStack> changes = new ArrayList<>();
 
@@ -1503,7 +1503,7 @@ public class Platform
 				final IAEStack ae_ext = src.extractItems( ae_req, realForFake, mySrc );
 				if( ae_ext != null )
 				{
-					final ItemStack extracted = ae_ext.createItemStack();
+					final ItemStack extracted = ((IAEItemStack)ae_ext).getItemStack();
 					if( !extracted.isEmpty() )
 					{
 						energySrc.extractAEPower( 1, realForFake, PowerMultiplier.CONFIG );
@@ -1519,8 +1519,8 @@ public class Platform
 			{
 				for( final IAEStack x : items )
 				{
-					final ItemStack sh = x.getDefinition();
-					if( ( Platform.itemComparisons().isEqualItemType( providedTemplate, sh ) || ae_req.sameOre( x ) ) && !ItemStack.areItemsEqual( sh,
+					final ItemStack sh = ((IAEItemStack)x).getDefinition();
+					if( ( Platform.itemComparisons().isEqualItemType( providedTemplate, sh ) || ae_req.sameOre( (IAEItemStack)x ) ) && !ItemStack.areItemsEqual( sh,
 							output ) )
 					{ // Platform.isSameItemType( sh, providedTemplate )
 						final ItemStack cp = sh.copy();
@@ -1528,15 +1528,15 @@ public class Platform
 						ci.setInventorySlotContents( slot, cp );
 						if( r.matches( ci, w ) && ItemStack.areItemsEqual( r.getCraftingResult( ci ), output ) )
 						{
-							final IAEItemStack ax = x.copy();
+							final IAEStack ax = x.copy();
 							ax.setStackSize( 1 );
 							if( filter == null || filter.isListed( ax ) )
 							{
-								final IAEItemStack ex = src.extractItems( ax, realForFake, mySrc );
+								final IAEItemStack ex = (IAEItemStack)src.extractItems( ax, realForFake, mySrc );
 								if( ex != null )
 								{
 									energySrc.extractAEPower( 1, realForFake, PowerMultiplier.CONFIG );
-									return ex.createItemStack();
+									return ex.getItemStack();
 								}
 							}
 						}

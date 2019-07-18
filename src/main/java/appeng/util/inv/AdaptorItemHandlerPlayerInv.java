@@ -19,11 +19,13 @@
 package appeng.util.inv;
 
 
+import appeng.api.AEApi;
+import appeng.api.storage.channels.IItemStorageChannel;
+import appeng.api.storage.data.IAEStack;
+import appeng.util.item.AEItemStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.wrapper.PlayerMainInvWrapper;
-
-import appeng.util.Platform;
 
 
 public class AdaptorItemHandlerPlayerInv extends AdaptorItemHandler
@@ -37,35 +39,37 @@ public class AdaptorItemHandlerPlayerInv extends AdaptorItemHandler
 	 * Tries to fill existing stacks first
 	 */
 	@Override
-	protected ItemStack addItems( final ItemStack itemsToAdd, final boolean simulate )
+	protected IAEStack addItems(final IAEStack itemsToAdd, final boolean simulate )
 	{
-		if( itemsToAdd.isEmpty() )
+		if( itemsToAdd == null || itemsToAdd.isEmpty())
 		{
-			return ItemStack.EMPTY;
+			return null;
 		}
+		if(itemsToAdd.getChannel() != AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ))
+			return itemsToAdd;
 
-		ItemStack left = itemsToAdd.copy();
+		IAEStack left = itemsToAdd.copy();
 
 		for( int slot = 0; slot < this.itemHandler.getSlots(); slot++ )
 		{
-			ItemStack is = this.itemHandler.getStackInSlot( slot );
+			IAEStack is = AEItemStack.fromItemStack( this.itemHandler.getStackInSlot( slot ) );
 
-			if( Platform.itemComparisons().isSameItem( is, left ) )
+			if( is.equals( left ) )
 			{
-				left = this.itemHandler.insertItem( slot, left, simulate );
+				left = AEItemStack.fromItemStack( this.itemHandler.insertItem( slot, (ItemStack) left.getStack(), simulate ) );
 			}
 			if( left.isEmpty() )
 			{
-				return ItemStack.EMPTY;
+				return null;
 			}
 		}
 
 		for( int slot = 0; slot < this.itemHandler.getSlots(); slot++ )
 		{
-			left = this.itemHandler.insertItem( slot, left, simulate );
+			left = AEItemStack.fromItemStack( this.itemHandler.insertItem( slot, (ItemStack)left.getStack(), simulate ) );
 			if( left.isEmpty() )
 			{
-				return ItemStack.EMPTY;
+				return null;
 			}
 		}
 

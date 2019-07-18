@@ -126,7 +126,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 			IStorageMonitorable inventory = accessor.getInventory( this.source );
 			if( inventory != null )
 			{
-				return inventory.getInventory( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) );
+				return inventory.getInventory( );
 			}
 
 			// So this could / can be a design decision. If the tile does support our custom capability,
@@ -170,9 +170,10 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 
 		final IMEInventory in = this.getInternalHandler();
 		IItemList<IAEStack> before = new MixedList();
+		IStorageChannel channel = AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class);
 		if( in != null )
 		{
-			before = in.getAvailableItems( in.getChannel(), before );
+			before = in.getAvailableItems( channel, before );
 		}
 
 		this.cached = false;
@@ -188,7 +189,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 			IItemList<IAEStack> after = new MixedList();
 			if( out != null )
 			{
-				after = out.getAvailableItems( out.getChannel(), after );
+				after = out.getAvailableItems( channel, after );
 			}
 			Platform.postListChanges( before, after, this, this.source );
 		}
@@ -271,7 +272,7 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 			{
 				this.getProxy()
 						.getStorage()
-						.postAlterationOfStoredItems( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ), change, this.source );
+						.postAlterationOfStoredItems( change, this.source );
 			}
 		}
 		catch( final GridAccessException e )
@@ -315,13 +316,13 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 			{
 				this.checkInterfaceVsStorageBus( target, this.getSide().getOpposite() );
 
-				this.handler = new MEInventoryHandler( inv, AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) );
+				this.handler = new MEInventoryHandler( inv );
 
 				this.handler.setBaseAccess( (AccessRestriction) this.getConfigManager().getSetting( Settings.ACCESS ) );
 				this.handler.setWhitelist( this.getInstalledUpgrades( Upgrades.INVERTER ) > 0 ? IncludeExclude.BLACKLIST : IncludeExclude.WHITELIST );
 				this.handler.setPriority( this.getPriority() );
 
-				final IItemList<IAEFluidStack> priorityList = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
+				final IItemList<IAEStack> priorityList = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
 
 				final int slotsToUse = 18 + this.getInstalledUpgrades( Upgrades.CAPACITY ) * 9;
 				for( int x = 0; x < this.config.getSlots() && x < slotsToUse; x++ )
@@ -336,11 +337,11 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 				if( this.getInstalledUpgrades( Upgrades.FUZZY ) > 0 )
 				{
 					this.handler.setPartitionList(
-							new FuzzyPriorityList<IAEFluidStack>( priorityList, (FuzzyMode) this.getConfigManager().getSetting( Settings.FUZZY_MODE ) ) );
+							new FuzzyPriorityList( priorityList, (FuzzyMode) this.getConfigManager().getSetting( Settings.FUZZY_MODE ) ) );
 				}
 				else
 				{
-					this.handler.setPartitionList( new PrecisePriorityList<IAEFluidStack>( priorityList ) );
+					this.handler.setPartitionList( new PrecisePriorityList( priorityList ) );
 				}
 
 				if( inv instanceof IBaseMonitor )
@@ -408,6 +409,12 @@ public class PartFluidStorageBus extends PartSharedStorageBus implements IMEMoni
 			// );
 			// Platform.addStat( getActionableNode().getPlayerID(), Achievements.Recursive.getAchievement() );
 		}
+	}
+
+	@Override
+	public List<IMEInventoryHandler> getCellArray( )
+	{
+		return getCellArray( AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class) );
 	}
 
 	@Override

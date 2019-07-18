@@ -19,6 +19,7 @@
 package appeng.parts.automation;
 
 
+import appeng.api.util.ItemInventoryAdaptor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
@@ -96,7 +97,7 @@ public abstract class PartSharedItemBus extends PartUpgradeable implements IGrid
 		final TileEntity self = this.getHost().getTile();
 		final TileEntity target = this.getTileEntity( self, self.getPos().offset( this.getSide().getFacing() ) );
 
-		return InventoryAdaptor.getAdaptor( target, this.getSide().getFacing().getOpposite() );
+		return ItemInventoryAdaptor.getAdaptor( target, this.getSide().getFacing().getOpposite() );
 	}
 
 	private TileEntity getTileEntity( final TileEntity self, final BlockPos pos )

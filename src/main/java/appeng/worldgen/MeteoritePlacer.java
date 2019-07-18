@@ -24,6 +24,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.item.AEItemStack;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -223,7 +227,7 @@ public final class MeteoritePlacer
 			this.skyChestDefinition.maybeBlock().ifPresent( block -> this.putter.put( w, x, y, z, block ) );
 
 			final TileEntity te = w.getTileEntity( x, y, z );
-			final InventoryAdaptor ap = InventoryAdaptor.getAdaptor( te, EnumFacing.UP );
+			final ItemInventoryAdaptor ap = ItemInventoryAdaptor.getAdaptor( te, EnumFacing.UP );
 			if( ap != null )
 			{
 				int primary = Math.max( 1, (int) ( Math.random() * 4 ) );
@@ -273,9 +277,10 @@ public final class MeteoritePlacer
 
 						if( !toAdd.isEmpty() )
 						{
-							if( ap.simulateRemove( 1, toAdd, null ).isEmpty() )
+							IAEStack ais = AEItemStack.fromItemStack( toAdd );
+							if( ap.simulateRemove( 1, ais, null ).isEmpty() )
 							{
-								ap.addItems( toAdd );
+								ap.addItems( ais );
 							}
 							else
 							{
@@ -293,7 +298,7 @@ public final class MeteoritePlacer
 					{
 						case 0:
 							final int amount = (int) ( ( Math.random() * SKYSTONE_SPAWN_LIMIT ) + 1 );
-							this.skyStoneDefinition.maybeStack( amount ).ifPresent( ap::addItems );
+							this.skyStoneDefinition.maybeStack( amount ).ifPresent( itemStack -> ap.addItems( AEItemStack.fromItemStack( itemStack ) ) );
 							break;
 						case 1:
 							final List<ItemStack> possibles = new ArrayList<>();
@@ -313,7 +318,7 @@ public final class MeteoritePlacer
 							{
 								nugget = nugget.copy();
 								nugget.setCount( (int) ( Math.random() * 12 ) + 1 );
-								ap.addItems( nugget );
+								ap.addItems( AEItemStack.fromItemStack( nugget ) );
 							}
 							break;
 					}

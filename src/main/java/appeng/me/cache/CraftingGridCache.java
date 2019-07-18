@@ -253,7 +253,7 @@ public class CraftingGridCache implements ICraftingGrid, ICraftingProviderHelper
 		this.emitableItems.clear();
 		for( Entry<IStorageChannel, Map<IAEStack, ImmutableList<ICraftingPatternDetails>>> channel : oldItems.entrySet()) {
 			// update the stuff that was in the list...
-			this.storageGrid.postAlterationOfStoredItems(channel.getKey(), channel.getValue().keySet(), new BaseActionSource());
+			this.storageGrid.postAlterationOfStoredItems(channel.getValue().keySet(), new BaseActionSource());
 		}
 
 		// re-create list..
@@ -296,7 +296,7 @@ public class CraftingGridCache implements ICraftingGrid, ICraftingProviderHelper
 
 		for( Entry<IStorageChannel, Map<IAEStack, ImmutableList<ICraftingPatternDetails>>> channel : this.craftableItems.entrySet()) {
 			// update the stuff that was in the list...
-			this.storageGrid.postAlterationOfStoredItems(channel.getKey(), channel.getValue().keySet(), new BaseActionSource());
+			this.storageGrid.postAlterationOfStoredItems(channel.getValue().keySet(), new BaseActionSource());
 		}
 	}
 
@@ -375,16 +375,17 @@ public class CraftingGridCache implements ICraftingGrid, ICraftingProviderHelper
 	}
 
 	@Override
-	public List<IMEInventoryHandler> getCellArray( final IStorageChannel<?> channel )
+	public List<IMEInventoryHandler> getCellArray( )
 	{
-		final List<IMEInventoryHandler> list = new ArrayList<>( 1 );
+		List<IMEInventoryHandler> out = new ArrayList<>(1);
+		out.add(this);
+		return out;
+	}
 
-		if( channel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
-		{
-			list.add( this );
-		}
-
-		return list;
+	@Override
+	public List<IMEInventoryHandler> getCellArray( final IStorageChannel channel )
+	{
+		return getCellArray();
 	}
 
 	@Override
@@ -466,12 +467,6 @@ public class CraftingGridCache implements ICraftingGrid, ICraftingProviderHelper
 				out.addCrafting( st );
 			}
 		return out;
-	}
-
-	@Override
-	public IStorageChannel<IAEItemStack> getChannel()
-	{
-		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}
 
 	@Override

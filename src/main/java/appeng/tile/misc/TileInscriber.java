@@ -167,7 +167,7 @@ public class TileInscriber extends AENetworkPowerTile implements IGridTickable, 
 		{
 			if( ( slot & ( 1 << num ) ) > 0 )
 			{
-				this.inv.setStackInSlot( num, AEItemStack.fromPacket( data ).createItemStack() );
+				this.inv.setStackInSlot( num, AEItemStack.fromPacket( data ).getItemStack() );
 			}
 			else
 			{

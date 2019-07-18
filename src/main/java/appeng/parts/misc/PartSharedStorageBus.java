@@ -111,7 +111,7 @@ public abstract class PartSharedStorageBus extends PartUpgradeable implements IG
 	}
 
 	@Override
-	public void saveChanges( ICellInventory<?> cellInventory )
+	public void saveChanges( ICellInventory<?, ?, ?> cellInventory )
 	{
 	}
 

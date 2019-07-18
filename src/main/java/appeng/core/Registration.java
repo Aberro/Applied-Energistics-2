@@ -27,6 +27,7 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
+import appeng.core.features.registries.cell.*;
 import com.google.common.base.Preconditions;
 
 import net.minecraft.advancements.CriteriaTriggers;
@@ -91,9 +92,6 @@ import appeng.bootstrap.components.IRecipeRegistrationComponent;
 import appeng.capabilities.Capabilities;
 import appeng.core.features.AEFeature;
 import appeng.core.features.registries.P2PTunnelRegistry;
-import appeng.core.features.registries.cell.BasicCellHandler;
-import appeng.core.features.registries.cell.BasicItemCellGuiHandler;
-import appeng.core.features.registries.cell.CreativeCellHandler;
 import appeng.core.localization.GuiText;
 import appeng.core.localization.PlayerMessages;
 import appeng.core.stats.AdvancementTriggers;
@@ -237,7 +235,8 @@ final class Registration
 		gcr.registerGridCache( ISecurityGrid.class, SecurityCache.class );
 		gcr.registerGridCache( ICraftingGrid.class, CraftingGridCache.class );
 
-		registries.cell().addCellHandler( new BasicCellHandler() );
+		registries.cell().addCellHandler( new BasicItemCellHandler() );
+		registries.cell().addCellHandler( new BasicFluidCellHandler() );
 		registries.cell().addCellHandler( new CreativeCellHandler() );
 		registries.cell().addCellGuiHandler( new BasicItemCellGuiHandler() );
 		registries.cell().addCellGuiHandler( new BasicFluidCellGuiHandler() );

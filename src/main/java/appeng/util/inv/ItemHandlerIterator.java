@@ -22,10 +22,12 @@ package appeng.util.inv;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import appeng.api.util.ISlot;
+import appeng.util.item.AEItemStack;
 import net.minecraftforge.items.IItemHandler;
 
 
-class ItemHandlerIterator implements Iterator<ItemSlot>
+class ItemHandlerIterator implements Iterator<ISlot>
 {
 
 	private final IItemHandler itemHandler;
@@ -53,7 +55,7 @@ class ItemHandlerIterator implements Iterator<ItemSlot>
 			throw new NoSuchElementException();
 		}
 		this.itemSlot.setExtractable( !this.itemHandler.extractItem( this.slot, 1, true ).isEmpty() );
-		this.itemSlot.setItemStack( this.itemHandler.getStackInSlot( this.slot ) );
+		this.itemSlot.setAEStack(AEItemStack.fromItemStack( this.itemHandler.getStackInSlot( this.slot ) ) );
 		this.itemSlot.setSlot( this.slot );
 		this.slot++;
 		return this.itemSlot;

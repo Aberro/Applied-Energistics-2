@@ -19,6 +19,7 @@
 package appeng.client.render;
 
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 
@@ -41,7 +42,7 @@ public class StackSizeRenderer
 	private static final ISlimReadableNumberConverter SLIM_CONVERTER = ReadableNumberConverter.INSTANCE;
 	private static final IWideReadableNumberConverter WIDE_CONVERTER = ReadableNumberConverter.INSTANCE;
 
-	public void renderStackSize( FontRenderer fontRenderer, IAEItemStack aeStack, int xPos, int yPos )
+	public void renderStackSize(FontRenderer fontRenderer, IAEStack aeStack, int xPos, int yPos )
 	{
 		if( aeStack != null )
 		{

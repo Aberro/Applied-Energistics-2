@@ -24,6 +24,7 @@ import java.nio.BufferOverflowException;
 
 import javax.annotation.Nonnull;
 
+import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -82,7 +83,7 @@ public class ContainerFluidTerminal extends AEBaseContainer implements IConfigMa
 {
 	private final IConfigManager clientCM;
 	private final IMEMonitor monitor;
-	private final IItemList<IAEFluidStack> fluids = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
+	private final IItemList<IAEStack> fluids = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
 	@GuiSync( 99 )
 	public boolean hasPower = false;
 	private ITerminalHost terminal;
@@ -104,7 +105,7 @@ public class ContainerFluidTerminal extends AEBaseContainer implements IConfigMa
 		if( Platform.isServer() )
 		{
 			this.serverCM = terminal.getConfigManager();
-			this.monitor = terminal.getInventory( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) );
+			this.monitor = terminal.getInventory( );
 
 			if( this.monitor != null )
 			{
@@ -158,9 +159,10 @@ public class ContainerFluidTerminal extends AEBaseContainer implements IConfigMa
 	@Override
 	public void postChange(IBaseMonitor monitor, Iterable<IAEStack> change, IActionSource actionSource )
 	{
+		IStorageChannel channel = AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class);
 		for( final IAEStack is : change )
 		{
-			if(is.getChannel() == this.monitor.getChannel())
+			if(is.getChannel() == channel)
 				this.fluids.add( (IAEFluidStack) is );
 		}
 	}
@@ -199,11 +201,12 @@ public class ContainerFluidTerminal extends AEBaseContainer implements IConfigMa
 			try
 			{
 				PacketMEFluidInventoryUpdate piu = new PacketMEFluidInventoryUpdate();
-				final IItemList<IAEStack> monitorCache = this.monitor.getStorageList(this.monitor.getChannel());
+				IStorageChannel channel = AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class);
+				final IItemList<IAEStack> monitorCache = this.monitor.getStorageList(channel);
 
 				for( final IAEStack send : monitorCache )
 				{
-					if(send.getChannel() != this.monitor.getChannel())
+					if(send.getChannel() != channel)
 						continue;
 					try
 					{
@@ -270,7 +273,7 @@ public class ContainerFluidTerminal extends AEBaseContainer implements IConfigMa
 	{
 		if( Platform.isServer() )
 		{
-			if( this.monitor != this.terminal.getInventory( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) ) )
+			if( this.monitor != this.terminal.getInventory( ) )
 			{
 				this.setValidContainer( false );
 			}
@@ -304,19 +307,20 @@ public class ContainerFluidTerminal extends AEBaseContainer implements IConfigMa
 			{
 				try
 				{
-					final IItemList<IAEStack> monitorCache = this.monitor.getStorageList(this.monitor.getChannel());
+					IStorageChannel channel = AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class);
+					final IItemList<IAEStack> monitorCache = this.monitor.getStorageList(channel);
 
 					final PacketMEFluidInventoryUpdate piu = new PacketMEFluidInventoryUpdate();
 
-					for( final IAEFluidStack is : this.fluids )
+					for( final IAEStack is : this.fluids )
 					{
-						if(is.getChannel() != this.monitor.getChannel())
+						if(is.getChannel() != channel)
 							continue;
 						final IAEFluidStack send = (IAEFluidStack)monitorCache.findPrecise( is );
 						if( send == null )
 						{
 							is.setStackSize( 0 );
-							piu.appendFluid( is );
+							piu.appendFluid( (IAEFluidStack)is );
 						}
 						else
 						{

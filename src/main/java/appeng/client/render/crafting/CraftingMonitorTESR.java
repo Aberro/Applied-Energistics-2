@@ -19,6 +19,7 @@
 package appeng.client.render.crafting;
 
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.util.EnumFacing;
@@ -47,7 +48,7 @@ public class CraftingMonitorTESR extends TileEntitySpecialRenderer<TileCraftingM
 
 		EnumFacing facing = te.getForward();
 
-		IAEItemStack jobProgress = te.getJobProgress();
+		IAEStack jobProgress = te.getJobProgress();
 		if( jobProgress != null )
 		{
 			GlStateManager.pushMatrix();

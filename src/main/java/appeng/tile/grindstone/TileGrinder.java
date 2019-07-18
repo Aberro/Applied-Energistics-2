@@ -22,6 +22,9 @@ package appeng.tile.grindstone;
 import java.util.ArrayList;
 import java.util.List;
 
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.item.AEItemStack;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
@@ -136,7 +139,7 @@ public class TileGrinder extends AEBaseInvTile implements ICrankable
 			}
 
 			this.points = 0;
-			final InventoryAdaptor sia = new AdaptorItemHandler( new RangedWrapper( this.inv, 3, 6 ) );
+			final ItemInventoryAdaptor sia = new AdaptorItemHandler( new RangedWrapper( this.inv, 3, 6 ) );
 
 			this.addItem( sia, r.getOutput() );
 
@@ -171,11 +174,11 @@ public class TileGrinder extends AEBaseInvTile implements ICrankable
 			return;
 		}
 
-		final ItemStack notAdded = sia.addItems( output );
+		final IAEStack notAdded = sia.addItems(AEItemStack.fromItemStack( output ) );
 		if( !notAdded.isEmpty() )
 		{
 			final List<ItemStack> out = new ArrayList<>();
-			out.add( notAdded );
+			out.add( (ItemStack)notAdded.getStack() );
 
 			Platform.spawnDrops( this.world, this.pos.offset( this.getForward() ), out );
 		}

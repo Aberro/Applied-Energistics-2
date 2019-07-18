@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.AEApi;
@@ -50,8 +51,8 @@ import appeng.util.prioritylist.IPartitionList;
 public class ItemRepo
 {
 
-	private final IItemList<IAEItemStack> list = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
-	private final ArrayList<IAEItemStack> view = new ArrayList<>();
+	private final IItemList<IAEStack> list = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+	private final ArrayList<IAEStack> view = new ArrayList<>();
 	private final IScrollSource src;
 	private final ISortSource sortSrc;
 
@@ -68,7 +69,7 @@ public class ItemRepo
 		this.sortSrc = sortSrc;
 	}
 
-	public IAEItemStack getReferenceItem( int idx )
+	public IAEStack getReferenceItem( int idx )
 	{
 		idx += this.src.getCurrentScroll() * this.rowSize;
 
@@ -84,9 +85,9 @@ public class ItemRepo
 		this.searchString = search == null ? "" : search;
 	}
 
-	public void postUpdate( final IAEItemStack is )
+	public void postUpdate( final IAEStack is )
 	{
-		final IAEItemStack st = this.list.findPrecise( is );
+		final IAEStack st = this.list.findPrecise( is );
 
 		if( st != null )
 		{
@@ -148,7 +149,7 @@ public class ItemRepo
 		}
 
 		boolean notDone = false;
-		for( IAEItemStack is : this.list )
+		for( IAEStack is : this.list )
 		{
 			if( this.myPartitionList != null )
 			{

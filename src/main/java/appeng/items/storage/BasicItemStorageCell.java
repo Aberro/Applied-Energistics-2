@@ -19,6 +19,10 @@
 package appeng.items.storage;
 
 
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.inv.ItemSlot;
+import appeng.util.item.AEItemStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 
@@ -30,7 +34,7 @@ import appeng.items.materials.MaterialType;
 import appeng.util.InventoryAdaptor;
 
 
-public final class BasicItemStorageCell extends AbstractStorageCell<IAEItemStack>
+public final class BasicItemStorageCell extends AbstractStorageCell<IAEItemStack, ItemSlot, ItemStack>
 {
 
 	protected final int perType;
@@ -77,20 +81,20 @@ public final class BasicItemStorageCell extends AbstractStorageCell<IAEItemStack
 	}
 
 	@Override
-	public IStorageChannel<IAEItemStack> getChannel()
+	public IStorageChannel<IAEItemStack, ItemSlot, ItemStack> getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}
 
 	@Override
-	protected void dropEmptyStorageCellCase( final InventoryAdaptor ia, final EntityPlayer player )
+	protected void dropEmptyStorageCellCase(final ItemInventoryAdaptor ia, final EntityPlayer player )
 	{
 		AEApi.instance().definitions().materials().emptyStorageCell().maybeStack( 1 ).ifPresent( is ->
 		{
-			final ItemStack extraA = ia.addItems( is );
+			final IAEStack extraA = ia.addItems(AEItemStack.fromItemStack( is ) );
 			if( !extraA.isEmpty() )
 			{
-				player.dropItem( extraA, false );
+				player.dropItem( (ItemStack)extraA.getStack(), false );
 			}
 		} );
 	}

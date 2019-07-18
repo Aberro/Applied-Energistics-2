@@ -22,6 +22,7 @@ package appeng.parts.misc;
 import java.util.EnumSet;
 import java.util.List;
 
+import appeng.api.networking.crafting.IInventoryCrafting;
 import com.google.common.collect.ImmutableSet;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -182,15 +183,15 @@ public class PartInterface extends PartBasicState implements IGridTickable, ISto
 	}
 
 	@Override
-	public boolean canInsert( final ItemStack stack )
+	public boolean canInsert( final IAEStack stack )
 	{
 		return this.duality.canInsert( stack );
 	}
 
 	@Override
-	public <T extends IAEStack<T>> IMEMonitor<T> getInventory( IStorageChannel<T> channel )
+	public IMEMonitor getInventory( )
 	{
-		return this.duality.getInventory( channel );
+		return this.duality.getInventory( );
 	}
 
 	@Override
@@ -230,7 +231,7 @@ public class PartInterface extends PartBasicState implements IGridTickable, ISto
 	}
 
 	@Override
-	public boolean pushPattern( final ICraftingPatternDetails patternDetails, final InventoryCrafting table )
+	public boolean pushPattern( final ICraftingPatternDetails patternDetails, final IInventoryCrafting table )
 	{
 		return this.duality.pushPattern( patternDetails, table );
 	}
@@ -254,7 +255,7 @@ public class PartInterface extends PartBasicState implements IGridTickable, ISto
 	}
 
 	@Override
-	public IAEItemStack injectCraftedItems( final ICraftingLink link, final IAEItemStack items, final Actionable mode )
+	public IAEStack injectCraftedItems( final ICraftingLink link, final IAEStack items, final Actionable mode )
 	{
 		return this.duality.injectCraftedItems( link, items, mode );
 	}

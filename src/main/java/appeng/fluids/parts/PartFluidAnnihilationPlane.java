@@ -4,6 +4,7 @@ package appeng.fluids.parts;
 
 import java.util.List;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
@@ -283,12 +284,12 @@ public class PartFluidAnnihilationPlane extends PartBasicState implements IGridT
 		return this.pickupFluid();
 	}
 
-	private boolean storeFluid( IAEFluidStack stack, boolean modulate )
+	private boolean storeFluid(IAEStack stack, boolean modulate )
 	{
 		try
 		{
 			final IStorageGrid storage = this.getProxy().getStorage();
-			final IMEInventory<IAEFluidStack> inv = storage.getInventory( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) );
+			final IMEInventory inv = storage.getInventory( );
 
 			if( modulate )
 			{
@@ -304,7 +305,7 @@ public class PartFluidAnnihilationPlane extends PartBasicState implements IGridT
 				{
 					return false;
 				}
-				final IAEFluidStack leftOver = inv.injectItems( stack, Actionable.SIMULATE, this.mySrc );
+				final IAEStack leftOver = inv.injectItems( stack, Actionable.SIMULATE, this.mySrc );
 				return leftOver == null || leftOver.getStackSize() == 0;
 			}
 		}

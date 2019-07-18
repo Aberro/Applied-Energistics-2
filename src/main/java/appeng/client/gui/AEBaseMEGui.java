@@ -23,6 +23,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -51,7 +52,7 @@ public abstract class AEBaseMEGui extends AEBaseGui
 		{
 			final int bigNumber = AEConfig.instance().useTerminalUseLargeFont() ? 999 : 9999;
 
-			IAEItemStack myStack = null;
+			IAEStack myStack = null;
 			final List<String> currentToolTip = this.getItemToolTip( stack );
 
 			try

@@ -7,6 +7,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import javax.vecmath.Matrix4f;
 
+import appeng.api.storage.data.IAEStack;
 import appeng.core.Api;
 import appeng.fluids.items.FluidDummyItem;
 import com.google.common.collect.ImmutableMap;
@@ -229,14 +230,12 @@ class ItemEncodedPatternBakedModel implements IBakedModel
 			if( shiftHeld )
 			{
 				ItemEncodedPattern iep = (ItemEncodedPattern) stack.getItem();
-				ItemStack output = iep.getOutput( stack );
-				if(output.isEmpty())
-					output = iep.getOutputFluidDummyStack( stack );
+				IAEStack output = iep.getOutput( stack );
 				if( !output.isEmpty() )
 				{
-					IBakedModel realModel = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel( output );
+					IBakedModel realModel = Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel( (ItemStack)output.getStack() );
 					// Give the item model a chance to handle the overrides as well
-					realModel = realModel.getOverrides().handleItemState( realModel, output, world, entity );
+					realModel = realModel.getOverrides().handleItemState( realModel, (ItemStack)output.getStack(), world, entity );
 					return new ShiftHoldingModelWrapper( realModel );
 				}
 			}

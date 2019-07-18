@@ -294,12 +294,6 @@ public class MECraftingInventory implements IMEInventory
 		return out;
 	}
 
-	@Override
-	public IStorageChannel getChannel()
-	{
-		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
-	}
-
 	public IItemList<IAEStack> getItemList(IStorageChannel channel)
 	{
 		return this.localCache.get(channel);

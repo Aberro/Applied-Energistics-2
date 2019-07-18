@@ -22,6 +22,7 @@ package appeng.core.features.registries.cell;
 import java.util.ArrayList;
 import java.util.List;
 
+import appeng.api.util.ISlot;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 
@@ -95,7 +96,7 @@ public class CellRegistry implements ICellRegistry
 	}
 
 	@Override
-	public <T extends IAEStack> ICellInventoryHandler<T> getCellInventory( final ItemStack is, final ISaveProvider container, final IStorageChannel<T> chan )
+	public <TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> ICellInventoryHandler<TAEStack, TSlot, TStack> getCellInventory( ItemStack is, ISaveProvider container )
 	{
 		if( is.isEmpty() )
 		{
@@ -105,7 +106,7 @@ public class CellRegistry implements ICellRegistry
 		{
 			if( ch.isCell( is ) )
 			{
-				return ch.getCellInventory( is, container, chan );
+				return ch.getCellInventory( is, container );
 			}
 		}
 		return null;
@@ -118,7 +119,7 @@ public class CellRegistry implements ICellRegistry
 	}
 
 	@Override
-	public <T extends IAEStack> ICellGuiHandler getGuiHandler( final IStorageChannel<T> channel, final ItemStack is )
+	public <TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> ICellGuiHandler getGuiHandler(IStorageChannel<TAEStack, TSlot, TStack> channel, ItemStack is )
 	{
 		ICellGuiHandler fallBack = null;
 

@@ -30,6 +30,8 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.item.AEItemStack;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 
@@ -272,8 +274,8 @@ public final class ItemMaterial extends AEBaseItem implements IStorageComponent,
 						return EnumActionResult.PASS;
 					}
 
-					final InventoryAdaptor ad = new AdaptorItemHandler( upgrades );
-					player.setHeldItem( hand, ad.addItems( player.getHeldItem( hand ) ) );
+					final ItemInventoryAdaptor ad = new AdaptorItemHandler( upgrades );
+					player.setHeldItem( hand, (ItemStack)ad.addItems(AEItemStack.fromItemStack( player.getHeldItem( hand ) ) ).getStack() );
 					return EnumActionResult.SUCCESS;
 				}
 			}

@@ -27,6 +27,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
+import appeng.api.storage.*;
 import io.netty.buffer.ByteBuf;
 
 import net.minecraft.item.ItemStack;
@@ -42,11 +43,6 @@ import appeng.api.networking.events.MENetworkEventSubscribe;
 import appeng.api.networking.events.MENetworkPowerStatusChange;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.storage.IStorageGrid;
-import appeng.api.storage.ICellHandler;
-import appeng.api.storage.ICellInventory;
-import appeng.api.storage.ICellInventoryHandler;
-import appeng.api.storage.IMEInventoryHandler;
-import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.util.AECableType;
@@ -73,10 +69,9 @@ public class TileDrive extends AENetworkInvTile implements IChestOrDrive, IPrior
 
 	private final AppEngCellInventory inv = new AppEngCellInventory( this, 10 );
 	private final ICellHandler[] handlersBySlot = new ICellHandler[10];
-	private final DriveWatcher<IAEItemStack>[] invBySlot = new DriveWatcher[10];
+	private final DriveWatcher[] invBySlot = new DriveWatcher[10];
 	private final IActionSource mySrc;
 	private boolean isCached = false;
-	private Map<IStorageChannel<? extends IAEStack<?>>, List<IMEInventoryHandler>> inventoryHandlers;
 	private int priority = 0;
 	private boolean wasActive = false;
 
@@ -100,7 +95,6 @@ public class TileDrive extends AENetworkInvTile implements IChestOrDrive, IPrior
 		this.mySrc = new MachineSource( this );
 		this.getProxy().setFlags( GridFlags.REQUIRE_CHANNEL );
 		this.inv.setFilter( new CellValidInventoryFilter() );
-		this.inventoryHandlers = new IdentityHashMap<>();
 	}
 
 	@Override
@@ -279,8 +273,7 @@ public class TileDrive extends AENetworkInvTile implements IChestOrDrive, IPrior
 	{
 		if( !this.isCached )
 		{
-			final Collection<IStorageChannel<? extends IAEStack<?>>> storageChannels = AEApi.instance().storage().storageChannels();
-			storageChannels.forEach( channel -> this.inventoryHandlers.put( channel, new ArrayList<>( 10 ) ) );
+			final Collection<IStorageChannel<?,?,?>> storageChannels = AEApi.instance().storage().storageChannels();
 
 			double power = 2.0;
 
@@ -296,23 +289,18 @@ public class TileDrive extends AENetworkInvTile implements IChestOrDrive, IPrior
 
 					if( this.handlersBySlot[x] != null )
 					{
-						for( IStorageChannel<? extends IAEStack<?>> channel : storageChannels )
+						ICellInventoryHandler cell = this.handlersBySlot[x].getCellInventory( is, this );
+
+						if( cell != null )
 						{
+							this.inv.setHandler( x, cell );
+							power += this.handlersBySlot[x].cellIdleDrain( is, cell );
 
-							ICellInventoryHandler cell = this.handlersBySlot[x].getCellInventory( is, this, channel );
+							final DriveWatcher ih = new DriveWatcher( cell, is, this.handlersBySlot[x], this );
+							ih.setPriority( this.priority );
+							this.invBySlot[x] = ih;
 
-							if( cell != null )
-							{
-								this.inv.setHandler( x, cell );
-								power += this.handlersBySlot[x].cellIdleDrain( is, cell );
-
-								final DriveWatcher<IAEItemStack> ih = new DriveWatcher( cell, is, this.handlersBySlot[x], this );
-								ih.setPriority( this.priority );
-								this.invBySlot[x] = ih;
-								this.inventoryHandlers.get( channel ).add( ih );
-
-								break;
-							}
+							break;
 						}
 					}
 				}
@@ -332,14 +320,29 @@ public class TileDrive extends AENetworkInvTile implements IChestOrDrive, IPrior
 	}
 
 	@Override
-	public List<IMEInventoryHandler> getCellArray( final IStorageChannel channel )
+	public List<ICellInventoryHandler> getCellArray(final IStorageChannel channel )
 	{
 		if( this.getProxy().isActive() )
 		{
 			this.updateState();
 
-			return this.inventoryHandlers.get( channel );
+			List<IMEInventoryHandler> out = new ArrayList<>();
+			for(DriveWatcher dw : this.invBySlot)
+				if(dw.getChannel() == channel)
+					out.add((ICellInventoryHandler)dw.getInternal());
 		}
+		return Collections.emptyList();
+	}
+	@Override
+	public List<IMEInventoryHandler> getCellArray()
+	{if( this.getProxy().isActive() )
+	{
+		this.updateState();
+
+		List<IMEInventory> out = new ArrayList<>();
+		for(DriveWatcher dw : this.invBySlot)
+			out.add(dw.getInternal());
+	}
 		return Collections.emptyList();
 	}
 
@@ -377,7 +380,7 @@ public class TileDrive extends AENetworkInvTile implements IChestOrDrive, IPrior
 	}
 
 	@Override
-	public void saveChanges( final ICellInventory<?> cellInventory )
+	public void saveChanges( final ICellInventory cellInventory )
 	{
 		this.world.markChunkDirty( this.pos, this );
 	}

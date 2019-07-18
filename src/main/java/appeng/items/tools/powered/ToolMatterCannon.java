@@ -23,6 +23,8 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import appeng.api.storage.data.IAEStack;
+import appeng.util.inv.ItemSlot;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.util.ITooltipFlag;
@@ -78,7 +80,7 @@ import appeng.util.LookDirection;
 import appeng.util.Platform;
 
 
-public class ToolMatterCannon extends AEBasePoweredItem implements IStorageCell<IAEItemStack>
+public class ToolMatterCannon extends AEBasePoweredItem implements IStorageCell<IAEItemStack, ItemSlot, ItemStack>
 {
 
 	public ToolMatterCannon()
@@ -92,11 +94,10 @@ public class ToolMatterCannon extends AEBasePoweredItem implements IStorageCell<
 	{
 		super.addCheckedInformation( stack, world, lines, advancedTooltips );
 
-		final ICellInventoryHandler<IAEItemStack> cdi = AEApi.instance()
+		final ICellInventoryHandler<IAEItemStack, ItemSlot, ItemStack> cdi = AEApi.instance()
 				.registries()
 				.cell()
-				.getCellInventory( stack, null,
-						AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+				.getCellInventory( stack, null );
 
 		AEApi.instance().client().addCellInformation( cdi, lines );
 	}
@@ -114,22 +115,21 @@ public class ToolMatterCannon extends AEBasePoweredItem implements IStorageCell<
 				shots += cu.getInstalledUpgrades( Upgrades.SPEED );
 			}
 
-			final ICellInventoryHandler<IAEItemStack> inv = AEApi.instance()
+			final ICellInventoryHandler<IAEItemStack, ItemSlot, ItemStack> inv = AEApi.instance()
 					.registries()
 					.cell()
-					.getCellInventory( p.getHeldItem( hand ), null,
-							AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+					.getCellInventory( p.getHeldItem( hand ), null );
 			if( inv != null )
 			{
-				final IItemList<IAEItemStack> itemList = inv
-						.getAvailableItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList() );
-				IAEItemStack req = itemList.getFirstItem();
+				final IItemList<IAEStack> itemList = inv
+						.getAvailableItems( this.getChannel(), this.getChannel().createList() );
+				IAEStack req = itemList.getFirstItem();
 				if( req instanceof IAEItemStack )
 				{
 					shots = Math.min( shots, (int) req.getStackSize() );
 					for( int sh = 0; sh < shots; sh++ )
 					{
-						IAEItemStack aeAmmo = req.copy();
+						IAEStack aeAmmo = req.copy();
 						this.extractAEPower( p.getHeldItem( hand ), 1600, Actionable.MODULATE );
 
 						if( Platform.isClient() )
@@ -138,7 +138,7 @@ public class ToolMatterCannon extends AEBasePoweredItem implements IStorageCell<
 						}
 
 						aeAmmo.setStackSize( 1 );
-						final ItemStack ammo = aeAmmo.createItemStack();
+						final ItemStack ammo = (ItemStack)aeAmmo.getStack();
 						if( ammo == null )
 						{
 							return new ActionResult<>( EnumActionResult.SUCCESS, p.getHeldItem( hand ) );
@@ -494,7 +494,7 @@ public class ToolMatterCannon extends AEBasePoweredItem implements IStorageCell<
 	@Override
 	public boolean isBlackListed( final ItemStack cellItem, final IAEItemStack requestedAddition )
 	{
-		final float pen = AEApi.instance().registries().matterCannon().getPenetration( requestedAddition.createItemStack() );
+		final float pen = AEApi.instance().registries().matterCannon().getPenetration( requestedAddition.getItemStack() );
 		if( pen > 0 )
 		{
 			return false;
@@ -527,7 +527,7 @@ public class ToolMatterCannon extends AEBasePoweredItem implements IStorageCell<
 	}
 
 	@Override
-	public IStorageChannel<IAEItemStack> getChannel()
+	public IStorageChannel getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}

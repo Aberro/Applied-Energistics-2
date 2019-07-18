@@ -22,6 +22,7 @@ package appeng.parts.automation;
 import java.util.Collection;
 import java.util.Random;
 
+import appeng.api.networking.crafting.*;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
@@ -42,12 +43,6 @@ import appeng.api.config.RedstoneMode;
 import appeng.api.config.Settings;
 import appeng.api.config.Upgrades;
 import appeng.api.config.YesNo;
-import appeng.api.networking.crafting.ICraftingGrid;
-import appeng.api.networking.crafting.ICraftingPatternDetails;
-import appeng.api.networking.crafting.ICraftingProvider;
-import appeng.api.networking.crafting.ICraftingProviderHelper;
-import appeng.api.networking.crafting.ICraftingWatcher;
-import appeng.api.networking.crafting.ICraftingWatcherHost;
 import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.networking.energy.IEnergyWatcher;
 import appeng.api.networking.energy.IEnergyWatcherHost;
@@ -82,7 +77,7 @@ import appeng.util.Platform;
 import appeng.util.inv.InvOperation;
 
 
-public class PartLevelEmitter extends PartUpgradeable implements IEnergyWatcherHost, IStackWatcherHost, ICraftingWatcherHost, IMEMonitorHandlerReceiver<IAEItemStack>, ICraftingProvider
+public class PartLevelEmitter extends PartUpgradeable implements IEnergyWatcherHost, IStackWatcherHost, ICraftingWatcherHost, IMEMonitorHandlerReceiver, ICraftingProvider
 {
 
 	@PartModels
@@ -218,7 +213,7 @@ public class PartLevelEmitter extends PartUpgradeable implements IEnergyWatcherH
 	}
 
 	@Override
-	public void onRequestChange( final ICraftingGrid craftingGrid, final IAEItemStack what )
+	public void onRequestChange( final ICraftingGrid craftingGrid, final IAEStack what )
 	{
 		this.updateState();
 	}
@@ -276,7 +271,7 @@ public class PartLevelEmitter extends PartUpgradeable implements IEnergyWatcherH
 				this.updateState();
 
 				// no more item stuff..
-				this.getProxy().getStorage().getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) ).removeListener( this );
+				this.getProxy().getStorage().getInventory( ).removeListener( this );
 			}
 			catch( final GridAccessException e )
 			{
@@ -292,13 +287,13 @@ public class PartLevelEmitter extends PartUpgradeable implements IEnergyWatcherH
 			{
 				this.getProxy()
 						.getStorage()
-						.getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
+						.getInventory( )
 						.addListener( this,
 								this.getProxy().getGrid() );
 			}
 			else
 			{
-				this.getProxy().getStorage().getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) ).removeListener( this );
+				this.getProxy().getStorage().getInventory( ).removeListener( this );
 
 				if( this.myWatcher != null )
 				{
@@ -306,7 +301,7 @@ public class PartLevelEmitter extends PartUpgradeable implements IEnergyWatcherH
 				}
 			}
 
-			this.updateReportingValue( this.getProxy().getStorage().getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) ) );
+			this.updateReportingValue( this.getProxy().getStorage().getInventory( ) );
 		}
 		catch( final GridAccessException e )
 		{
@@ -314,31 +309,32 @@ public class PartLevelEmitter extends PartUpgradeable implements IEnergyWatcherH
 		}
 	}
 
-	private void updateReportingValue( final IMEMonitor<IAEItemStack> monitor )
+	private void updateReportingValue( final IMEMonitor monitor )
 	{
 		final IAEItemStack myStack = this.config.getAEStackInSlot( 0 );
 
 		if( myStack == null )
 		{
 			this.lastReportedValue = 0;
-			for( final IAEItemStack st : monitor.getStorageList() )
-			{
-				this.lastReportedValue += st.getStackSize();
-			}
+			for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
+				for( final IAEStack st : monitor.getStorageList( channel ) )
+				{
+					this.lastReportedValue += st.getStackSize();
+				}
 		}
 		else if( this.getInstalledUpgrades( Upgrades.FUZZY ) > 0 )
 		{
 			this.lastReportedValue = 0;
 			final FuzzyMode fzMode = (FuzzyMode) this.getConfigManager().getSetting( Settings.FUZZY_MODE );
-			final Collection<IAEItemStack> fuzzyList = monitor.getStorageList().findFuzzy( myStack, fzMode );
-			for( final IAEItemStack st : fuzzyList )
+			final Collection<IAEStack> fuzzyList = monitor.getStorageList(myStack.getChannel()).findFuzzy( myStack, fzMode );
+			for( final IAEStack st : fuzzyList )
 			{
 				this.lastReportedValue += st.getStackSize();
 			}
 		}
 		else
 		{
-			final IAEItemStack r = monitor.getStorageList().findPrecise( myStack );
+			final IAEStack r = monitor.getStorageList(myStack.getChannel()).findPrecise( myStack );
 			if( r == null )
 			{
 				this.lastReportedValue = 0;
@@ -360,9 +356,9 @@ public class PartLevelEmitter extends PartUpgradeable implements IEnergyWatcherH
 	}
 
 	@Override
-	public void onStackChange( final IItemList o, final IAEStack fullStack, final IAEStack diffStack, final IActionSource src, final IStorageChannel chan )
+	public void onStackChange( final IItemList o, final IAEStack fullStack, final IAEStack diffStack, final IActionSource src )
 	{
-		if( chan == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) && fullStack.equals( this.config.getAEStackInSlot( 0 ) ) && this
+		if( fullStack.equals( this.config.getAEStackInSlot( 0 ) ) && this
 				.getInstalledUpgrades( Upgrades.FUZZY ) == 0 )
 		{
 			this.lastReportedValue = fullStack.getStackSize();
@@ -398,9 +394,9 @@ public class PartLevelEmitter extends PartUpgradeable implements IEnergyWatcherH
 	}
 
 	@Override
-	public void postChange( final IBaseMonitor<IAEItemStack> monitor, final Iterable<IAEItemStack> change, final IActionSource actionSource )
+	public void postChange( final IBaseMonitor monitor, final Iterable<IAEStack> change, final IActionSource actionSource )
 	{
-		this.updateReportingValue( (IMEMonitor<IAEItemStack>) monitor );
+		this.updateReportingValue( (IMEMonitor) monitor );
 	}
 
 	@Override
@@ -408,7 +404,7 @@ public class PartLevelEmitter extends PartUpgradeable implements IEnergyWatcherH
 	{
 		try
 		{
-			this.updateReportingValue( this.getProxy().getStorage().getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) ) );
+			this.updateReportingValue( this.getProxy().getStorage().getInventory( ) );
 		}
 		catch( final GridAccessException e )
 		{
@@ -533,7 +529,7 @@ public class PartLevelEmitter extends PartUpgradeable implements IEnergyWatcherH
 	}
 
 	@Override
-	public boolean pushPattern( final ICraftingPatternDetails patternDetails, final InventoryCrafting table )
+	public boolean pushPattern( final ICraftingPatternDetails patternDetails, final IInventoryCrafting table )
 	{
 		return false;
 	}
@@ -551,10 +547,10 @@ public class PartLevelEmitter extends PartUpgradeable implements IEnergyWatcherH
 		{
 			if( this.getConfigManager().getSetting( Settings.CRAFT_VIA_REDSTONE ) == YesNo.YES )
 			{
-				final IAEItemStack what = this.config.getAEStackInSlot( 0 );
+				final IAEStack what = this.config.getAEStackInSlot( 0 );
 				if( what != null )
 				{
-					craftingTracker.setEmitable( what );
+					craftingTracker.setEmitable( what.getChannel(), what );
 				}
 			}
 		}

@@ -42,7 +42,7 @@ import appeng.api.storage.data.IItemList;
 import appeng.me.cache.SecurityCache;
 
 
-public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHandler<T>
+public class NetworkInventoryHandler implements IMEInventoryHandler
 {
 
 	private static final ThreadLocal<Deque> DEPTH_MOD = new ThreadLocal<>();
@@ -50,22 +50,20 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 	private static final Comparator<Integer> PRIORITY_SORTER = ( o1, o2 ) -> Integer.compare( o2, o1 );
 
 	private static int currentPass = 0;
-	private final IStorageChannel<T> myChannel;
 	private final SecurityCache security;
-	private final NavigableMap<Integer, List<IMEInventoryHandler<T>>> priorityInventory;
+	private final NavigableMap<Integer, List<IMEInventoryHandler>> priorityInventory;
 	private int myPass = 0;
 
-	public NetworkInventoryHandler( final IStorageChannel<T> chan, final SecurityCache security )
+	public NetworkInventoryHandler( final SecurityCache security )
 	{
-		this.myChannel = chan;
 		this.security = security;
 		this.priorityInventory = new TreeMap<>( PRIORITY_SORTER );
 	}
 
-	public void addNewStorage( final IMEInventoryHandler<T> h )
+	public void addNewStorage( final IMEInventoryHandler h )
 	{
 		final int priority = h.getPriority();
-		List<IMEInventoryHandler<T>> list = this.priorityInventory.get( priority );
+		List<IMEInventoryHandler> list = this.priorityInventory.get( priority );
 		if( list == null )
 		{
 			this.priorityInventory.put( priority, list = new ArrayList<>() );
@@ -75,7 +73,7 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 	}
 
 	@Override
-	public T injectItems( T input, final Actionable type, final IActionSource src )
+	public IAEStack injectItems( IAEStack input, final Actionable type, final IActionSource src )
 	{
 		if( this.diveList( this, type ) )
 		{
@@ -88,12 +86,12 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 			return input;
 		}
 
-		for( final List<IMEInventoryHandler<T>> invList : this.priorityInventory.values() )
+		for( final List<IMEInventoryHandler> invList : this.priorityInventory.values() )
 		{
-			Iterator<IMEInventoryHandler<T>> ii = invList.iterator();
+			Iterator<IMEInventoryHandler> ii = invList.iterator();
 			while( ii.hasNext() && input != null )
 			{
-				final IMEInventoryHandler<T> inv = ii.next();
+				final IMEInventoryHandler inv = ii.next();
 
 				if( inv.validForPass( 1 ) && inv
 						.canAccept( input ) && ( inv.isPrioritized( input ) || inv.extractItems( input, Actionable.SIMULATE, src ) != null ) )
@@ -109,7 +107,7 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 			ii = invList.iterator();
 			while( ii.hasNext() && input != null )
 			{
-				final IMEInventoryHandler<T> inv = ii.next();
+				final IMEInventoryHandler inv = ii.next();
 
 				if( inv.validForPass( 2 ) && inv.canAccept( input ) && !inv.isPrioritized( input ) )
 				{
@@ -123,7 +121,7 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 		return input;
 	}
 
-	private boolean diveList( final NetworkInventoryHandler<T> networkInventoryHandler, final Actionable type )
+	private boolean diveList( final NetworkInventoryHandler networkInventoryHandler, final Actionable type )
 	{
 		final Deque cDepth = this.getDepth( type );
 		if( cDepth.contains( networkInventoryHandler ) )
@@ -172,7 +170,7 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 		return false;
 	}
 
-	private void surface( final NetworkInventoryHandler<T> networkInventoryHandler, final Actionable type )
+	private void surface( final NetworkInventoryHandler networkInventoryHandler, final Actionable type )
 	{
 		if( this.getDepth( type ).pop() != this )
 		{
@@ -195,7 +193,7 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 	}
 
 	@Override
-	public T extractItems( T request, final Actionable mode, final IActionSource src )
+	public IAEStack extractItems( IAEStack request, final Actionable mode, final IActionSource src )
 	{
 		if( this.diveList( this, mode ) )
 		{
@@ -208,21 +206,21 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 			return null;
 		}
 
-		final Iterator<List<IMEInventoryHandler<T>>> i = this.priorityInventory.descendingMap().values().iterator();// priorityInventory.asMap().descendingMap().entrySet().iterator();
+		final Iterator<List<IMEInventoryHandler>> i = this.priorityInventory.descendingMap().values().iterator();// priorityInventory.asMap().descendingMap().entrySet().iterator();
 
-		final T output = request.copy();
+		final IAEStack output = request.copy();
 		request = request.copy();
 		output.setStackSize( 0 );
 		final long req = request.getStackSize();
 
 		while( i.hasNext() )
 		{
-			final List<IMEInventoryHandler<T>> invList = i.next();
+			final List<IMEInventoryHandler> invList = i.next();
 
-			final Iterator<IMEInventoryHandler<T>> ii = invList.iterator();
+			final Iterator<IMEInventoryHandler> ii = invList.iterator();
 			while( ii.hasNext() && output.getStackSize() < req )
 			{
-				final IMEInventoryHandler<T> inv = ii.next();
+				final IMEInventoryHandler inv = ii.next();
 
 				request.setStackSize( req - output.getStackSize() );
 				output.add( inv.extractItems( request, mode, src ) );
@@ -240,7 +238,7 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 	}
 
 	@Override
-	public IItemList<T> getAvailableItems( IItemList<T> out )
+	public IItemList<IAEStack> getAvailableItems(IStorageChannel channel, IItemList<IAEStack> out )
 	{
 		if( this.diveIteration( this, Actionable.SIMULATE ) )
 		{
@@ -248,11 +246,11 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 		}
 
 		// for (Entry<Integer, IMEInventoryHandler<T>> h : priorityInventory.entries())
-		for( final List<IMEInventoryHandler<T>> i : this.priorityInventory.values() )
+		for( final List<IMEInventoryHandler> i : this.priorityInventory.values() )
 		{
-			for( final IMEInventoryHandler<T> j : i )
+			for( final IMEInventoryHandler j : i )
 			{
-				out = j.getAvailableItems( out );
+				out = j.getAvailableItems( channel, out );
 			}
 		}
 
@@ -261,7 +259,7 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 		return out;
 	}
 
-	private boolean diveIteration( final NetworkInventoryHandler<T> networkInventoryHandler, final Actionable type )
+	private boolean diveIteration( final NetworkInventoryHandler networkInventoryHandler, final Actionable type )
 	{
 		final Deque cDepth = this.getDepth( type );
 		if( cDepth.isEmpty() )
@@ -286,25 +284,19 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 	}
 
 	@Override
-	public IStorageChannel<T> getChannel()
-	{
-		return this.myChannel;
-	}
-
-	@Override
 	public AccessRestriction getAccess()
 	{
 		return AccessRestriction.READ_WRITE;
 	}
 
 	@Override
-	public boolean isPrioritized( final T input )
+	public boolean isPrioritized( final IAEStack input )
 	{
 		return false;
 	}
 
 	@Override
-	public boolean canAccept( final T input )
+	public boolean canAccept( final IAEStack input )
 	{
 		return true;
 	}

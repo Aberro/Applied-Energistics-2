@@ -20,25 +20,34 @@ package appeng.util.inv;
 
 
 import java.util.Iterator;
+import java.util.function.Supplier;
 
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 
 
-public final class IMEAdaptorIterator implements Iterator<ItemSlot>
+public final class IMEAdaptorIterator implements Iterator<ISlot>
 {
-	private final Iterator<IAEItemStack> stack;
-	private final ItemSlot slot = new ItemSlot();
+	private final Iterator<IAEStack> stack;
+	private final ISlot slot;
 	private final IMEAdaptor parent;
 	private final int containerSize;
 
 	private int offset = 0;
 	private boolean hasNext;
 
-	public IMEAdaptorIterator( final IMEAdaptor parent, final IItemList<IAEItemStack> availableItems )
+	public IMEAdaptorIterator(final IMEAdaptor parent, final IItemList<IAEStack> availableItems )
 	{
+		IAEStack first = availableItems.getFirstItem();
+		if(first != null)
+			this.slot = first.getChannel().createSlot();
+		else
+			this.slot = new ItemSlot();
 		this.stack = availableItems.iterator();
 		this.containerSize = parent.getMaxSlots();
 		this.parent = parent;
@@ -52,7 +61,7 @@ public final class IMEAdaptorIterator implements Iterator<ItemSlot>
 	}
 
 	@Override
-	public ItemSlot next()
+	public ISlot next()
 	{
 		this.slot.setSlot( this.offset );
 		this.offset++;
@@ -65,12 +74,12 @@ public final class IMEAdaptorIterator implements Iterator<ItemSlot>
 
 		if( this.hasNext )
 		{
-			final IAEItemStack item = this.stack.next();
-			this.slot.setAEItemStack( item );
+			final IAEStack item = this.stack.next();
+			this.slot.setAEStack( item );
 			return this.slot;
 		}
 
-		this.slot.setItemStack( ItemStack.EMPTY );
+		this.slot.setStack( null );
 		return this.slot;
 	}
 

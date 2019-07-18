@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import appeng.api.storage.data.IAEStack;
 import appeng.container.slot.*;
 import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
@@ -438,7 +439,7 @@ public abstract class AEBaseGui extends GuiContainer
 		{
 			if( this.enableSpaceClicking() )
 			{
-				IAEItemStack stack = null;
+				IAEStack stack = null;
 				if( slot instanceof SlotME )
 				{
 					stack = ( (SlotME) slot ).getAEStack();
@@ -496,7 +497,7 @@ public abstract class AEBaseGui extends GuiContainer
 		if( slot instanceof SlotME )
 		{
 			InventoryAction action = null;
-			IAEItemStack stack = null;
+			IAEStack stack = null;
 
 			switch( clickType )
 			{
@@ -525,7 +526,7 @@ public abstract class AEBaseGui extends GuiContainer
 					}
 					else if( player.capabilities.isCreativeMode )
 					{
-						final IAEItemStack slotItem = ( (SlotME) slot ).getAEStack();
+						final IAEStack slotItem = ( (SlotME) slot ).getAEStack();
 						if( slotItem != null )
 						{
 							action = InventoryAction.CREATIVE_DUPLICATE;
@@ -680,7 +681,7 @@ public abstract class AEBaseGui extends GuiContainer
 		final Slot slot = this.getSlot( x, y );
 		if( slot instanceof SlotME )
 		{
-			final IAEItemStack item = ( (SlotME) slot ).getAEStack();
+			final IAEStack item = ( (SlotME) slot ).getAEStack();
 			if( item != null )
 			{
 				( (AEBaseContainer) this.inventorySlots ).setTargetStack( item );

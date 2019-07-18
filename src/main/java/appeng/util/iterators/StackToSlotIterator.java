@@ -21,19 +21,21 @@ package appeng.util.iterators;
 
 import java.util.Iterator;
 
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
 import net.minecraft.item.ItemStack;
 
 import appeng.util.inv.ItemSlot;
 
 
-public class StackToSlotIterator implements Iterator<ItemSlot>
+public class StackToSlotIterator implements Iterator<ISlot>
 {
 
-	private final ItemSlot iss = new ItemSlot();
-	private final Iterator<ItemStack> is;
+	private final ISlot iss = new ItemSlot();
+	private final Iterator<IAEStack> is;
 	private int x = 0;
 
-	public StackToSlotIterator( final Iterator<ItemStack> is )
+	public StackToSlotIterator( final Iterator<IAEStack> is )
 	{
 		this.is = is;
 	}
@@ -45,11 +47,11 @@ public class StackToSlotIterator implements Iterator<ItemSlot>
 	}
 
 	@Override
-	public ItemSlot next()
+	public ISlot next()
 	{
 		this.iss.setSlot( this.x );
 		this.x++;
-		this.iss.setItemStack( this.is.next() );
+		this.iss.setAEStack( this.is.next() );
 		return this.iss;
 	}
 

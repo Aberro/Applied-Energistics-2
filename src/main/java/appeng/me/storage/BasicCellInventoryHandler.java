@@ -19,6 +19,7 @@
 package appeng.me.storage;
 
 
+import appeng.api.util.ISlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.items.IItemHandler;
@@ -43,16 +44,18 @@ import appeng.util.prioritylist.PrecisePriorityList;
  * @version rv6 - 2018-01-23
  * @since rv6 2018-01-23
  */
-public class BasicCellInventoryHandler<T extends IAEStack> extends MEInventoryHandler implements ICellInventoryHandler<T>
+public class BasicCellInventoryHandler<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> extends MEInventoryHandler implements ICellInventoryHandler<TAEStack, TSlot, TStack>
 {
-	public BasicCellInventoryHandler( final IMEInventory c, final IStorageChannel<T> channel )
+	private IStorageChannel channel;
+	public BasicCellInventoryHandler( final IMEInventory c, final IStorageChannel<TAEStack, TSlot, TStack> channel )
 	{
-		super( c, channel );
+		super( c );
+		this.channel = channel;
 
 		final ICellInventory ci = this.getCellInv();
 		if( ci != null )
 		{
-			final IItemList<T> priorityList = channel.createList();
+			final IItemList<IAEStack> priorityList = channel.createList();
 
 			final IItemHandler upgrades = ci.getUpgradesInventory();
 			final IItemHandler config = ci.getConfigInventory();
@@ -88,7 +91,7 @@ public class BasicCellInventoryHandler<T extends IAEStack> extends MEInventoryHa
 				final ItemStack is = config.getStackInSlot( x );
 				if( !is.isEmpty() )
 				{
-					final T configItem = channel.createStack( is );
+					final TAEStack configItem = channel.createStack( is );
 					if( configItem != null )
 					{
 						priorityList.add( configItem );
@@ -102,11 +105,11 @@ public class BasicCellInventoryHandler<T extends IAEStack> extends MEInventoryHa
 			{
 				if( hasFuzzy )
 				{
-					this.setPartitionList( new FuzzyPriorityList<>( priorityList, fzMode ) );
+					this.setPartitionList( new FuzzyPriorityList( priorityList, fzMode ) );
 				}
 				else
 				{
-					this.setPartitionList( new PrecisePriorityList<>( priorityList ) );
+					this.setPartitionList( new PrecisePriorityList( priorityList ) );
 				}
 			}
 		}
@@ -143,8 +146,11 @@ public class BasicCellInventoryHandler<T extends IAEStack> extends MEInventoryHa
 		return this.getWhitelist();
 	}
 
+	@Override
+	public IStorageChannel getChannel() { return this.channel; }
+
 	NBTTagCompound openNbtData()
 	{
-		return Platform.openNbtData( this.getCellInv().getItemStack() );
+		return Platform.openNbtData( (ItemStack)this.getCellInv().getStack() );
 	}
 }

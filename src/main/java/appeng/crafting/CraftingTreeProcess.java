@@ -23,7 +23,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import net.minecraft.inventory.InventoryCrafting;
+import appeng.api.config.FuzzyMode;
+import appeng.api.networking.crafting.IInventoryCrafting;
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.data.IAEStack;
+import appeng.util.item.AEItemStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
@@ -70,30 +74,36 @@ public class CraftingTreeProcess
 		{
 			final IAEItemStack[] list = details.getInputs();
 
-			final InventoryCrafting ic = new InventoryCrafting( new ContainerNull(), 3, 3 );
-			final IAEItemStack[] is = details.getInputs();
-			for( int x = 0; x < ic.getSizeInventory(); x++ )
+			final IInventoryCrafting ic = details.getInventoryCrafting();
+			for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
 			{
-				ic.setInventorySlotContents( x, is[x] == null ? ItemStack.EMPTY : is[x].createItemStack() );
-			}
-
-			FMLCommonHandler.instance().firePlayerCraftingEvent( Platform.getPlayer( (WorldServer) world ), details.getOutput( ic, world ), ic );
-
-			for( int x = 0; x < ic.getSizeInventory(); x++ )
-			{
-				final ItemStack g = ic.getStackInSlot( x );
-				if( !g.isEmpty() && g.getCount() > 1 )
+				final IAEStack[] is = details.getChannelInputs(channel);
+				for (int x = 0; x < ic.getSlotsCount(channel); x++)
 				{
-					this.fullSimulation = true;
+					ic.setStackInSlot( channel, x, is[x] );
 				}
 			}
 
-			for( final IAEItemStack part : details.getCondensedInputs() )
+			FMLCommonHandler.instance().firePlayerCraftingEvent( Platform.getPlayer( (WorldServer) world ), details.getOutput( ic, world ), ic.toMCInventoryCrafting() );
+
+			for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
 			{
-				final ItemStack g = part.createItemStack();
+				for( int x = 0; x < ic.getSlotsCount(channel); x++ )
+				{
+					final IAEStack g = ic.getStackInSlot( channel, x );
+					if( !g.isEmpty() && g.getStackSize() > 1 )
+					{
+						this.fullSimulation = true;
+					}
+				}
+			}
+
+			for( final IAEStack part : details.getChannelCondensedInputs( AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class) ) )
+			{
+				final ItemStack g = ((IAEItemStack)part).getItemStack();
 
 				boolean isAnInput = false;
-				for( final IAEItemStack a : details.getCondensedOutputs() )
+				for( final IAEStack a : details.getChannelCondensedOutputs( AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class) ) )
 				{
 					if( !g.isEmpty() && a != null && a.equals( g ) )
 					{
@@ -121,22 +131,22 @@ public class CraftingTreeProcess
 					final IAEItemStack part = list[x];
 					if( part != null )
 					{
-						this.nodes.put( new CraftingTreeNode( cc, job, part.copy(), this, x, depth + 1 ), part.getStackSize() );
+						this.nodes.put( new CraftingTreeNode( cc, job, part.copy(), this, x, depth + 1 ), (long)part.getStackSize() );
 					}
 				}
 			}
 			else
 			{
 				// this is minor different then below, this slot uses the pattern, but kinda fudges it.
-				for( final IAEItemStack part : details.getCondensedInputs() )
+				for( final IAEStack part : details.getChannelCondensedInputs( AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class) ) )
 				{
 					for( int x = 0; x < list.length; x++ )
 					{
-						final IAEItemStack comparePart = list[x];
+						final IAEStack comparePart = list[x];
 						if( part != null && part.equals( comparePart ) )
 						{
 							// use the first slot...
-							this.nodes.put( new CraftingTreeNode( cc, job, part.copy(), this, x, depth + 1 ), part.getStackSize() );
+							this.nodes.put( new CraftingTreeNode( cc, job, part.copy(), this, x, depth + 1 ), (long)part.getStackSize() );
 							break;
 						}
 					}
@@ -145,14 +155,12 @@ public class CraftingTreeProcess
 		}
 		else
 		{
-			for( final IAEItemStack part : details.getCondensedInputs() )
+			for( final IAEStack part : details.getAllCondensedInputs() )
 			{
-				final ItemStack g = part.createItemStack();
-
 				boolean isAnInput = false;
-				for( final IAEItemStack a : details.getCondensedOutputs() )
+				for( final IAEStack a : details.getAllCondensedOutputs() )
 				{
-					if( !g.isEmpty() && a != null && a.equals( g ) )
+					if( !part.isEmpty() && a != null && a.equals( part ) )
 					{
 						isAnInput = true;
 					}
@@ -164,9 +172,9 @@ public class CraftingTreeProcess
 				}
 			}
 
-			for( final IAEItemStack part : details.getCondensedInputs() )
+			for( final IAEStack part : details.getAllCondensedInputs() )
 			{
-				this.nodes.put( new CraftingTreeNode( cc, job, part.copy(), this, -1, depth + 1 ), part.getStackSize() );
+				this.nodes.put( new CraftingTreeNode( cc, job, part.copy(), this, -1, depth + 1 ), (long)part.getStackSize() );
 			}
 		}
 	}
@@ -191,42 +199,43 @@ public class CraftingTreeProcess
 
 		if( this.fullSimulation )
 		{
-			final InventoryCrafting ic = new InventoryCrafting( new ContainerNull(), 3, 3 );
+			final IInventoryCrafting ic = details.getInventoryCrafting();
 
 			for( final Entry<CraftingTreeNode, Long> entry : this.nodes.entrySet() )
 			{
-				final IAEItemStack item = entry.getKey().getStack( entry.getValue() );
-				final IAEItemStack stack = entry.getKey().request( inv, item.getStackSize(), src );
+				final IAEStack item = entry.getKey().getStack( entry.getValue() );
+				final IAEStack stack = entry.getKey().request( inv, item.getStackSize(), src );
 
-				ic.setInventorySlotContents( entry.getKey().getSlot(), stack.createItemStack() );
+				ic.setStackInSlot(stack.getChannel(), entry.getKey().getSlot(), stack );
 			}
 
-			FMLCommonHandler.instance().firePlayerCraftingEvent( Platform.getPlayer( (WorldServer) this.world ), this.details.getOutput( ic, this.world ), ic );
+			FMLCommonHandler.instance().firePlayerCraftingEvent( Platform.getPlayer( (WorldServer) this.world ), this.details.getOutput( ic, this.world ), ic.toMCInventoryCrafting() );
 
-			for( int x = 0; x < ic.getSizeInventory(); x++ )
-			{
-				ItemStack is = ic.getStackInSlot( x );
-				is = Platform.getContainerItem( is );
-
-				final IAEItemStack o = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( is );
-				if( o != null )
+			for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
+				for( int x = 0; x < ic.getSlotsCount(channel); x++ )
 				{
-					this.bytes++;
-					inv.injectItems( o, Actionable.MODULATE, src );
+					IAEStack is = ic.getStackInSlot( channel, x );
+					is = AEItemStack.fromItemStack( Platform.getContainerItem( (ItemStack)is.getStack() ) );
+
+					final IAEItemStack o = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( is );
+					if( o != null )
+					{
+						this.bytes++;
+						inv.injectItems( o, Actionable.MODULATE, src );
+					}
 				}
-			}
 		}
 		else
 		{
 			// request and remove inputs...
 			for( final Entry<CraftingTreeNode, Long> entry : this.nodes.entrySet() )
 			{
-				final IAEItemStack item = entry.getKey().getStack( entry.getValue() );
-				final IAEItemStack stack = entry.getKey().request( inv, item.getStackSize() * i, src );
+				final IAEStack item = entry.getKey().getStack( entry.getValue() );
+				final IAEStack stack = entry.getKey().request( inv, item.getStackSize() * i, src );
 
 				if( this.containerItems )
 				{
-					final ItemStack is = Platform.getContainerItem( stack.createItemStack() );
+					final ItemStack is = Platform.getContainerItem( ((IAEItemStack)stack).getItemStack() );
 					final IAEItemStack o = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( is );
 					if( o != null )
 					{
@@ -240,9 +249,9 @@ public class CraftingTreeProcess
 		// assume its possible.
 
 		// add crafting results..
-		for( final IAEItemStack out : this.details.getCondensedOutputs() )
+		for( final IAEStack out : this.details.getAllCondensedOutputs() )
 		{
-			final IAEItemStack o = out.copy();
+			final IAEStack o = out.copy();
 			o.setStackSize( o.getStackSize() * i );
 			inv.injectItems( o, Actionable.MODULATE, src );
 		}
@@ -261,9 +270,9 @@ public class CraftingTreeProcess
 		job.addBytes( 8 + this.crafts + this.bytes );
 	}
 
-	IAEItemStack getAmountCrafted( IAEItemStack what2 )
+	IAEStack getAmountCrafted( IAEStack what2 )
 	{
-		for( final IAEItemStack is : this.details.getCondensedOutputs() )
+		for( final IAEStack is : this.details.getAllCondensedOutputs() )
 		{
 			if( is.equals( what2 ) )
 			{
@@ -274,9 +283,9 @@ public class CraftingTreeProcess
 		}
 
 		// more fuzzy!
-		for( final IAEItemStack is : this.details.getCondensedOutputs() )
+		for( final IAEStack is : this.details.getAllCondensedInputs() )
 		{
-			if( is.getItem() == what2.getItem() && ( is.getItem().isDamageable() || is.getItemDamage() == what2.getItemDamage() ) )
+			if( is.fuzzyComparison(what2, FuzzyMode.IGNORE_ALL ) )
 			{
 				what2 = is.copy();
 				what2.setStackSize( is.getStackSize() );
@@ -308,14 +317,15 @@ public class CraftingTreeProcess
 		}
 	}
 
-	void getPlan( final IItemList<IAEItemStack> plan )
+	void getPlan( final IItemList<IAEStack> plan )
 	{
-		for( IAEItemStack i : this.details.getOutputs() )
-		{
-			i = i.copy();
-			i.setCountRequestable( i.getStackSize() * this.crafts );
-			plan.addRequestable( i );
-		}
+		for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
+			for( IAEStack i : this.details.getChannelOutputs(channel) )
+			{
+				i = i.copy();
+				i.setCountRequestable( i.getStackSize() * this.crafts );
+				plan.addRequestable( i );
+			}
 
 		for( final CraftingTreeNode pro : this.nodes.keySet() )
 		{

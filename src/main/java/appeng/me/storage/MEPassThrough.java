@@ -34,12 +34,10 @@ import appeng.api.storage.data.IItemList;
 public class MEPassThrough implements IMEInventoryHandler
 {
 
-	private final IStorageChannel wrappedChannel;
 	private IMEInventory internal;
 
-	public MEPassThrough( final IMEInventory i, final IStorageChannel channel )
+	public MEPassThrough( final IMEInventory i )
 	{
-		this.wrappedChannel = channel;
 		this.setInternal( i );
 	}
 
@@ -56,29 +54,19 @@ public class MEPassThrough implements IMEInventoryHandler
 	@Override
 	public IAEStack injectItems( final IAEStack input, final Actionable type, final IActionSource src )
 	{
-		if(input.getChannel() == wrappedChannel.getChannelType())
-			return this.internal.injectItems( input, type, src );
-		return input;
+		return this.internal.injectItems( input, type, src );
 	}
 
 	@Override
 	public IAEStack extractItems( final IAEStack request, final Actionable type, final IActionSource src )
 	{
-		if(request.getChannel() == wrappedChannel.getChannelType())
-			return this.internal.extractItems( request, type, src );
-		return null;
+		return this.internal.extractItems( request, type, src );
 	}
 
 	@Override
 	public IItemList<IAEStack> getAvailableItems( IStorageChannel channel, final IItemList<IAEStack> out )
 	{
 		return this.internal.getAvailableItems( channel, out );
-	}
-
-	@Override
-	public IStorageChannel getChannel()
-	{
-		return this.internal.getChannel();
 	}
 
 	@Override
@@ -96,7 +84,7 @@ public class MEPassThrough implements IMEInventoryHandler
 	@Override
 	public boolean canAccept( final IAEStack input )
 	{
-		return input.getChannel() == wrappedChannel.getChannelType();
+		return true;
 	}
 
 	@Override
@@ -117,8 +105,5 @@ public class MEPassThrough implements IMEInventoryHandler
 		return true;
 	}
 
-	IStorageChannel getWrappedChannel()
-	{
-		return this.wrappedChannel;
-	}
+
 }

@@ -229,12 +229,12 @@ public class ContainerCellWorkbench extends ContainerUpgradeable
 				.storage()
 				.getStorageChannel( IItemStorageChannel.class );
 
-		final IMEInventory cellInv = AEApi.instance().registries().cell().getCellInventory( is, null, channel );
+		final IMEInventory cellInv = AEApi.instance().registries().cell().getCellInventory( is, null );
 
 		Iterator<IAEStack> i = new NullIterator<>();
 		if( cellInv != null )
 		{
-			final IItemList list = cellInv.getAvailableItems( channel.createList() );
+			final IItemList list = cellInv.getAvailableItems( channel, channel.createList() );
 			i = list.iterator();
 		}
 

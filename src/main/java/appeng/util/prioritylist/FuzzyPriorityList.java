@@ -26,22 +26,22 @@ import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 
 
-public class FuzzyPriorityList<T extends IAEStack<T>> implements IPartitionList<T>
+public class FuzzyPriorityList implements IPartitionList
 {
 
-	private final IItemList<T> list;
+	private final IItemList<IAEStack> list;
 	private final FuzzyMode mode;
 
-	public FuzzyPriorityList( final IItemList<T> in, final FuzzyMode mode )
+	public FuzzyPriorityList( final IItemList<IAEStack> in, final FuzzyMode mode )
 	{
 		this.list = in;
 		this.mode = mode;
 	}
 
 	@Override
-	public boolean isListed( final T input )
+	public boolean isListed( final IAEStack input )
 	{
-		final Collection<T> out = this.list.findFuzzy( input, this.mode );
+		final Collection<IAEStack> out = this.list.findFuzzy( input, this.mode );
 		return out != null && !out.isEmpty();
 	}
 
@@ -52,7 +52,7 @@ public class FuzzyPriorityList<T extends IAEStack<T>> implements IPartitionList<
 	}
 
 	@Override
-	public Iterable<T> getItems()
+	public Iterable<IAEStack> getItems()
 	{
 		return this.list;
 	}

@@ -109,7 +109,7 @@ public class AppEngCellInventory implements IItemHandlerModifiable
 		{
 			final ICellInventory ci = this.handlerForSlot[slot].getCellInv();
 
-			if( ci == null || ci.getItemStack() != this.inv.getStackInSlot( slot ) )
+			if( ci == null || ci.getStack().isItemEqual(this.inv.getStackInSlot( slot ) ) )
 			{
 				this.handlerForSlot[slot] = null;
 			}

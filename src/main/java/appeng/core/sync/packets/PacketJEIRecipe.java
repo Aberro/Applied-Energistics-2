@@ -24,6 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import appeng.api.storage.data.IAEStack;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
@@ -139,8 +140,8 @@ public class PacketJEIRecipe extends AppEngPacket
 
 		if( inv != null && this.recipe != null && security != null )
 		{
-			final IMEMonitor<IAEItemStack> storage = inv.getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
-			final IPartitionList<IAEItemStack> filter = ItemViewCell.createFilter( cct.getViewCells() );
+			final IMEMonitor storage = inv.getInventory( );
+			final IPartitionList filter = ItemViewCell.createFilter( cct.getViewCells() );
 
 			for( int x = 0; x < craftMatrix.getSlots(); x++ )
 			{
@@ -159,7 +160,7 @@ public class PacketJEIRecipe extends AppEngPacket
 						final IAEItemStack out = cct.useRealItems() ? Platform.poweredInsert( energy, storage, in, cct.getActionSource() ) : null;
 						if( out != null )
 						{
-							currentItem = out.createItemStack();
+							currentItem = out.getItemStack();
 						}
 						else
 						{
@@ -180,7 +181,7 @@ public class PacketJEIRecipe extends AppEngPacket
 							if( ( filter == null || filter.isListed( request ) ) && security.hasPermission( player, SecurityPermissions.EXTRACT ) )
 							{
 								request.setStackSize( 1 );
-								IAEItemStack out;
+								IAEStack out;
 
 								if( cct.useRealItems() )
 								{
@@ -202,7 +203,7 @@ public class PacketJEIRecipe extends AppEngPacket
 
 								if( out != null )
 								{
-									currentItem = out.createItemStack();
+									currentItem = ((IAEItemStack)out).getItemStack();
 								}
 							}
 
@@ -213,11 +214,11 @@ public class PacketJEIRecipe extends AppEngPacket
 
 								if( cct.useRealItems() )
 								{
-									currentItem = ad.removeItems( 1, this.recipe[x][y], null );
+									currentItem = ad.removeItems( 1, AEItemStack.fromItemStack( this.recipe[x][y] ), null ).asItemStackRepresentation();
 								}
 								else
 								{
-									currentItem = ad.simulateRemove( 1, this.recipe[x][y], null );
+									currentItem = ad.simulateRemove( 1, AEItemStack.fromItemStack( this.recipe[x][y] ), null ).asItemStackRepresentation();
 								}
 							}
 						}

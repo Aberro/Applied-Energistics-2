@@ -21,6 +21,7 @@ package appeng.container.implementations;
 
 import java.io.IOException;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -114,7 +115,7 @@ public class ContainerNetworkStatus extends AEBaseContainer
 
 				for( final Class<? extends IGridHost> machineClass : this.network.getMachinesClasses() )
 				{
-					final IItemList<IAEItemStack> list = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+					final IItemList<IAEStack> list = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
 					for( final IGridNode machine : this.network.getMachines( machineClass ) )
 					{
 						final IGridBlock blk = machine.getGridBlock();
@@ -128,7 +129,7 @@ public class ContainerNetworkStatus extends AEBaseContainer
 						}
 					}
 
-					for( final IAEItemStack ais : list )
+					for( final IAEStack ais : list )
 					{
 						piu.appendItem( ais );
 					}

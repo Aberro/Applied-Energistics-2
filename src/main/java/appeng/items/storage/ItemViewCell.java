@@ -19,6 +19,7 @@
 package appeng.items.storage;
 
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 
@@ -52,7 +53,7 @@ public class ItemViewCell extends AEBaseItem implements ICellWorkbenchItem
 	{
 		IPartitionList myPartitionList = null;
 
-		final MergedPriorityList<IAEItemStack> myMergedList = new MergedPriorityList<>();
+		final MergedPriorityList myMergedList = new MergedPriorityList();
 
 		for( final ItemStack currentViewCell : list )
 		{
@@ -63,7 +64,7 @@ public class ItemViewCell extends AEBaseItem implements ICellWorkbenchItem
 
 			if( ( currentViewCell.getItem() instanceof ItemViewCell ) )
 			{
-				final IItemList<IAEItemStack> priorityList = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+				final IItemList<IAEStack> priorityList = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
 
 				final ICellWorkbenchItem vc = (ICellWorkbenchItem) currentViewCell.getItem();
 				final IItemHandler upgrades = vc.getUpgradesInventory( currentViewCell );
@@ -108,11 +109,11 @@ public class ItemViewCell extends AEBaseItem implements ICellWorkbenchItem
 				{
 					if( hasFuzzy )
 					{
-						myMergedList.addNewList( new FuzzyPriorityList<>( priorityList, fzMode ), !hasInverter );
+						myMergedList.addNewList( new FuzzyPriorityList( priorityList, fzMode ), !hasInverter );
 					}
 					else
 					{
-						myMergedList.addNewList( new PrecisePriorityList<>( priorityList ), !hasInverter );
+						myMergedList.addNewList( new PrecisePriorityList( priorityList ), !hasInverter );
 					}
 
 					myPartitionList = myMergedList;

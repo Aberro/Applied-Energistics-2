@@ -261,7 +261,7 @@ public abstract class PartAbstractFormationPlane<T extends IAEStack> extends Par
 	}
 
 	@Override
-	public void saveChanges( final ICellInventory<?> cell )
+	public void saveChanges( final ICellInventory<?, ?, ?> cell )
 	{
 		// nope!
 	}

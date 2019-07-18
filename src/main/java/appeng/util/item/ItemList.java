@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.stream.Collectors;
 
 import appeng.api.storage.data.IAEStack;
 import net.minecraftforge.oredict.OreDictionary;
@@ -34,15 +35,15 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.util.item.AESharedItemStack.Bounds;
 
-public final class ItemList implements IItemList<IAEItemStack>
+public final class ItemList implements IItemList<IAEStack>
 {
 
 	private final NavigableMap<AESharedItemStack, IAEItemStack> records = new ConcurrentSkipListMap<>();
 
 	@Override
-	public void add( final IAEItemStack option )
+	public void add( final IAEStack option )
 	{
-		if( option == null )
+		if( option == null || !(option instanceof IAEItemStack))
 		{
 			return;
 		}
@@ -55,15 +56,15 @@ public final class ItemList implements IItemList<IAEItemStack>
 			return;
 		}
 
-		final IAEItemStack opt = option.copy();
+		final IAEItemStack opt = (IAEItemStack)option.copy();
 
 		this.putItemRecord( opt );
 	}
 
 	@Override
-	public IAEItemStack findPrecise( final IAEItemStack itemStack )
+	public IAEItemStack findPrecise( final IAEStack itemStack )
 	{
-		if( itemStack == null )
+		if( itemStack == null || !(itemStack instanceof IAEItemStack))
 		{
 			return null;
 		}
@@ -72,9 +73,9 @@ public final class ItemList implements IItemList<IAEItemStack>
 	}
 
 	@Override
-	public Collection<IAEItemStack> findFuzzy( final IAEItemStack filter, final FuzzyMode fuzzy )
+	public Collection<IAEStack> findFuzzy( final IAEStack filter, final FuzzyMode fuzzy )
 	{
-		if( filter == null )
+		if( filter == null || !(filter instanceof IAEItemStack))
 		{
 			return Collections.emptyList();
 		}
@@ -91,7 +92,7 @@ public final class ItemList implements IItemList<IAEItemStack>
 			}
 			else
 			{
-				final Collection<IAEItemStack> output = new ArrayList<>();
+				final Collection<IAEStack> output = new ArrayList<>();
 
 				for( final IAEItemStack is : or.getAEEquivalents() )
 				{
@@ -110,9 +111,9 @@ public final class ItemList implements IItemList<IAEItemStack>
 	}
 
 	@Override
-	public void addStorage( final IAEItemStack option )
+	public void addStorage( final IAEStack option )
 	{
-		if( option == null )
+		if( option == null || !(option instanceof IAEItemStack))
 		{
 			return;
 		}
@@ -125,7 +126,7 @@ public final class ItemList implements IItemList<IAEItemStack>
 			return;
 		}
 
-		final IAEItemStack opt = option.copy();
+		final IAEItemStack opt = (IAEItemStack)option.copy();
 
 		this.putItemRecord( opt );
 	}
@@ -136,9 +137,9 @@ public final class ItemList implements IItemList<IAEItemStack>
 	 */
 
 	@Override
-	public void addCrafting( final IAEItemStack option )
+	public void addCrafting( final IAEStack option )
 	{
-		if( option == null )
+		if( option == null || !(option instanceof IAEItemStack))
 		{
 			return;
 		}
@@ -151,7 +152,7 @@ public final class ItemList implements IItemList<IAEItemStack>
 			return;
 		}
 
-		final IAEItemStack opt = option.copy();
+		final IAEItemStack opt = (IAEItemStack) option.copy();
 		opt.setStackSize( 0 );
 		opt.setCraftable( true );
 
@@ -159,9 +160,9 @@ public final class ItemList implements IItemList<IAEItemStack>
 	}
 
 	@Override
-	public void addRequestable( final IAEItemStack option )
+	public void addRequestable( final IAEStack option )
 	{
-		if( option == null )
+		if( option == null || !(option instanceof IAEItemStack) )
 		{
 			return;
 		}
@@ -174,7 +175,7 @@ public final class ItemList implements IItemList<IAEItemStack>
 			return;
 		}
 
-		final IAEItemStack opt = option.copy();
+		final IAEItemStack opt = (IAEItemStack)option.copy();
 		opt.setStackSize( 0 );
 		opt.setCraftable( false );
 		opt.setCountRequestable( option.getCountRequestable() );
@@ -183,9 +184,9 @@ public final class ItemList implements IItemList<IAEItemStack>
 	}
 
 	@Override
-	public IAEItemStack getFirstItem()
+	public IAEStack getFirstItem()
 	{
-		for( final IAEItemStack stackType : this )
+		for( final IAEStack stackType : this )
 		{
 			return stackType;
 		}
@@ -200,15 +201,15 @@ public final class ItemList implements IItemList<IAEItemStack>
 	}
 
 	@Override
-	public Iterator<IAEItemStack> iterator()
+	public Iterator<IAEStack> iterator()
 	{
-		return new MeaningfulItemIterator<>( this.records.values().iterator() );
+		return new MeaningfulItemIterator<>( this.records.values().stream().map(x -> (IAEStack)x).iterator() );
 	}
 
 	@Override
 	public void resetStatus()
 	{
-		for( final IAEItemStack i : this )
+		for( final IAEStack i : this )
 		{
 			i.reset();
 		}
@@ -219,11 +220,13 @@ public final class ItemList implements IItemList<IAEItemStack>
 		return this.records.put( ( (AEItemStack) itemStack ).getSharedStack(), itemStack );
 	}
 
-	private Collection<IAEItemStack> findFuzzyDamage( final IAEItemStack filter, final FuzzyMode fuzzy, final boolean ignoreMeta )
+	private Collection<IAEStack> findFuzzyDamage( final IAEStack filter, final FuzzyMode fuzzy, final boolean ignoreMeta )
 	{
 		final AEItemStack itemStack = (AEItemStack) filter;
 		final Bounds bounds = itemStack.getSharedStack().getBounds( fuzzy, ignoreMeta );
 
-		return this.records.subMap( bounds.lower(), true, bounds.upper(), true ).descendingMap().values();
+		return this.records.subMap( bounds.lower(), true, bounds.upper(), true )
+				.descendingMap().values()
+				.stream().map(x -> (IAEStack)x).collect(Collectors.toCollection(ArrayList::new));
 	}
 }

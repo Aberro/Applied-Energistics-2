@@ -44,12 +44,18 @@ public interface IAEStack
 	 */
 	void add( IAEStack is );
 
+	Object getStack();
+
 	/**
 	 * number of items in the stack.
 	 *
 	 * @return basically ItemStack.stackSize
 	 */
 	long getStackSize();
+
+	String getModID();
+
+	String getUnlocalizedName();
 
 	/**
 	 * changes the number of items in the stack.
@@ -150,6 +156,15 @@ public interface IAEStack
 	boolean equals( Object obj );
 
 	/**
+	 * compare the item/damage/nbt of the stack.
+	 *
+	 * @param otherStack to be compared item
+	 *
+	 * @return true if it is the same type (same item, damage, nbt)
+	 */
+	boolean isSameType( IAEStack otherStack );
+
+	/**
 	 * Compare the same subtype of {@link IAEStack} with another using a fuzzy comparison.
 	 *
 	 * @param other The stack to compare.
@@ -203,4 +218,6 @@ public interface IAEStack
 	 * @return itemstack
 	 */
 	ItemStack asItemStackRepresentation();
+
+	long getMaxStackSize();
 }

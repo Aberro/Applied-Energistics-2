@@ -24,7 +24,7 @@ import io.netty.buffer.ByteBuf;
 import appeng.api.storage.data.IAEStack;
 
 
-public abstract class AEStack<StackType extends IAEStack> implements IAEStack
+public abstract class AEStack<TAEStack extends IAEStack> implements IAEStack
 {
 
 	private boolean isCraftable;
@@ -58,14 +58,14 @@ public abstract class AEStack<StackType extends IAEStack> implements IAEStack
 	@Override
 	public long getStackSize()
 	{
-		return this.stackSize;
+		return isEmpty() ? 0 : this.stackSize;
 	}
 
 	@Override
-	public StackType setStackSize( final long ss )
+	public TAEStack setStackSize(final long ss )
 	{
 		this.stackSize = ss;
-		return (StackType) this;
+		return (TAEStack) this;
 	}
 
 	@Override
@@ -75,10 +75,10 @@ public abstract class AEStack<StackType extends IAEStack> implements IAEStack
 	}
 
 	@Override
-	public StackType setCountRequestable( final long countRequestable )
+	public TAEStack setCountRequestable(final long countRequestable )
 	{
 		this.countRequestable = countRequestable;
-		return (StackType) this;
+		return (TAEStack) this;
 	}
 
 	@Override
@@ -88,26 +88,26 @@ public abstract class AEStack<StackType extends IAEStack> implements IAEStack
 	}
 
 	@Override
-	public StackType setCraftable( final boolean isCraftable )
+	public TAEStack setCraftable(final boolean isCraftable )
 	{
 		this.isCraftable = isCraftable;
-		return (StackType) this;
+		return (TAEStack) this;
 	}
 
 	@Override
-	public StackType reset()
+	public TAEStack reset()
 	{
 		this.stackSize = 0;
 		// priority = Integer.MIN_VALUE;
 		this.setCountRequestable( 0 );
 		this.setCraftable( false );
-		return (StackType) this;
+		return (TAEStack) this;
 	}
 
 	@Override
-	public StackType empty()
+	public TAEStack empty()
 	{
-		final StackType dup = (StackType) this.copy();
+		final TAEStack dup = (TAEStack) this.copy();
 		dup.reset();
 		return dup;
 	}

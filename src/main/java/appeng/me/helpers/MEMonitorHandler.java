@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import appeng.api.AEApi;
+import appeng.api.implementations.items.IStorageCell;
 import com.google.common.collect.ImmutableList;
 
 import appeng.api.config.AccessRestriction;
@@ -51,7 +53,7 @@ public class MEMonitorHandler implements IMEMonitor
 {
 
 	private final IMEInventoryHandler internalHandler;
-	private final IItemList cachedList;
+	private final Map<IStorageChannel, IItemList> cachedList;
 	private final HashMap<IMEMonitorHandlerReceiver, Object> listeners = new HashMap<>();
 
 	protected boolean hasChanged = true;
@@ -59,13 +61,9 @@ public class MEMonitorHandler implements IMEMonitor
 	public MEMonitorHandler( final IMEInventoryHandler t )
 	{
 		this.internalHandler = t;
-		this.cachedList = t.getChannel().createList();
-	}
-
-	public MEMonitorHandler( final IMEInventoryHandler t, final IStorageChannel chan )
-	{
-		this.internalHandler = t;
-		this.cachedList = chan.createList();
+		this.cachedList = new HashMap<>();
+		for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
+			this.cachedList.put(channel, channel.createList());
 	}
 
 	@Override
@@ -156,12 +154,6 @@ public class MEMonitorHandler implements IMEMonitor
 	}
 
 	@Override
-	public IStorageChannel getChannel()
-	{
-		return this.getHandler().getChannel();
-	}
-
-	@Override
 	public AccessRestriction getAccess()
 	{
 		return this.getHandler().getAccess();
@@ -173,11 +165,12 @@ public class MEMonitorHandler implements IMEMonitor
 		if( this.hasChanged )
 		{
 			this.hasChanged = false;
-			this.cachedList.resetStatus();
-			return this.getAvailableItems( channel, this.cachedList );
+			IItemList list = this.cachedList.get(channel);
+			list.resetStatus();
+			return this.getAvailableItems( channel, list );
 		}
 
-		return this.cachedList;
+		return this.cachedList.get(channel);
 	}
 
 	@Override

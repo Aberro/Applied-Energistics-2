@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ItemInventoryAdaptor;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.Item;
@@ -49,7 +50,6 @@ import appeng.container.implementations.ContainerCraftingTerm;
 import appeng.helpers.IContainerCraftingPacket;
 import appeng.helpers.InventoryAction;
 import appeng.items.storage.ItemViewCell;
-import appeng.util.InventoryAdaptor;
 import appeng.util.Platform;
 import appeng.util.helpers.ItemHandlerUtil;
 import appeng.util.inv.AdaptorItemHandler;
@@ -108,14 +108,14 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 			return;
 		}
 
-		final IMEMonitor inv = this.storage.getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+		final IMEMonitor inv = this.storage.getInventory( );
 		final int howManyPerCraft = this.getStack().getCount();
 		int maxTimesToCraft = 0;
 
-		InventoryAdaptor ia = null;
+		ItemInventoryAdaptor ia = null;
 		if( action == InventoryAction.CRAFT_SHIFT ) // craft into player inventory...
 		{
-			ia = InventoryAdaptor.getAdaptor( who );
+			ia = ItemInventoryAdaptor.getAdaptor( who );
 			maxTimesToCraft = (int) Math.floor( (double) this.getStack().getMaxStackSize() / (double) howManyPerCraft );
 		}
 		else if( action == InventoryAction.CRAFT_STACK ) // craft into hand, full stack
@@ -137,7 +137,7 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 			return;
 		}
 
-		final ItemStack rs = this.getStack().copy();
+		final IAEStack rs = AEItemStack.fromItemStack( this.getStack().copy() );
 		if( rs.isEmpty() )
 		{
 			return;
@@ -148,11 +148,11 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 			if( ia.simulateAdd( rs ).isEmpty() )
 			{
 				final IItemList<IAEStack> all = inv.getStorageList( AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class) );
-				final ItemStack extra = ia.addItems( this.craftItem( who, rs, inv, all ) );
+				final IAEStack extra = ia.addItems( this.craftItem( who, rs, inv, all ) );
 				if( !extra.isEmpty() )
 				{
 					final List<ItemStack> drops = new ArrayList<>();
-					drops.add( extra );
+					drops.add( extra.asItemStackRepresentation() );
 					Platform.spawnDrops( who.world, new BlockPos( (int) who.posX, (int) who.posY, (int) who.posZ ), drops );
 					return;
 				}
@@ -200,12 +200,12 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 		return maxTimesToCraft;
 	}
 
-	private ItemStack craftItem( final EntityPlayer p, final ItemStack request, final IMEMonitor inv, final IItemList all )
+	private IAEStack craftItem( final EntityPlayer p, final IAEStack request, final IMEMonitor inv, final IItemList all )
 	{
 		// update crafting matrix...
 		ItemStack is = this.getStack();
 
-		if( !is.isEmpty() && ItemStack.areItemsEqual( request, is ) )
+		if( !is.isEmpty() && is.equals(request) )
 		{
 			final ItemStack[] set = new ItemStack[this.getPattern().getSlots()];
 			// Safeguard for empty slots in the inventory for now
@@ -224,7 +224,7 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 
 				if( r == null )
 				{
-					final Item target = request.getItem();
+					final Item target = request.asItemStackRepresentation().getItem();
 					if( target.isDamageable() && target.isRepairable() )
 					{
 						boolean isBad = false;
@@ -248,7 +248,7 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 							return request;
 						}
 					}
-					return ItemStack.EMPTY;
+					return null;
 				}
 
 				is = r.getCraftingResult( ic );
@@ -276,10 +276,10 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 
 			p.openContainer.onCraftMatrixChanged( new WrapperInvItemHandler( this.craftInv ) );
 
-			return is;
+			return AEItemStack.fromItemStack( is );
 		}
 
-		return ItemStack.EMPTY;
+		return null;
 	}
 
 	private boolean preCraft( final EntityPlayer p, final IMEMonitor inv, final ItemStack[] set, final ItemStack result )
@@ -312,7 +312,7 @@ public class SlotCraftingTerm extends AppEngCraftingSlot
 					final IAEStack fail = inv.injectItems( AEItemStack.fromItemStack( set[x] ), Actionable.MODULATE, this.mySrc );
 					if( fail != null )
 					{
-						drops.add( ((IAEItemStack)fail).createItemStack() );
+						drops.add( ((IAEItemStack)fail).getItemStack() );
 					}
 				}
 			}

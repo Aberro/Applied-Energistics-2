@@ -23,6 +23,7 @@ import java.util.Comparator;
 
 import appeng.api.config.SortDir;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.util.Platform;
 
 
@@ -35,7 +36,7 @@ public class FluidSorters
 {
 	private static SortDir Direction = SortDir.ASCENDING;
 
-	public static final Comparator<IAEFluidStack> CONFIG_BASED_SORT_BY_NAME = ( o1, o2 ) ->
+	public static final Comparator<IAEStack> CONFIG_BASED_SORT_BY_NAME = ( o1, o2 ) ->
 	{
 		if( getDirection() == SortDir.ASCENDING )
 		{
@@ -44,11 +45,11 @@ public class FluidSorters
 		return Platform.getFluidDisplayName( o2 ).compareToIgnoreCase( Platform.getFluidDisplayName( o1 ) );
 	};
 
-	public static final Comparator<IAEFluidStack> CONFIG_BASED_SORT_BY_MOD = new Comparator<IAEFluidStack>()
+	public static final Comparator<IAEStack> CONFIG_BASED_SORT_BY_MOD = new Comparator<IAEStack>()
 	{
 
 		@Override
-		public int compare( final IAEFluidStack o1, final IAEFluidStack o2 )
+		public int compare( final IAEStack o1, final IAEStack o2 )
 		{
 			final AEFluidStack op1 = (AEFluidStack) o1;
 			final AEFluidStack op2 = (AEFluidStack) o2;
@@ -60,7 +61,7 @@ public class FluidSorters
 			return this.secondarySort( Platform.getModId( op2 ).compareToIgnoreCase( Platform.getModId( op1 ) ), o1, o2 );
 		}
 
-		private int secondarySort( final int compareToIgnoreCase, final IAEFluidStack o1, final IAEFluidStack o2 )
+		private int secondarySort( final int compareToIgnoreCase, final IAEStack o1, final IAEStack o2 )
 		{
 			if( compareToIgnoreCase == 0 )
 			{
@@ -71,7 +72,7 @@ public class FluidSorters
 		}
 	};
 
-	public static final Comparator<IAEFluidStack> CONFIG_BASED_SORT_BY_SIZE = ( o1, o2 ) ->
+	public static final Comparator<IAEStack> CONFIG_BASED_SORT_BY_SIZE = ( o1, o2 ) ->
 	{
 		if( getDirection() == SortDir.ASCENDING )
 		{

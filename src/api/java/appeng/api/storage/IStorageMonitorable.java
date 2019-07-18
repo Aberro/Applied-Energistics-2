@@ -34,6 +34,6 @@ import appeng.api.storage.data.IAEStack;
 public interface IStorageMonitorable
 {
 
-	<T extends IAEStack> IMEMonitor getInventory( IStorageChannel<T> channel );
+	IMEMonitor getInventory( );
 
 }

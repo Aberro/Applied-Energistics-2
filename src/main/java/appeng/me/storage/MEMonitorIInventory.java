@@ -27,6 +27,8 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.AEApi;
@@ -46,12 +48,12 @@ import appeng.util.Platform;
 import appeng.util.inv.ItemSlot;
 
 
-public class MEMonitorIInventory implements IMEMonitor<IAEItemStack>, ITickingMonitor
+public class MEMonitorIInventory implements IMEMonitor, ITickingMonitor
 {
 
 	private final InventoryAdaptor adaptor;
-	private final IItemList<IAEItemStack> list = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
-	private final HashMap<IMEMonitorHandlerReceiver<IAEItemStack>, Object> listeners = new HashMap<>();
+	private final IItemList<IAEStack> list = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+	private final HashMap<IMEMonitorHandlerReceiver, Object> listeners = new HashMap<>();
 	private final NavigableMap<Integer, CachedItemStack> memory;
 	private IActionSource mySource;
 	private StorageFilter mode = StorageFilter.EXTRACTABLE_ONLY;
@@ -63,29 +65,30 @@ public class MEMonitorIInventory implements IMEMonitor<IAEItemStack>, ITickingMo
 	}
 
 	@Override
-	public void addListener( final IMEMonitorHandlerReceiver<IAEItemStack> l, final Object verificationToken )
+	public void addListener( final IMEMonitorHandlerReceiver l, final Object verificationToken )
 	{
 		this.listeners.put( l, verificationToken );
 	}
 
 	@Override
-	public void removeListener( final IMEMonitorHandlerReceiver<IAEItemStack> l )
+	public void removeListener( final IMEMonitorHandlerReceiver l )
 	{
 		this.listeners.remove( l );
 	}
 
 	@Override
-	public IAEItemStack injectItems( final IAEItemStack input, final Actionable type, final IActionSource src )
+	public IAEStack injectItems(final IAEStack input, final Actionable type, final IActionSource src )
 	{
-		ItemStack out = ItemStack.EMPTY;
+		IAEStack out = null;
+		IAEItemStack inputItem = (IAEItemStack)input;
 
 		if( type == Actionable.SIMULATE )
 		{
-			out = this.adaptor.simulateAdd( input.createItemStack() );
+			out = this.adaptor.simulateAdd( inputItem );
 		}
 		else
 		{
-			out = this.adaptor.addItems( input.createItemStack() );
+			out = this.adaptor.addItems( inputItem );
 		}
 
 		if( type == Actionable.MODULATE )
@@ -99,23 +102,24 @@ public class MEMonitorIInventory implements IMEMonitor<IAEItemStack>, ITickingMo
 		}
 
 		// better then doing construction from scratch :3
-		final IAEItemStack o = input.copy();
-		o.setStackSize( out.getCount() );
+		final IAEItemStack o = inputItem.copy();
+		o.setStackSize( out.getStackSize() );
 		return o;
 	}
 
 	@Override
-	public IAEItemStack extractItems( final IAEItemStack request, final Actionable type, final IActionSource src )
+	public IAEStack extractItems( final IAEStack request, final Actionable type, final IActionSource src )
 	{
-		ItemStack out = ItemStack.EMPTY;
+		IAEStack out = null;
+		IAEItemStack requestItem = (IAEItemStack)request;
 
 		if( type == Actionable.SIMULATE )
 		{
-			out = this.adaptor.simulateRemove( (int) request.getStackSize(), request.getDefinition(), null );
+			out = this.adaptor.simulateRemove( (int) requestItem.getStackSize(), requestItem, null );
 		}
 		else
 		{
-			out = this.adaptor.removeItems( (int) request.getStackSize(), request.getDefinition(), null );
+			out = this.adaptor.removeItems( (int) requestItem.getStackSize(), requestItem, null );
 		}
 
 		if( out.isEmpty() )
@@ -124,8 +128,8 @@ public class MEMonitorIInventory implements IMEMonitor<IAEItemStack>, ITickingMo
 		}
 
 		// better then doing construction from scratch :3
-		final IAEItemStack o = request.copy();
-		o.setStackSize( out.getCount() );
+		final IAEItemStack o = requestItem.copy();
+		o.setStackSize( out.getStackSize() );
 
 		if( type == Actionable.MODULATE )
 		{
@@ -133,59 +137,53 @@ public class MEMonitorIInventory implements IMEMonitor<IAEItemStack>, ITickingMo
 		}
 
 		return o;
-	}
-
-	@Override
-	public IStorageChannel getChannel()
-	{
-		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}
 
 	@Override
 	public TickRateModulation onTick()
 	{
 
-		final List<IAEItemStack> changes = new ArrayList<>();
+		final List<IAEStack> changes = new ArrayList<>();
 
 		this.list.resetStatus();
 		int high = 0;
 		boolean changed = false;
-		for( final ItemSlot is : this.adaptor )
+		for( final ISlot is : this.adaptor )
 		{
 			final CachedItemStack old = this.memory.get( is.getSlot() );
 			high = Math.max( high, is.getSlot() );
 
-			final ItemStack newIS = !is.isExtractable() && this.getMode() == StorageFilter.EXTRACTABLE_ONLY ? ItemStack.EMPTY : is.getItemStack();
-			final ItemStack oldIS = old == null ? ItemStack.EMPTY : old.itemStack;
+			final IAEStack newIS = !is.isExtractable() && this.getMode() == StorageFilter.EXTRACTABLE_ONLY ? null : is.getAEStack();
+			final IAEStack oldIS = old.stack;
 
-			if( this.isDifferent( newIS, oldIS ) )
+			if( ( ( newIS == null ) != ( oldIS == null ) ) || (newIS != null && !newIS.equals( oldIS ) ) )
 			{
-				final CachedItemStack cis = new CachedItemStack( is.getItemStack() );
+				final CachedItemStack cis = new CachedItemStack( is.getAEStack() );
 				this.memory.put( is.getSlot(), cis );
 
-				if( old != null && old.aeStack != null )
+				if( old != null && old.stack != null )
 				{
-					old.aeStack.setStackSize( -old.aeStack.getStackSize() );
-					changes.add( old.aeStack );
+					old.stack.setStackSize( -old.stack.getStackSize() );
+					changes.add( old.stack );
 				}
 
-				if( cis.aeStack != null )
+				if( cis.stack != null )
 				{
-					changes.add( cis.aeStack );
-					this.list.add( cis.aeStack );
+					changes.add( cis.stack );
+					this.list.add( cis.stack );
 				}
 
 				changed = true;
 			}
 			else
 			{
-				final int newSize = ( newIS.isEmpty() ? 0 : newIS.getCount() );
-				final int diff = newSize - ( oldIS.isEmpty() ? 0 : oldIS.getCount() );
+				final long newSize = ( newIS.isEmpty() ? 0 : newIS.getStackSize() );
+				final long diff = newSize - ( oldIS.isEmpty() ? 0 : oldIS.getStackSize() );
 
-				final IAEItemStack stack = ( old == null || old.aeStack == null ? AEApi.instance()
+				final IAEStack stack = ( old == null || old.stack == null ? AEApi.instance()
 						.storage()
 						.getStorageChannel( IItemStorageChannel.class )
-						.createStack( newIS ) : old.aeStack.copy() );
+						.createStack( newIS ) : old.stack.copy() );
 				if( stack != null )
 				{
 					stack.setStackSize( newSize );
@@ -194,10 +192,10 @@ public class MEMonitorIInventory implements IMEMonitor<IAEItemStack>, ITickingMo
 
 				if( diff != 0 && stack != null )
 				{
-					final CachedItemStack cis = new CachedItemStack( is.getItemStack() );
+					final CachedItemStack cis = new CachedItemStack( is.getAEStack() );
 					this.memory.put( is.getSlot(), cis );
 
-					final IAEItemStack a = stack.copy();
+					final IAEStack a = stack.copy();
 					a.setStackSize( diff );
 					changes.add( a );
 					changed = true;
@@ -211,9 +209,9 @@ public class MEMonitorIInventory implements IMEMonitor<IAEItemStack>, ITickingMo
 		{
 			for( final CachedItemStack cis : end.values() )
 			{
-				if( cis != null && cis.aeStack != null )
+				if( cis != null && cis.stack != null )
 				{
-					final IAEItemStack a = cis.aeStack.copy();
+					final IAEStack a = cis.stack.copy();
 					a.setStackSize( -a.getStackSize() );
 					changes.add( a );
 					changed = true;
@@ -230,31 +228,16 @@ public class MEMonitorIInventory implements IMEMonitor<IAEItemStack>, ITickingMo
 		return changed ? TickRateModulation.URGENT : TickRateModulation.SLOWER;
 	}
 
-	private boolean isDifferent( final ItemStack a, final ItemStack b )
-	{
-		if( a == b && b.isEmpty() )
-		{
-			return false;
-		}
-
-		if( ( a.isEmpty() && !b.isEmpty() ) || ( !a.isEmpty() && b.isEmpty() ) )
-		{
-			return true;
-		}
-
-		return !Platform.itemComparisons().isSameItem( a, b );
-	}
-
-	private void postDifference( final Iterable<IAEItemStack> a )
+	private void postDifference( final Iterable<IAEStack> a )
 	{
 		// AELog.info( a.getItemStack().getUnlocalizedName() + " @ " + a.getStackSize() );
 		if( a != null )
 		{
-			final Iterator<Entry<IMEMonitorHandlerReceiver<IAEItemStack>, Object>> i = this.listeners.entrySet().iterator();
+			final Iterator<Entry<IMEMonitorHandlerReceiver, Object>> i = this.listeners.entrySet().iterator();
 			while( i.hasNext() )
 			{
-				final Entry<IMEMonitorHandlerReceiver<IAEItemStack>, Object> l = i.next();
-				final IMEMonitorHandlerReceiver<IAEItemStack> key = l.getKey();
+				final Entry<IMEMonitorHandlerReceiver, Object> l = i.next();
+				final IMEMonitorHandlerReceiver key = l.getKey();
 				if( key.isValid( l.getValue() ) )
 				{
 					key.postChange( this, a, this.getActionSource() );
@@ -274,13 +257,13 @@ public class MEMonitorIInventory implements IMEMonitor<IAEItemStack>, ITickingMo
 	}
 
 	@Override
-	public boolean isPrioritized( final IAEItemStack input )
+	public boolean isPrioritized( final IAEStack input )
 	{
 		return false;
 	}
 
 	@Override
-	public boolean canAccept( final IAEItemStack input )
+	public boolean canAccept( final IAEStack input )
 	{
 		return true;
 	}
@@ -304,18 +287,18 @@ public class MEMonitorIInventory implements IMEMonitor<IAEItemStack>, ITickingMo
 	}
 
 	@Override
-	public IItemList<IAEItemStack> getAvailableItems( final IItemList out )
+	public IItemList<IAEStack> getAvailableItems( IStorageChannel channel, final IItemList<IAEStack> out )
 	{
 		for( final CachedItemStack is : this.memory.values() )
 		{
-			out.addStorage( is.aeStack );
+			out.addStorage( is.stack );
 		}
 
 		return out;
 	}
 
 	@Override
-	public IItemList<IAEItemStack> getStorageList()
+	public IItemList<IAEStack> getStorageList( IStorageChannel channel )
 	{
 		return this.list;
 	}
@@ -344,21 +327,14 @@ public class MEMonitorIInventory implements IMEMonitor<IAEItemStack>, ITickingMo
 	private static class CachedItemStack
 	{
 
-		private final ItemStack itemStack;
-		private final IAEItemStack aeStack;
+		private final IAEStack stack;
 
-		public CachedItemStack( final ItemStack is )
+		public CachedItemStack( final IAEStack stack )
 		{
-			if( is.isEmpty() )
-			{
-				this.itemStack = ItemStack.EMPTY;
-				this.aeStack = null;
-			}
+			if( stack == null || stack.isEmpty() )
+				this.stack = null;
 			else
-			{
-				this.itemStack = is.copy();
-				this.aeStack = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( is );
-			}
+				this.stack = stack.copy();
 		}
 	}
 }

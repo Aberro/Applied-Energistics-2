@@ -29,6 +29,7 @@ import java.io.IOException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import appeng.api.util.ISlot;
 import io.netty.buffer.ByteBuf;
 
 import net.minecraft.item.ItemStack;
@@ -39,7 +40,7 @@ import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 
 
-public interface IStorageChannel<T extends IAEStack>
+public interface IStorageChannel<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack>
 {
 	IStorageChannel getChannelType();
 	/**
@@ -70,6 +71,11 @@ public interface IStorageChannel<T extends IAEStack>
 	String getPatternNBTInputTag();
 	@Nonnull
 	String getPatternNBTOutputTag();
+	@Nonnull
+	String getNBTName();
+
+	TStack getEMPTY();
+	TSlot createSlot();
 
 	/**
 	 * Create a new {@link IItemList} of the specific type.
@@ -77,7 +83,7 @@ public interface IStorageChannel<T extends IAEStack>
 	 * @return
 	 */
 	@Nonnull
-	IItemList<T> createList();
+	IItemList<IAEStack> createList();
 
 	/**
 	 * Create a new {@link IAEStack} subtype of the specific object.
@@ -94,7 +100,7 @@ public interface IStorageChannel<T extends IAEStack>
 	 * @return The converted stack or null
 	 */
 	@Nullable
-	T createStack( @Nonnull Object input );
+	TAEStack createStack(@Nonnull Object input );
 
 	/**
 	 * 
@@ -103,7 +109,7 @@ public interface IStorageChannel<T extends IAEStack>
 	 * @throws IOException
 	 */
 	@Nullable
-	T readFromPacket( @Nonnull ByteBuf input ) throws IOException;
+	TAEStack readFromPacket(@Nonnull ByteBuf input ) throws IOException;
 
 	/**
 	 * create from nbt data
@@ -112,5 +118,7 @@ public interface IStorageChannel<T extends IAEStack>
 	 * @return
 	 */
 	@Nullable
-	T createFromNBT( @Nonnull NBTTagCompound nbt );
+	TAEStack createFromNBT(@Nonnull NBTTagCompound nbt );
+
+    int getDefaultStackLimit();
 }

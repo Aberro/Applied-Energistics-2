@@ -16,6 +16,6 @@ public interface IClientHelper
 	 * @param handler Cell handler.
 	 * @param lines List of lines to add to.
 	 */
-	<T extends IAEStack> void addCellInformation( ICellInventoryHandler<T> handler, List<String> lines );
+	<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> void addCellInformation( ICellInventoryHandler<TAEStack, TSlot, TStack> handler, List<String> lines );
 
 }

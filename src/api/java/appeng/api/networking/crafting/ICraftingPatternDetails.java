@@ -50,6 +50,8 @@ public interface ICraftingPatternDetails
 	 */
 	ItemStack getPattern();
 
+	IInventoryCrafting getInventoryCrafting();
+
 	/**
 	 * @param slotIndex specific slot index
 	 * @param itemStack item in slot
@@ -101,7 +103,7 @@ public interface ICraftingPatternDetails
 	 *
 	 * @return the crafted ( work bench ) item.
 	 */
-	ItemStack getOutput( InventoryCrafting craftingInv, World world );
+	ItemStack getOutput( IInventoryCrafting craftingInv, World world );
 
 	/**
 	 * Get the priority of this pattern

@@ -80,11 +80,10 @@ public class ItemCreativeStorageCell extends AEBaseItem implements ICellWorkbenc
 	@Override
 	public void addCheckedInformation( final ItemStack stack, final World world, final List<String> lines, final ITooltipFlag advancedTooltips )
 	{
-		final IMEInventoryHandler<?> inventory = AEApi.instance()
+		final IMEInventoryHandler inventory = AEApi.instance()
 				.registries()
 				.cell()
-				.getCellInventory( stack, null,
-						AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+				.getCellInventory( stack, null );
 
 		if( inventory instanceof ICellInventoryHandler )
 		{

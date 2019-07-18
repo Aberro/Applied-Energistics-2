@@ -25,6 +25,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Optional;
 
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -284,7 +286,7 @@ public class TileCraftingTile extends AENetworkTile implements IAEMultiBlock, IP
 		if( this.cluster != null )
 		{
 			this.cluster.cancel();
-			final IMEInventory<IAEItemStack> inv = this.cluster.getInventory();
+			final IMEInventory inv = this.cluster.getInventory();
 
 			final LinkedList<WorldCoord> places = new LinkedList<>();
 
@@ -319,13 +321,14 @@ public class TileCraftingTile extends AENetworkTile implements IAEMultiBlock, IP
 				throw new IllegalStateException( this.cluster + " does not contain any kind of blocks, which were destroyed." );
 			}
 
-			for( IAEItemStack ais : inv.getAvailableItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList() ) )
+			IStorageChannel channel = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
+			for( IAEStack ais : inv.getAvailableItems( channel, channel.createList() ) )
 			{
 				ais = ais.copy();
-				ais.setStackSize( ais.getDefinition().getMaxStackSize() );
+				ais.setStackSize( ((IAEItemStack)ais).getDefinition().getMaxStackSize() );
 				while( true )
 				{
-					final IAEItemStack g = inv.extractItems( ais.copy(), Actionable.MODULATE, this.cluster.getActionSource() );
+					final IAEStack g = inv.extractItems( ais.copy(), Actionable.MODULATE, this.cluster.getActionSource() );
 					if( g == null )
 					{
 						break;
@@ -334,7 +337,7 @@ public class TileCraftingTile extends AENetworkTile implements IAEMultiBlock, IP
 					final WorldCoord wc = places.poll();
 					places.add( wc );
 
-					Platform.spawnDrops( this.world, wc.getPos(), Collections.singletonList( g.createItemStack() ) );
+					Platform.spawnDrops( this.world, wc.getPos(), Collections.singletonList( ((IAEItemStack)g).getItemStack() ) );
 				}
 			}
 

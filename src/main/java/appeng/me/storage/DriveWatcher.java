@@ -19,6 +19,8 @@
 package appeng.me.storage;
 
 
+import appeng.api.storage.IMEInventory;
+import appeng.api.storage.IStorageChannel;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.config.Actionable;
@@ -29,7 +31,7 @@ import appeng.api.storage.ICellInventoryHandler;
 import appeng.api.storage.data.IAEStack;
 
 
-public class DriveWatcher<T extends IAEStack<T>> extends MEInventoryHandler<T>
+public class DriveWatcher extends MEInventoryHandler
 {
 
 	private int oldStatus = 0;
@@ -37,9 +39,9 @@ public class DriveWatcher<T extends IAEStack<T>> extends MEInventoryHandler<T>
 	private final ICellHandler handler;
 	private final IChestOrDrive cord;
 
-	public DriveWatcher( final ICellInventoryHandler<T> i, final ItemStack is, final ICellHandler han, final IChestOrDrive cod )
+	public DriveWatcher( final ICellInventoryHandler i, final ItemStack is, final ICellHandler han, final IChestOrDrive cod )
 	{
-		super( i, i.getChannel() );
+		super( i );
 		this.is = is;
 		this.handler = han;
 		this.cord = cod;
@@ -51,11 +53,11 @@ public class DriveWatcher<T extends IAEStack<T>> extends MEInventoryHandler<T>
 	}
 
 	@Override
-	public T injectItems( final T input, final Actionable type, final IActionSource src )
+	public IAEStack injectItems( final IAEStack input, final Actionable type, final IActionSource src )
 	{
 		final long size = input.getStackSize();
 
-		final T a = super.injectItems( input, type, src );
+		final IAEStack a = super.injectItems( input, type, src );
 
 		if( type == Actionable.MODULATE && ( a == null || a.getStackSize() != size ) )
 		{
@@ -72,9 +74,9 @@ public class DriveWatcher<T extends IAEStack<T>> extends MEInventoryHandler<T>
 	}
 
 	@Override
-	public T extractItems( final T request, final Actionable type, final IActionSource src )
+	public IAEStack extractItems( final IAEStack request, final Actionable type, final IActionSource src )
 	{
-		final T a = super.extractItems( request, type, src );
+		final IAEStack a = super.extractItems( request, type, src );
 
 		if( type == Actionable.MODULATE && a != null )
 		{
@@ -88,5 +90,15 @@ public class DriveWatcher<T extends IAEStack<T>> extends MEInventoryHandler<T>
 		}
 
 		return a;
+	}
+
+	public IStorageChannel getChannel()
+	{
+		IMEInventory i = getInternal();
+
+		if(i instanceof ICellInventoryHandler)
+			return ((ICellInventoryHandler)i).getChannel();
+		//TODO maybe throw exception? This should be wrong case...
+		return null;
 	}
 }

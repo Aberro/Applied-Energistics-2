@@ -59,7 +59,7 @@ public final class StorageMonitorWailaDataProvider extends BasePartWailaDataProv
 		{
 			final IPartStorageMonitor monitor = (IPartStorageMonitor) part;
 
-			final IAEStack<?> displayed = monitor.getDisplayed();
+			final IAEStack displayed = monitor.getDisplayed();
 			final boolean isLocked = monitor.isLocked();
 
 			// TODO: generalize

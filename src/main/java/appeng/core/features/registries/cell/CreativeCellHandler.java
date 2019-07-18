@@ -19,6 +19,8 @@
 package appeng.core.features.registries.cell;
 
 
+import appeng.api.storage.data.IAEItemStack;
+import appeng.util.inv.ItemSlot;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.AEApi;
@@ -31,20 +33,25 @@ import appeng.items.storage.ItemCreativeStorageCell;
 import appeng.me.storage.CreativeCellInventory;
 
 
-public final class CreativeCellHandler implements ICellHandler
+public final class CreativeCellHandler implements ICellHandler<IAEItemStack, ItemSlot, ItemStack>
 {
 
 	@Override
 	public boolean isCell( final ItemStack is )
 	{
-		return !is.isEmpty() && is.getItem() instanceof ItemCreativeStorageCell;
+		return CreativeCellInventory.isCell( is, getChannel() );
 	}
 
 	@Override
-	public ICellInventoryHandler getCellInventory( final ItemStack is, final ISaveProvider container, final IStorageChannel channel )
+	public IStorageChannel<IAEItemStack, ItemSlot, ItemStack> getChannel()
 	{
-		if( channel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) && !is.isEmpty() && is
-				.getItem() instanceof ItemCreativeStorageCell )
+		return AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
+	}
+
+	@Override
+	public ICellInventoryHandler<IAEItemStack, ItemSlot, ItemStack> getCellInventory( final ItemStack is, final ISaveProvider container )
+	{
+		if( !is.isEmpty() && is.getItem() instanceof ItemCreativeStorageCell )
 		{
 			return CreativeCellInventory.getCell( is );
 		}

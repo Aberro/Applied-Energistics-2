@@ -2,6 +2,7 @@
 package appeng.api.storage;
 
 
+import appeng.api.util.ISlot;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 
@@ -17,7 +18,7 @@ public interface ICellGuiHandler
 	 * @param channel Storage channel
 	 * @return True if handled, else false.
 	 */
-	<T extends IAEStack> boolean isHandlerFor( IStorageChannel<T> channel );
+	boolean isHandlerFor( IStorageChannel channel );
 
 	/**
 	 * Return true to prioritize this handler for the provided {@link ItemStack}.
@@ -42,6 +43,6 @@ public interface ICellGuiHandler
 	 * @param is item
 	 * @param chan storage channel
 	 */
-	<T extends IAEStack> void openChestGui( EntityPlayer player, IChestOrDrive chest, ICellHandler cellHandler, IMEInventoryHandler inv, ItemStack is, IStorageChannel<T> chan );
+	<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> void openChestGui(EntityPlayer player, IChestOrDrive chest, ICellHandler cellHandler, IMEInventoryHandler inv, ItemStack is, IStorageChannel<TAEStack, TSlot, TStack> chan );
 
 }

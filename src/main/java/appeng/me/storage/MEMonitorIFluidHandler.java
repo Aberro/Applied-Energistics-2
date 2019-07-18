@@ -50,7 +50,7 @@ import appeng.api.storage.data.IItemList;
 public class MEMonitorIFluidHandler implements IMEMonitor, ITickingMonitor
 {
 	private final IFluidHandler handler;
-	private final IItemList<IAEFluidStack> list = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
+	private final IItemList<IAEStack> list = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
 	private final HashMap<IMEMonitorHandlerReceiver, Object> listeners = new HashMap<>();
 	private final NavigableMap<Integer, CachedFluidStack> memory;
 	private IActionSource mySource;
@@ -123,7 +123,6 @@ public class MEMonitorIFluidHandler implements IMEMonitor, ITickingMonitor
 		return o;
 	}
 
-	@Override
 	public IStorageChannel getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class );

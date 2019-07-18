@@ -24,6 +24,7 @@
 package appeng.api.storage;
 
 
+import appeng.api.util.ISlot;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.storage.data.IAEStack;
@@ -32,7 +33,7 @@ import appeng.api.storage.data.IAEStack;
 /**
  * Registration record for {@link ICellRegistry}
  */
-public interface ICellHandler
+public interface ICellHandler<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack>
 {
 
 	/**
@@ -45,17 +46,18 @@ public interface ICellHandler
 	 */
 	boolean isCell( ItemStack is );
 
+	IStorageChannel<TAEStack, TSlot, TStack> getChannel();
+
 	/**
 	 * If you cannot handle the provided item, return null
 	 *
 	 * @param is a storage cell item.
 	 * @param host anytime the contents of your storage cell changes it should use this to request a save, please
 	 * note, this value can be null. If provided, the host is responsible for persisting the cell content.
-	 * @param channel the storage channel requested.
 	 *
 	 * @return a new IMEHandler for the provided item
 	 */
-	<T extends IAEStack> ICellInventoryHandler<T> getCellInventory( ItemStack is, ISaveProvider host, IStorageChannel<T> channel );
+	ICellInventoryHandler<TAEStack, TSlot, TStack> getCellInventory( ItemStack is, ISaveProvider host );
 
 	/**
 	 * 0 - cell is missing.
@@ -71,7 +73,7 @@ public interface ICellHandler
 	 *
 	 * @return get the status of the cell based on its contents.
 	 */
-	default <T extends IAEStack> int getStatusForCell( ItemStack is, ICellInventoryHandler<T> handler )
+	default int getStatusForCell( ItemStack is, ICellInventoryHandler<TAEStack, TSlot, TStack> handler )
 	{
 		if( handler.getCellInv() != null )
 		{
@@ -90,7 +92,7 @@ public interface ICellHandler
 	/**
 	 * @return the ae/t to drain for this storage cell inside a chest/drive.
 	 */
-	default <T extends IAEStack> double cellIdleDrain( ItemStack is, ICellInventoryHandler<T> handler )
+	default double cellIdleDrain( ItemStack is, ICellInventoryHandler<TAEStack, TSlot, TStack> handler )
 	{
 		if( handler.getCellInv() != null )
 		{

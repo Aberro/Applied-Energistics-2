@@ -61,7 +61,7 @@ public class PacketMEInventoryUpdate extends AppEngPacket
 
 	// input.
 	@Nullable
-	private final List<IAEItemStack> list;
+	private final List<IAEStack> list;
 	// output...
 	private final byte ref;
 

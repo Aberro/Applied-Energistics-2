@@ -19,6 +19,11 @@
 package appeng.me.storage;
 
 
+import appeng.api.implementations.items.IStorageCell;
+import appeng.api.storage.data.IAEStack;
+import appeng.items.storage.ItemCreativeStorageCell;
+import appeng.util.inv.ItemSlot;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.AEApi;
@@ -35,10 +40,10 @@ import appeng.items.contents.CellConfig;
 import appeng.util.item.AEItemStack;
 
 
-public class CreativeCellInventory implements IMEInventoryHandler<IAEItemStack>
+public class CreativeCellInventory implements IMEInventoryHandler
 {
 
-	private final IItemList<IAEItemStack> itemListCache = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+	private final IItemList<IAEStack> itemListCache = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
 
 	protected CreativeCellInventory( final ItemStack o )
 	{
@@ -59,10 +64,15 @@ public class CreativeCellInventory implements IMEInventoryHandler<IAEItemStack>
 		return new BasicCellInventoryHandler( new CreativeCellInventory( o ), AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
 	}
 
-	@Override
-	public IAEItemStack injectItems( final IAEItemStack input, final Actionable mode, final IActionSource src )
+	public static boolean isCell(ItemStack is, IStorageChannel<IAEItemStack, ItemSlot, ItemStack> channel)
 	{
-		final IAEItemStack local = this.itemListCache.findPrecise( input );
+		return !is.isEmpty() && is.getItem() instanceof ItemCreativeStorageCell;
+	}
+
+	@Override
+	public IAEStack injectItems( final IAEStack input, final Actionable mode, final IActionSource src )
+	{
+		final IAEStack local = this.itemListCache.findPrecise( input );
 		if( local == null )
 		{
 			return input;
@@ -72,9 +82,9 @@ public class CreativeCellInventory implements IMEInventoryHandler<IAEItemStack>
 	}
 
 	@Override
-	public IAEItemStack extractItems( final IAEItemStack request, final Actionable mode, final IActionSource src )
+	public IAEStack extractItems( final IAEStack request, final Actionable mode, final IActionSource src )
 	{
-		final IAEItemStack local = this.itemListCache.findPrecise( request );
+		final IAEStack local = this.itemListCache.findPrecise( request );
 		if( local == null )
 		{
 			return null;
@@ -84,16 +94,17 @@ public class CreativeCellInventory implements IMEInventoryHandler<IAEItemStack>
 	}
 
 	@Override
-	public IItemList<IAEItemStack> getAvailableItems( final IItemList out )
+	public IItemList<IAEStack> getAvailableItems( IStorageChannel channel, final IItemList out )
 	{
-		for( final IAEItemStack ais : this.itemListCache )
+		if(channel != this.getChannel())
+			return out;
+		for( final IAEStack ais : this.itemListCache )
 		{
 			out.add( ais );
 		}
 		return out;
 	}
 
-	@Override
 	public IStorageChannel getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
@@ -106,13 +117,13 @@ public class CreativeCellInventory implements IMEInventoryHandler<IAEItemStack>
 	}
 
 	@Override
-	public boolean isPrioritized( final IAEItemStack input )
+	public boolean isPrioritized( final IAEStack input )
 	{
 		return this.itemListCache.findPrecise( input ) != null;
 	}
 
 	@Override
-	public boolean canAccept( final IAEItemStack input )
+	public boolean canAccept( final IAEStack input )
 	{
 		return this.itemListCache.findPrecise( input ) != null;
 	}

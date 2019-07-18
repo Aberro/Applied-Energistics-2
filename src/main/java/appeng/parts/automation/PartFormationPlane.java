@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 import appeng.api.storage.data.IAEStack;
+import appeng.util.inv.ItemSlot;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -91,9 +92,7 @@ public class PartFormationPlane extends PartAbstractFormationPlane<IAEItemStack>
 		return MODELS.getModels();
 	}
 
-	private final MEInventoryHandler myHandler = new MEInventoryHandler( this, AEApi.instance()
-			.storage()
-			.getStorageChannel( IItemStorageChannel.class ) );
+	private final MEInventoryHandler myHandler = new MEInventoryHandler( this );
 	private final AppEngInternalAEInventory Config = new AppEngInternalAEInventory( this, 63 );
 
 	public PartFormationPlane( final ItemStack is )
@@ -112,7 +111,7 @@ public class PartFormationPlane extends PartAbstractFormationPlane<IAEItemStack>
 		this.myHandler.setWhitelist( this.getInstalledUpgrades( Upgrades.INVERTER ) > 0 ? IncludeExclude.BLACKLIST : IncludeExclude.WHITELIST );
 		this.myHandler.setPriority( this.getPriority() );
 
-		final IItemList<IAEItemStack> priorityList = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+		final IItemList<IAEStack> priorityList = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
 
 		final int slotsToUse = 18 + this.getInstalledUpgrades( Upgrades.CAPACITY ) * 9;
 		for( int x = 0; x < this.Config.getSlots() && x < slotsToUse; x++ )
@@ -127,11 +126,11 @@ public class PartFormationPlane extends PartAbstractFormationPlane<IAEItemStack>
 		if( this.getInstalledUpgrades( Upgrades.FUZZY ) > 0 )
 		{
 			this.myHandler.setPartitionList(
-					new FuzzyPriorityList<IAEItemStack>( priorityList, (FuzzyMode) this.getConfigManager().getSetting( Settings.FUZZY_MODE ) ) );
+					new FuzzyPriorityList( priorityList, (FuzzyMode) this.getConfigManager().getSetting( Settings.FUZZY_MODE ) ) );
 		}
 		else
 		{
-			this.myHandler.setPartitionList( new PrecisePriorityList<IAEItemStack>( priorityList ) );
+			this.myHandler.setPartitionList( new PrecisePriorityList( priorityList ) );
 		}
 
 		try
@@ -205,15 +204,17 @@ public class PartFormationPlane extends PartAbstractFormationPlane<IAEItemStack>
 	}
 
 	@Override
+	public List<IMEInventoryHandler> getCellArray( )
+	{
+		final List<IMEInventoryHandler> handler = new ArrayList<>( 1 );
+		handler.add( this.myHandler );
+		return handler;
+	}
+
+	@Override
 	public List<IMEInventoryHandler> getCellArray( final IStorageChannel channel )
 	{
-		if( this.getProxy().isActive() && channel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
-		{
-			final List<IMEInventoryHandler> handler = new ArrayList<>( 1 );
-			handler.add( this.myHandler );
-			return handler;
-		}
-		return Collections.emptyList();
+		return getCellArray();
 	}
 
 	@Override
@@ -229,7 +230,7 @@ public class PartFormationPlane extends PartAbstractFormationPlane<IAEItemStack>
 
 		final YesNo placeBlock = (YesNo) this.getConfigManager().getSetting( Settings.PLACE_BLOCK );
 
-		final ItemStack is = itemInput.createItemStack();
+		final ItemStack is = itemInput.getItemStack();
 		final Item i = is.getItem();
 
 		long maxStorage = Math.min( itemInput.getStackSize(), is.getMaxStackSize() );
@@ -364,8 +365,7 @@ public class PartFormationPlane extends PartAbstractFormationPlane<IAEItemStack>
 		return itemInput;
 	}
 
-	@Override
-	public IStorageChannel<IAEItemStack> getChannel()
+	public IStorageChannel<IAEItemStack, ItemSlot, ItemStack> getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}

@@ -21,6 +21,8 @@ package appeng.container.implementations;
 
 import java.util.Iterator;
 
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
@@ -153,13 +155,14 @@ public class ContainerStorageBus extends ContainerUpgradeable
 	{
 		final IItemHandler inv = this.getUpgradeable().getInventoryByName( "config" );
 
-		final IMEInventory<IAEItemStack> cellInv = this.storageBus.getInternalHandler();
+		final IMEInventory cellInv = this.storageBus.getInternalHandler();
 
-		Iterator<IAEItemStack> i = new NullIterator<>();
+		Iterator<IAEStack> i = new NullIterator<>();
 		if( cellInv != null )
 		{
-			final IItemList<IAEItemStack> list = cellInv
-					.getAvailableItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList() );
+			IStorageChannel channel = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
+			final IItemList<IAEStack> list = cellInv
+					.getAvailableItems( channel, channel.createList() );
 			i = list.iterator();
 		}
 

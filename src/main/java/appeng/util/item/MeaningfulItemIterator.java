@@ -23,9 +23,10 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 
 
-public class MeaningfulItemIterator<T extends IAEItemStack> implements Iterator<T>
+public class MeaningfulItemIterator<T extends IAEStack> implements Iterator<T>
 {
 
 	private final Iterator<T> parent;

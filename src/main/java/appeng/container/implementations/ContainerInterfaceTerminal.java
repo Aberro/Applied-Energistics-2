@@ -24,8 +24,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.item.AEItemStack;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.items.IItemHandler;
@@ -208,10 +212,10 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer
 			final ItemStack is = inv.server.getStackInSlot( slot );
 			final boolean hasItemInHand = !player.inventory.getItemStack().isEmpty();
 
-			final InventoryAdaptor playerHand = new AdaptorItemHandler( new WrapperCursorItemHandler( player.inventory ) );
+			final ItemInventoryAdaptor playerHand = new AdaptorItemHandler( new WrapperCursorItemHandler( player.inventory ) );
 
 			final IItemHandler theSlot = new WrapperFilteredItemHandler( new WrapperRangeItemHandler( inv.server, slot, slot + 1 ), new PatternSlotFilter() );
-			final InventoryAdaptor interfaceSlot = new AdaptorItemHandler( theSlot );
+			final ItemInventoryAdaptor interfaceSlot = new AdaptorItemHandler( theSlot );
 
 			switch( action )
 			{
@@ -222,7 +226,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer
 						ItemStack inSlot = theSlot.getStackInSlot( 0 );
 						if( inSlot.isEmpty() )
 						{
-							player.inventory.setItemStack( interfaceSlot.addItems( player.inventory.getItemStack() ) );
+							player.inventory.setItemStack( (ItemStack)interfaceSlot.addItems(AEItemStack.fromItemStack( player.inventory.getItemStack() ) ).getStack() );
 						}
 						else
 						{
@@ -232,7 +236,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer
 							ItemHandlerUtil.setStackInSlot( theSlot, 0, ItemStack.EMPTY );
 							player.inventory.setItemStack( ItemStack.EMPTY );
 
-							player.inventory.setItemStack( interfaceSlot.addItems( inHand.copy() ) );
+							player.inventory.setItemStack( (ItemStack)interfaceSlot.addItems(AEItemStack.fromItemStack( inHand.copy() ) ).getStack() );
 
 							if( player.inventory.getItemStack().isEmpty() )
 							{
@@ -247,7 +251,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer
 					}
 					else
 					{
-						ItemHandlerUtil.setStackInSlot( theSlot, 0, playerHand.addItems( theSlot.getStackInSlot( 0 ) ) );
+						ItemHandlerUtil.setStackInSlot( theSlot, 0, (ItemStack)playerHand.addItems( AEItemStack.fromItemStack( theSlot.getStackInSlot( 0 ) ) ).getStack() );
 					}
 
 					break;
@@ -255,7 +259,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer
 
 					if( hasItemInHand )
 					{
-						ItemStack extra = playerHand.removeItems( 1, ItemStack.EMPTY, null );
+						IAEStack extra = playerHand.removeItems( 1, null, null );
 						if( !extra.isEmpty() )
 						{
 							extra = interfaceSlot.addItems( extra );
@@ -267,7 +271,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer
 					}
 					else if( !is.isEmpty() )
 					{
-						ItemStack extra = interfaceSlot.removeItems( ( is.getCount() + 1 ) / 2, ItemStack.EMPTY, null );
+						IAEStack extra = interfaceSlot.removeItems( ( is.getCount() + 1 ) / 2, null, null );
 						if( !extra.isEmpty() )
 						{
 							extra = playerHand.addItems( extra );
@@ -281,17 +285,17 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer
 					break;
 				case SHIFT_CLICK:
 
-					final InventoryAdaptor playerInv = InventoryAdaptor.getAdaptor( player );
+					final ItemInventoryAdaptor playerInv = ItemInventoryAdaptor.getAdaptor( player );
 
-					ItemHandlerUtil.setStackInSlot( theSlot, 0, playerInv.addItems( theSlot.getStackInSlot( 0 ) ) );
+					ItemHandlerUtil.setStackInSlot( theSlot, 0, (ItemStack)playerInv.addItems( AEItemStack.fromItemStack( theSlot.getStackInSlot( 0 ) ) ).getStack() );
 
 					break;
 				case MOVE_REGION:
 
-					final InventoryAdaptor playerInvAd = InventoryAdaptor.getAdaptor( player );
+					final ItemInventoryAdaptor playerInvAd = ItemInventoryAdaptor.getAdaptor( player );
 					for( int x = 0; x < inv.server.getSlots(); x++ )
 					{
-						ItemHandlerUtil.setStackInSlot( inv.server, x, playerInvAd.addItems( inv.server.getStackInSlot( x ) ) );
+						ItemHandlerUtil.setStackInSlot( inv.server, x, (ItemStack)playerInvAd.addItems( AEItemStack.fromItemStack( inv.server.getStackInSlot( x ) ) ).getStack() );
 					}
 
 					break;

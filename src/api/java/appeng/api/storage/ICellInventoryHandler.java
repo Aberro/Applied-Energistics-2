@@ -28,9 +28,10 @@ import javax.annotation.Nullable;
 
 import appeng.api.config.IncludeExclude;
 import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
 
 
-public interface ICellInventoryHandler<T extends IAEStack> extends IMEInventoryHandler
+public interface ICellInventoryHandler<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> extends IMEInventoryHandler
 {
 
 	/**
@@ -39,7 +40,9 @@ public interface ICellInventoryHandler<T extends IAEStack> extends IMEInventoryH
 	 * @return get access to the Cell Inventory.
 	 */
 	@Nullable
-	ICellInventory<T> getCellInv();
+	ICellInventory<TAEStack, TSlot, TStack> getCellInv();
+
+	IStorageChannel<TAEStack, TSlot, TStack> getChannel();
 
 	boolean isPreformatted();
 

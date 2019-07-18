@@ -75,12 +75,6 @@ class CondenserVoidInventory implements IMEMonitor
 	}
 
 	@Override
-	public IStorageChannel<IAEStack> getChannel()
-	{
-		return this.channel;
-	}
-
-	@Override
 	public AccessRestriction getAccess()
 	{
 		return AccessRestriction.WRITE;

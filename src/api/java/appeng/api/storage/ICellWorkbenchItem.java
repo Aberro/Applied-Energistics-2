@@ -24,13 +24,15 @@
 package appeng.api.storage;
 
 
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 
 import appeng.api.config.FuzzyMode;
 
 
-public interface ICellWorkbenchItem
+public interface ICellWorkbenchItem<TAEStack extends IAEStack, TSlot, TStack>
 {
 
 	/**

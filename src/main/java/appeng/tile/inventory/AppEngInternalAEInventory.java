@@ -142,7 +142,7 @@ public class AppEngInternalAEInventory implements IItemHandlerModifiable, Iterab
 			return ItemStack.EMPTY;
 		}
 
-		return this.inv[var1].createItemStack();
+		return this.inv[var1].getItemStack();
 	}
 
 	@Override

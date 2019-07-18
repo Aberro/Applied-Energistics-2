@@ -22,10 +22,14 @@ package appeng.items.storage;
 import java.util.List;
 import java.util.Set;
 
+import appeng.api.util.ISlot;
+import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.item.AEItemStack;
 import appeng.util.item.MixedList;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
@@ -63,7 +67,7 @@ import appeng.util.Platform;
  * @version rv6 - 2018-01-17
  * @since rv6 2018-01-17
  */
-public abstract class AbstractStorageCell<T extends IAEStack> extends AEBaseItem implements IStorageCell<T>, IItemGroup
+public abstract class AbstractStorageCell<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> extends AEBaseItem implements IStorageCell<TAEStack, TSlot, TStack>, IItemGroup
 {
 	protected final MaterialType component;
 	protected final int totalBytes;
@@ -81,7 +85,7 @@ public abstract class AbstractStorageCell<T extends IAEStack> extends AEBaseItem
 	{
 		AEApi.instance()
 				.client()
-				.addCellInformation( AEApi.instance().registries().cell().getCellInventory( stack, null, this.getChannel() ), lines );
+				.addCellInformation( AEApi.instance().registries().cell().getCellInventory( stack, null ), lines );
 	}
 
 	@Override
@@ -97,7 +101,7 @@ public abstract class AbstractStorageCell<T extends IAEStack> extends AEBaseItem
 	}
 
 	@Override
-	public boolean isBlackListed( final ItemStack cellItem, final T requestedAddition )
+	public boolean isBlackListed( final ItemStack cellItem, final TAEStack requestedAddition )
 	{
 		return false;
 	}
@@ -111,6 +115,7 @@ public abstract class AbstractStorageCell<T extends IAEStack> extends AEBaseItem
 	@Override
 	public boolean isStorageCell( final ItemStack i )
 	{
+		//TODO this is wrong! Should check whether input is actually a cell or not!
 		return true;
 	}
 
@@ -175,31 +180,31 @@ public abstract class AbstractStorageCell<T extends IAEStack> extends AEBaseItem
 			}
 
 			final InventoryPlayer playerInventory = player.inventory;
-			final IMEInventoryHandler inv = AEApi.instance().registries().cell().getCellInventory( stack, null, this.getChannel() );
+			final IMEInventoryHandler inv = AEApi.instance().registries().cell().getCellInventory( stack, null );
 			if( inv != null && playerInventory.getCurrentItem() == stack )
 			{
-				final InventoryAdaptor ia = InventoryAdaptor.getAdaptor( player );
+				final ItemInventoryAdaptor ia = ItemInventoryAdaptor.getAdaptor( player );
 				final IItemList<IAEStack> list = inv.getAvailableItems( this.getChannel(), new MixedList());
 				if( list.isEmpty() && ia != null )
 				{
 					playerInventory.setInventorySlotContents( playerInventory.currentItem, ItemStack.EMPTY );
 
 					// drop core
-					final ItemStack extraB = ia.addItems( this.component.stack( 1 ) );
+					final IAEStack extraB = ia.addItems(AEItemStack.fromItemStack( this.component.stack( 1 ) ) );
 					if( !extraB.isEmpty() )
 					{
-						player.dropItem( extraB, false );
+						player.dropItem( (ItemStack)extraB.getStack(), false );
 					}
 
 					// drop upgrades
 					final IItemHandler upgradesInventory = this.getUpgradesInventory( stack );
 					for( int upgradeIndex = 0; upgradeIndex < upgradesInventory.getSlots(); upgradeIndex++ )
 					{
-						final ItemStack upgradeStack = upgradesInventory.getStackInSlot( upgradeIndex );
-						final ItemStack leftStack = ia.addItems( upgradeStack );
-						if( !leftStack.isEmpty() && upgradeStack.getItem() instanceof IUpgradeModule )
+						final IAEStack upgradeStack = AEItemStack.fromItemStack( upgradesInventory.getStackInSlot( upgradeIndex ) );
+						final IAEStack leftStack = ia.addItems( upgradeStack );
+						if( !leftStack.isEmpty() && ((ItemStack)upgradeStack.getStack()).getItem() instanceof IUpgradeModule )
 						{
-							player.dropItem( upgradeStack, false );
+							player.dropItem( (ItemStack)upgradeStack.getStack(), false );
 						}
 					}
 
@@ -218,7 +223,7 @@ public abstract class AbstractStorageCell<T extends IAEStack> extends AEBaseItem
 		return false;
 	}
 
-	protected abstract void dropEmptyStorageCellCase( final InventoryAdaptor ia, final EntityPlayer player );
+	protected abstract void dropEmptyStorageCellCase( final ItemInventoryAdaptor ia, final EntityPlayer player );
 
 	@Override
 	public EnumActionResult onItemUseFirst( final EntityPlayer player, final World world, final BlockPos pos, final EnumFacing side, final float hitX, final float hitY, final float hitZ, final EnumHand hand )

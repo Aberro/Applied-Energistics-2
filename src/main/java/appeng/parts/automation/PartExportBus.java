@@ -19,6 +19,7 @@
 package appeng.parts.automation;
 
 
+import appeng.api.storage.data.IAEStack;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -130,10 +131,9 @@ public class PartExportBus extends PartSharedItemBus implements ICraftingRequest
 		try
 		{
 			final InventoryAdaptor destination = this.getHandler();
-			final IMEMonitor<IAEItemStack> inv = this.getProxy()
+			final IMEMonitor inv = this.getProxy()
 					.getStorage()
-					.getInventory(
-							AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+					.getInventory( );
 			final IEnergyGrid energy = this.getProxy().getEnergy();
 			final ICraftingGrid cg = this.getProxy().getCrafting();
 			final FuzzyMode fzMode = (FuzzyMode) this.getConfigManager().getSetting( Settings.FUZZY_MODE );
@@ -163,7 +163,7 @@ public class PartExportBus extends PartSharedItemBus implements ICraftingRequest
 
 					if( this.getInstalledUpgrades( Upgrades.FUZZY ) > 0 )
 					{
-						for( final IAEItemStack o : ImmutableList.copyOf( inv.getStorageList().findFuzzy( ais, fzMode ) ) )
+						for( final IAEStack o : inv.getStorageList(ais.getChannel()).findFuzzy( ais, fzMode ) )
 						{
 							this.pushItemIntoTarget( destination, energy, inv, o );
 							if( this.itemToSend <= 0 )
@@ -249,7 +249,7 @@ public class PartExportBus extends PartSharedItemBus implements ICraftingRequest
 	}
 
 	@Override
-	public IAEItemStack injectCraftedItems( final ICraftingLink link, final IAEItemStack items, final Actionable mode )
+	public IAEStack injectCraftedItems( final ICraftingLink link, final IAEStack items, final Actionable mode )
 	{
 		final InventoryAdaptor d = this.getHandler();
 
@@ -264,9 +264,9 @@ public class PartExportBus extends PartSharedItemBus implements ICraftingRequest
 				{
 					if( mode == Actionable.MODULATE )
 					{
-						return AEItemStack.fromItemStack( d.addItems( items.createItemStack() ) );
+						return d.addItems( items );
 					}
-					return AEItemStack.fromItemStack( d.simulateAdd( items.createItemStack() ) );
+					return d.simulateAdd( items );
 				}
 			}
 		}
@@ -300,28 +300,27 @@ public class PartExportBus extends PartSharedItemBus implements ICraftingRequest
 		return this.getInstalledUpgrades( Upgrades.CRAFTING ) > 0;
 	}
 
-	private void pushItemIntoTarget( final InventoryAdaptor d, final IEnergyGrid energy, final IMEInventory<IAEItemStack> inv, IAEItemStack ais )
+	private void pushItemIntoTarget( final InventoryAdaptor d, final IEnergyGrid energy, final IMEInventory inv, IAEStack ais )
 	{
-		final ItemStack is = ais.createItemStack();
-		is.setCount( (int) this.itemToSend );
+		ais.setStackSize( (int) this.itemToSend );
 
-		final ItemStack o = d.simulateAdd( is );
-		final long canFit = o.isEmpty() ? this.itemToSend : this.itemToSend - o.getCount();
+		final IAEStack o = d.simulateAdd( ais );
+		final long canFit = o == null || o.isEmpty() ? this.itemToSend : this.itemToSend - o.getStackSize();
 
 		if( canFit > 0 )
 		{
 			ais = ais.copy();
 			ais.setStackSize( canFit );
-			final IAEItemStack itemsToAdd = Platform.poweredExtraction( energy, inv, ais, this.mySrc );
+			final IAEItemStack itemsToAdd = Platform.poweredExtraction( energy, inv, (IAEItemStack)ais, this.mySrc );
 
 			if( itemsToAdd != null )
 			{
 				this.itemToSend -= itemsToAdd.getStackSize();
 
-				final ItemStack failed = d.addItems( itemsToAdd.createItemStack() );
+				final IAEStack failed = d.addItems( itemsToAdd );
 				if( !failed.isEmpty() )
 				{
-					ais.setStackSize( failed.getCount() );
+					ais.setStackSize( failed.getStackSize() );
 					inv.injectItems( ais, Actionable.MODULATE, this.mySrc );
 				}
 				else

@@ -22,6 +22,9 @@ package appeng.tile.crafting;
 import java.io.IOException;
 import java.util.List;
 
+import appeng.api.networking.crafting.IInventoryCrafting;
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.channels.IItemStorageChannel;
 import io.netty.buffer.ByteBuf;
 
 import net.minecraft.inventory.InventoryCrafting;
@@ -115,7 +118,7 @@ public class TileMolecularAssembler extends AENetworkInvTile implements IUpgrade
 	}
 
 	@Override
-	public boolean pushPattern( final ICraftingPatternDetails patternDetails, final InventoryCrafting table, final EnumFacing where )
+	public boolean pushPattern(final ICraftingPatternDetails patternDetails, final IInventoryCrafting table, final EnumFacing where )
 	{
 		if( this.myPattern.isEmpty() )
 		{
@@ -126,10 +129,11 @@ public class TileMolecularAssembler extends AENetworkInvTile implements IUpgrade
 				this.forcePlan = true;
 				this.myPlan = patternDetails;
 				this.pushDirection = AEPartLocation.fromFacing( where );
+				IStorageChannel channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
 
-				for( int x = 0; x < table.getSizeInventory(); x++ )
+				for(int x = 0; x < table.getSlotsCount( channel ); x++ )
 				{
-					this.gridInv.setStackInSlot( x, table.getStackInSlot( x ) );
+					this.gridInv.setStackInSlot( x, table.getStackInSlot( channel, x ) );
 				}
 
 				this.updateSleepiness();

@@ -28,8 +28,11 @@ import java.io.IOException;
 import javax.annotation.Nonnull;
 
 import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
+import appeng.fluids.container.slots.IMEFluidSlot;
 import io.netty.buffer.ByteBuf;
 
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
@@ -218,6 +221,9 @@ public final class AEFluidStack extends AEStack implements IAEFluidStack, Compar
 	}
 
 	@Override
+	public long getMaxStackSize() { return 160000; }
+
+	@Override
 	public boolean isItem()
 	{
 		return false;
@@ -230,9 +236,40 @@ public final class AEFluidStack extends AEStack implements IAEFluidStack, Compar
 	}
 
 	@Override
-	public IStorageChannel<IAEFluidStack> getChannel()
+	public IStorageChannel<IAEFluidStack, ISlot<FluidStack, IAEFluidStack>, FluidStack> getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class );
+	}
+
+	@Override
+	public String getModID()
+	{
+		if( this.fluid.getOverlay() == null )
+		{
+			return "** Null";
+		}
+
+		return this.fluid.getOverlay().getResourceDomain() == null ? "** Null" : this.fluid.getOverlay().getResourceDomain();
+	}
+
+	@Override
+	public String getUnlocalizedName()
+	{
+		return fluid.getUnlocalizedName();
+	}
+
+	@Override
+	public boolean isEmpty()
+	{
+		// Fluids can't be empty, they would be null instead.
+		return false;
+	}
+
+	public boolean isSameType(IAEStack otherStack)
+	{
+		if(otherStack.getChannel() != this.getChannel())
+			return false;
+		return this.fluid == ((IAEFluidStack)otherStack).getFluid();
 	}
 
 	@Override
@@ -290,6 +327,10 @@ public final class AEFluidStack extends AEStack implements IAEFluidStack, Compar
 		return this.tagCompound != null;
 	}
 
+	public Object getStack()
+	{
+		return getFluidStack();
+	}
 	@Override
 	public FluidStack getFluidStack()
 	{

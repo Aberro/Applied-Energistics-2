@@ -225,7 +225,7 @@ public abstract class AbstractPartMonitor extends AbstractPartDisplay implements
 				}
 
 				this.updateReportingValue(
-						this.getProxy().getStorage().getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) ) );
+						this.getProxy().getStorage().getInventory( ) );
 			}
 		}
 		catch( final GridAccessException e )
@@ -234,11 +234,11 @@ public abstract class AbstractPartMonitor extends AbstractPartDisplay implements
 		}
 	}
 
-	private void updateReportingValue( final IMEMonitor<IAEItemStack> itemInventory )
+	private void updateReportingValue( final IMEMonitor itemInventory )
 	{
 		if( this.configuredItem != null )
 		{
-			final IAEItemStack result = itemInventory.getStorageList().findPrecise( this.configuredItem );
+			final IAEStack result = itemInventory.getStorageList(this.configuredItem.getChannel()).findPrecise( this.configuredItem );
 			if( result == null )
 			{
 				this.configuredItem.setStackSize( 0 );
@@ -306,7 +306,7 @@ public abstract class AbstractPartMonitor extends AbstractPartDisplay implements
 	}
 
 	@Override
-	public void onStackChange( final IItemList o, final IAEStack fullStack, final IAEStack diffStack, final IActionSource src, final IStorageChannel chan )
+	public void onStackChange( final IItemList o, final IAEStack fullStack, final IAEStack diffStack, final IActionSource src )
 	{
 		if( this.configuredItem != null )
 		{

@@ -21,8 +21,10 @@ package appeng.me.storage;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 
+import appeng.api.AEApi;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.storage.IBaseMonitor;
 import appeng.api.storage.IMEInventory;
@@ -35,6 +37,7 @@ import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.util.Platform;
 import appeng.util.inv.ItemListIgnoreCrafting;
+import appeng.util.item.MixedList;
 
 
 public class MEMonitorPassThrough extends MEPassThrough implements IMEMonitor, IMEMonitorHandlerReceiver
@@ -44,9 +47,9 @@ public class MEMonitorPassThrough extends MEPassThrough implements IMEMonitor, I
 	private IActionSource changeSource;
 	private IMEMonitor monitor;
 
-	public MEMonitorPassThrough( final IMEInventory i, final IStorageChannel channel )
+	public MEMonitorPassThrough( final IMEInventory i )
 	{
-		super( i, channel );
+		super( i );
 		if( i instanceof IMEMonitor )
 		{
 			this.monitor = (IMEMonitor) i;
@@ -62,8 +65,11 @@ public class MEMonitorPassThrough extends MEPassThrough implements IMEMonitor, I
 		}
 
 		this.monitor = null;
-		final IItemList<IAEStack> before = this.getInternal() == null ? this.getWrappedChannel().createList() : this.getInternal()
-					.getAvailableItems( this.getWrappedChannel(), new ItemListIgnoreCrafting( this.getWrappedChannel().createList() ) );
+		final Map<IStorageChannel, IItemList<IAEStack>> before = new HashMap<>();
+		if(this.getInternal() != null)
+			for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
+				before.put(channel, this.getInternal().getAvailableItems( channel, new ItemListIgnoreCrafting( channel.createList() ) ) );
+
 
 		super.setInternal( i );
 		if( i instanceof IMEMonitor )
@@ -71,15 +77,23 @@ public class MEMonitorPassThrough extends MEPassThrough implements IMEMonitor, I
 			this.monitor = (IMEMonitor) i;
 		}
 
-		final IItemList<IAEStack> after = this.getInternal() == null ? this.getWrappedChannel().createList() : this.getInternal()
-					.getAvailableItems( this.getWrappedChannel(), new ItemListIgnoreCrafting( this.getWrappedChannel().createList() ) );
+		final Map<IStorageChannel, IItemList<IAEStack>> after = new HashMap<>();
+		if(this.getInternal() != null)
+			for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
+				after.put( channel, this.getInternal().getAvailableItems( channel, new ItemListIgnoreCrafting( channel.createList() ) ) );
 
 		if( this.monitor != null )
 		{
 			this.monitor.addListener( this, this.monitor );
 		}
 
-		Platform.postListChanges( before, after, this, this.getChangeSource() );
+		for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
+		{
+			IItemList b = before.get(channel);
+			IItemList a = after.get(channel);
+			Platform.postListChanges( b, a, this, this.getChangeSource() );
+		}
+
 	}
 
 	@Override
@@ -106,7 +120,7 @@ public class MEMonitorPassThrough extends MEPassThrough implements IMEMonitor, I
 	{
 		if( this.monitor == null )
 		{
-			final IItemList<IAEStack> out = this.getWrappedChannel().createList();
+			final IItemList<IAEStack> out = channel.createList();
 			this.getInternal().getAvailableItems( channel, new ItemListIgnoreCrafting( out ) );
 
 			return out;

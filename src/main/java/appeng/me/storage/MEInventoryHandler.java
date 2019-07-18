@@ -45,7 +45,7 @@ public class MEInventoryHandler implements IMEInventoryHandler
 	private boolean hasReadAccess;
 	private boolean hasWriteAccess;
 
-	public MEInventoryHandler( final IMEInventory i, final IStorageChannel channel )
+	public MEInventoryHandler( final IMEInventory i )
 	{
 		if( i instanceof IMEInventoryHandler )
 		{
@@ -53,7 +53,7 @@ public class MEInventoryHandler implements IMEInventoryHandler
 		}
 		else
 		{
-			this.internal = new MEPassThrough( i, channel );
+			this.internal = new MEPassThrough( i );
 		}
 
 		this.myPriority = 0;
@@ -126,12 +126,6 @@ public class MEInventoryHandler implements IMEInventoryHandler
 		}
 
 		return this.internal.getAvailableItems( channel, out );
-	}
-
-	@Override
-	public IStorageChannel getChannel()
-	{
-		return this.internal.getChannel();
 	}
 
 	@Override

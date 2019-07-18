@@ -19,6 +19,7 @@
 package appeng.me.storage;
 
 
+import appeng.api.storage.data.IAEStack;
 import com.mojang.authlib.GameProfile;
 
 import appeng.api.AEApi;
@@ -35,11 +36,14 @@ import appeng.api.storage.data.IItemList;
 import appeng.me.GridAccessException;
 import appeng.tile.misc.TileSecurityStation;
 
+import java.util.HashMap;
+import java.util.Map;
 
-public class SecurityStationInventory implements IMEInventoryHandler<IAEItemStack>
+
+public class SecurityStationInventory implements IMEInventoryHandler
 {
 
-	private final IItemList<IAEItemStack> storedItems = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+	private final Map<IStorageChannel, IItemList<IAEStack>> storedItems = new HashMap<>();
 	private final TileSecurityStation securityTile;
 
 	public SecurityStationInventory( final TileSecurityStation ts )
@@ -48,11 +52,12 @@ public class SecurityStationInventory implements IMEInventoryHandler<IAEItemStac
 	}
 
 	@Override
-	public IAEItemStack injectItems( final IAEItemStack input, final Actionable type, final IActionSource src )
+	public IAEStack injectItems( final IAEStack input, final Actionable type, final IActionSource src )
 	{
 		if( this.hasPermission( src ) )
 		{
-			if( AEApi.instance().definitions().items().biometricCard().isSameAs( input.createItemStack() ) )
+			if( input.getChannel() == AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class)
+					&& AEApi.instance().definitions().items().biometricCard().isSameAs( ((IAEItemStack)input).getItemStack() ) )
 			{
 				if( this.canAccept( input ) )
 				{
@@ -61,7 +66,7 @@ public class SecurityStationInventory implements IMEInventoryHandler<IAEItemStac
 						return null;
 					}
 
-					this.getStoredItems().add( input );
+					this.getStoredItems(this.getChannel()).add( input );
 					this.securityTile.inventoryChanged();
 					return null;
 				}
@@ -87,14 +92,14 @@ public class SecurityStationInventory implements IMEInventoryHandler<IAEItemStac
 	}
 
 	@Override
-	public IAEItemStack extractItems( final IAEItemStack request, final Actionable mode, final IActionSource src )
+	public IAEStack extractItems(final IAEStack request, final Actionable mode, final IActionSource src )
 	{
 		if( this.hasPermission( src ) )
 		{
-			final IAEItemStack target = this.getStoredItems().findPrecise( request );
+			final IAEStack target = this.getStoredItems(request.getChannel()).findPrecise( request );
 			if( target != null )
 			{
-				final IAEItemStack output = target.copy();
+				final IAEStack output = target.copy();
 
 				if( mode == Actionable.SIMULATE )
 				{
@@ -110,9 +115,9 @@ public class SecurityStationInventory implements IMEInventoryHandler<IAEItemStac
 	}
 
 	@Override
-	public IItemList<IAEItemStack> getAvailableItems( final IItemList out )
+	public IItemList<IAEStack> getAvailableItems( IStorageChannel channel, final IItemList<IAEStack> out )
 	{
-		for( final IAEItemStack ais : this.getStoredItems() )
+		for( final IAEStack ais : this.getStoredItems(channel) )
 		{
 			out.add( ais );
 		}
@@ -120,7 +125,6 @@ public class SecurityStationInventory implements IMEInventoryHandler<IAEItemStac
 		return out;
 	}
 
-	@Override
 	public IStorageChannel getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
@@ -133,18 +137,20 @@ public class SecurityStationInventory implements IMEInventoryHandler<IAEItemStac
 	}
 
 	@Override
-	public boolean isPrioritized( final IAEItemStack input )
+	public boolean isPrioritized( final IAEStack input )
 	{
 		return false;
 	}
 
 	@Override
-	public boolean canAccept( final IAEItemStack input )
+	public boolean canAccept( final IAEStack input )
 	{
-		if( input.getItem() instanceof IBiometricCard )
+		if(input.getChannel() != this.getChannel())
+			return false;
+		if( ((IAEItemStack)input).getItem() instanceof IBiometricCard )
 		{
-			final IBiometricCard tbc = (IBiometricCard) input.getItem();
-			final GameProfile newUser = tbc.getProfile( input.createItemStack() );
+			final IBiometricCard tbc = (IBiometricCard) ((IAEItemStack)input).getItem();
+			final GameProfile newUser = tbc.getProfile( ((IAEItemStack)input).getItemStack() );
 
 			final int PlayerID = AEApi.instance().registries().players().getID( newUser );
 			if( this.securityTile.getOwner() == PlayerID )
@@ -152,11 +158,11 @@ public class SecurityStationInventory implements IMEInventoryHandler<IAEItemStac
 				return false;
 			}
 
-			for( final IAEItemStack ais : this.getStoredItems() )
+			for( final IAEStack ais : this.getStoredItems(this.getChannel()) )
 			{
 				if( ais.isMeaningful() )
 				{
-					final GameProfile thisUser = tbc.getProfile( ais.createItemStack() );
+					final GameProfile thisUser = tbc.getProfile( ((IAEItemStack)ais).getItemStack() );
 					if( thisUser == newUser )
 					{
 						return false;
@@ -192,8 +198,11 @@ public class SecurityStationInventory implements IMEInventoryHandler<IAEItemStac
 		return true;
 	}
 
-	public IItemList<IAEItemStack> getStoredItems()
+	public IItemList<IAEStack> getStoredItems(IStorageChannel channel)
 	{
-		return this.storedItems;
+		IItemList<IAEStack> result = this.storedItems.get(channel);
+		if(result == null)
+			this.storedItems.put(channel, result = channel.createList());
+		return  result;
 	}
 }

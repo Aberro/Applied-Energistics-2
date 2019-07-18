@@ -24,6 +24,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
+import appeng.api.util.*;
 import io.netty.buffer.ByteBuf;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -62,11 +63,6 @@ import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.channels.IItemStorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
-import appeng.api.util.AECableType;
-import appeng.api.util.AEColor;
-import appeng.api.util.AEPartLocation;
-import appeng.api.util.DimensionalCoord;
-import appeng.api.util.IConfigManager;
 import appeng.helpers.PlayerSecurityWrapper;
 import appeng.me.GridAccessException;
 import appeng.me.helpers.MEMonitorHandler;
@@ -89,7 +85,7 @@ public class TileSecurityStation extends AENetworkTile implements ITerminalHost,
 	private final AppEngInternalInventory configSlot = new AppEngInternalInventory( this, 1 );
 	private final IConfigManager cm = new ConfigManager( this );
 	private final SecurityStationInventory inventory = new SecurityStationInventory( this );
-	private final MEMonitorHandler<IAEItemStack> securityMonitor = new MEMonitorHandler<>( this.inventory );
+	private final MEMonitorHandler securityMonitor = new MEMonitorHandler( this.inventory );
 	private long securityKey;
 	private AEColor paintedColor = AEColor.TRANSPARENT;
 	private boolean isActive = false;
@@ -125,13 +121,13 @@ public class TileSecurityStation extends AENetworkTile implements ITerminalHost,
 			drops.add( this.getConfigSlot().getStackInSlot( 0 ) );
 		}
 
-		for( final IAEItemStack ais : this.inventory.getStoredItems() )
+		for( final IAEStack ais : this.inventory.getStoredItems(this.inventory.getChannel()) )
 		{
-			drops.add( ais.createItemStack() );
+			drops.add( ((IAEItemStack)ais).getItemStack() );
 		}
 	}
 
-	IMEInventoryHandler<IAEItemStack> getSecurityInventory()
+	IMEInventoryHandler getSecurityInventory()
 	{
 		return this.inventory;
 	}
@@ -170,10 +166,10 @@ public class TileSecurityStation extends AENetworkTile implements ITerminalHost,
 		final NBTTagCompound storedItems = new NBTTagCompound();
 
 		int offset = 0;
-		for( final IAEItemStack ais : this.inventory.getStoredItems() )
+		for( final IAEStack ais : this.inventory.getStoredItems(this.inventory.getChannel()) )
 		{
 			final NBTTagCompound it = new NBTTagCompound();
-			ais.createItemStack().writeToNBT( it );
+			((IAEItemStack)ais).getItemStack().writeToNBT( it );
 			storedItems.setTag( String.valueOf( offset ), it );
 			offset++;
 		}
@@ -201,7 +197,7 @@ public class TileSecurityStation extends AENetworkTile implements ITerminalHost,
 			final NBTBase obj = storedItems.getTag( (String) key );
 			if( obj instanceof NBTTagCompound )
 			{
-				this.inventory.getStoredItems().add( AEItemStack.fromItemStack( new ItemStack( (NBTTagCompound) obj ) ) );
+				this.inventory.getStoredItems(this.inventory.getChannel()).add( AEItemStack.fromItemStack( new ItemStack( (NBTTagCompound) obj ) ) );
 			}
 		}
 	}
@@ -276,14 +272,9 @@ public class TileSecurityStation extends AENetworkTile implements ITerminalHost,
 	}
 
 	@Override
-	public <T extends IAEStack<T>> IMEMonitor<T> getInventory( IStorageChannel<T> channel )
+	public IMEMonitor getInventory( )
 	{
-		if( channel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
-		{
-			return (IMEMonitor<T>) this.securityMonitor;
-		}
-		return null;
-
+		return this.securityMonitor;
 	}
 
 	@Override
@@ -321,9 +312,9 @@ public class TileSecurityStation extends AENetworkTile implements ITerminalHost,
 		final IPlayerRegistry pr = AEApi.instance().registries().players();
 
 		// read permissions
-		for( final IAEItemStack ais : this.inventory.getStoredItems() )
+		for( final IAEStack ais : this.inventory.getStoredItems(this.inventory.getChannel()) )
 		{
-			final ItemStack is = ais.createItemStack();
+			final ItemStack is = ((IAEItemStack)ais).getItemStack();
 			final Item i = is.getItem();
 			if( i instanceof IBiometricCard )
 			{

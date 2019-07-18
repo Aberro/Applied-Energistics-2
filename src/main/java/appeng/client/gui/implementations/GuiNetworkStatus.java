@@ -22,6 +22,7 @@ package appeng.client.gui.implementations;
 import java.io.IOException;
 import java.util.List;
 
+import appeng.api.storage.data.IAEStack;
 import org.lwjgl.input.Mouse;
 
 import net.minecraft.client.gui.GuiButton;
@@ -36,7 +37,6 @@ import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
 import appeng.api.config.ViewItems;
 import appeng.api.implementations.guiobjects.INetworkTool;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.client.gui.AEBaseGui;
 import appeng.client.gui.widgets.GuiImgButton;
 import appeng.client.gui.widgets.GuiScrollbar;
@@ -158,7 +158,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource
 
 		for( int z = viewStart; z < Math.min( viewEnd, this.repo.size() ); z++ )
 		{
-			final IAEItemStack refStack = this.repo.getReferenceItem( z );
+			final IAEStack refStack = this.repo.getReferenceItem( z );
 			if( refStack != null )
 			{
 				GlStateManager.pushMatrix();
@@ -217,11 +217,11 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource
 		this.drawTexturedModalRect( offsetX, offsetY, 0, 0, this.xSize, this.ySize );
 	}
 
-	public void postUpdate( final List<IAEItemStack> list )
+	public void postUpdate( final List<IAEStack> list )
 	{
 		this.repo.clear();
 
-		for( final IAEItemStack is : list )
+		for( final IAEStack is : list )
 		{
 			this.repo.postUpdate( is );
 		}
@@ -244,7 +244,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource
 
 		if( s instanceof SlotME && stack != null )
 		{
-			IAEItemStack myStack = null;
+			IAEStack myStack = null;
 
 			try
 			{

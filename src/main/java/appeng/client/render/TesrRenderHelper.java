@@ -19,6 +19,7 @@
 package appeng.client.render;
 
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -124,7 +125,7 @@ public class TesrRenderHelper
 	 *
 	 * @param spacing Specifies how far apart the item and the item stack amount are rendered.
 	 */
-	public static void renderItem2dWithAmount( IAEItemStack itemStack, float itemScale, float spacing )
+	public static void renderItem2dWithAmount(IAEStack itemStack, float itemScale, float spacing )
 	{
 		final ItemStack renderStack = itemStack.asItemStackRepresentation();
 

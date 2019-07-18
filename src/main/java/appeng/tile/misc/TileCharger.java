@@ -86,7 +86,7 @@ public class TileCharger extends AENetworkPowerTile implements ICrankable, IGrid
 		try
 		{
 			final IAEItemStack item = AEItemStack.fromPacket( data );
-			final ItemStack is = item.createItemStack();
+			final ItemStack is = item.getItemStack();
 			this.inv.setStackInSlot( 0, is );
 		}
 		catch( final Throwable t )

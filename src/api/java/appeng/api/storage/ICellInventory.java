@@ -24,6 +24,7 @@
 package appeng.api.storage;
 
 
+import appeng.api.storage.data.IAEItemStack;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 
@@ -31,13 +32,15 @@ import appeng.api.config.FuzzyMode;
 import appeng.api.storage.data.IAEStack;
 
 
-public interface ICellInventory<T extends IAEStack> extends IMEInventory
+public interface ICellInventory<TAEStack extends IAEStack, TSlot, TStack> extends IMEInventory
 {
 
 	/**
 	 * @return the item stack of this storage cell.
 	 */
-	ItemStack getItemStack();
+	ItemStack getStack();
+
+	IStorageChannel getChannel();
 
 	/**
 	 * @return the ae/t to drain for this storage cell inside a chest/drive.

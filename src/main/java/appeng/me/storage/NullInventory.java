@@ -30,31 +30,25 @@ import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 
 
-public class NullInventory<T extends IAEStack<T>> implements IMEInventoryHandler<T>
+public class NullInventory implements IMEInventoryHandler
 {
 
 	@Override
-	public T injectItems( final T input, final Actionable mode, final IActionSource src )
+	public IAEStack injectItems( final IAEStack input, final Actionable mode, final IActionSource src )
 	{
 		return input;
 	}
 
 	@Override
-	public T extractItems( final T request, final Actionable mode, final IActionSource src )
+	public IAEStack extractItems( final IAEStack request, final Actionable mode, final IActionSource src )
 	{
 		return null;
 	}
 
 	@Override
-	public IItemList<T> getAvailableItems( final IItemList out )
+	public IItemList<IAEStack> getAvailableItems( IStorageChannel channel, final IItemList<IAEStack> out )
 	{
 		return out;
-	}
-
-	@Override
-	public IStorageChannel getChannel()
-	{
-		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}
 
 	@Override
@@ -64,13 +58,13 @@ public class NullInventory<T extends IAEStack<T>> implements IMEInventoryHandler
 	}
 
 	@Override
-	public boolean isPrioritized( final T input )
+	public boolean isPrioritized( final IAEStack input )
 	{
 		return false;
 	}
 
 	@Override
-	public boolean canAccept( final T input )
+	public boolean canAccept( final IAEStack input )
 	{
 		return false;
 	}

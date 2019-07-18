@@ -19,6 +19,7 @@
 package appeng.client.me;
 
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.storage.data.IAEItemStack;
@@ -45,7 +46,7 @@ public class InternalSlotME
 		return this.getAEStack() == null ? ItemStack.EMPTY : this.getAEStack().asItemStackRepresentation();
 	}
 
-	IAEItemStack getAEStack()
+	IAEStack getAEStack()
 	{
 		return this.repo.getReferenceItem( this.offset );
 	}

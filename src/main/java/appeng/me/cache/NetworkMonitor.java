@@ -54,8 +54,6 @@ public class NetworkMonitor implements IMEMonitor
 	@Nonnull
 	private final GridStorageCache myGridCache;
 	@Nonnull
-	private final IStorageChannel myChannel;
-	@Nonnull
 	private final Map<IStorageChannel, IItemList<IAEStack>> cachedList;
 	@Nonnull
 	private final Map<IMEMonitorHandlerReceiver, Object> listeners;
@@ -65,10 +63,9 @@ public class NetworkMonitor implements IMEMonitor
 	@Nonnegative
 	private int localDepthSemaphore = 0;
 
-	public NetworkMonitor( final GridStorageCache cache, final IStorageChannel chan )
+	public NetworkMonitor( final GridStorageCache cache )
 	{
 		this.myGridCache = cache;
-		this.myChannel = chan;
 		this.cachedList = new HashMap<>();
 		this.listeners = new HashMap<>();
 	}
@@ -115,12 +112,6 @@ public class NetworkMonitor implements IMEMonitor
 	public IItemList<IAEStack> getAvailableItems( IStorageChannel channel, final IItemList<IAEStack> out )
 	{
 		return this.getHandler().getAvailableItems( channel, out );
-	}
-
-	@Override
-	public IStorageChannel getChannel()
-	{
-		return this.getHandler().getChannel();
 	}
 
 	@Override
@@ -192,7 +183,7 @@ public class NetworkMonitor implements IMEMonitor
 	@Nullable
 	private IMEInventoryHandler getHandler()
 	{
-		return this.myGridCache.getInventoryHandler( this.myChannel );
+		return this.myGridCache.getInventoryHandler( );
 	}
 
 	private Iterator<Entry<IMEMonitorHandlerReceiver, Object>> getListeners()
@@ -288,7 +279,7 @@ public class NetworkMonitor implements IMEMonitor
 
 					for( final ItemWatcher iw : list )
 					{
-						iw.getHost().onStackChange( this.getStorageList(changedItem.getChannel()), fullStack, difference, src, this.getChannel() );
+						iw.getHost().onStackChange( this.getStorageList(changedItem.getChannel()), fullStack, difference, src );
 					}
 
 					this.myGridCache.getInterestManager().disableTransactions();
@@ -331,7 +322,7 @@ public class NetworkMonitor implements IMEMonitor
 		if( this.sendEvent )
 		{
 			this.sendEvent = false;
-			this.myGridCache.getGrid().postEvent( new MENetworkStorageEvent( this, this.myChannel ) );
+			this.myGridCache.getGrid().postEvent( new MENetworkStorageEvent( this ) );
 		}
 	}
 }

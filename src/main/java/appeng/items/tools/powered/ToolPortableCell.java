@@ -22,8 +22,10 @@ package appeng.items.tools.powered;
 import java.util.List;
 import java.util.Set;
 
+import appeng.util.inv.ItemSlot;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemSlab;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
@@ -55,7 +57,7 @@ import appeng.items.tools.powered.powersink.AEBasePoweredItem;
 import appeng.util.Platform;
 
 
-public class ToolPortableCell extends AEBasePoweredItem implements IStorageCell<IAEItemStack>, IGuiItem, IItemGroup
+public class ToolPortableCell extends AEBasePoweredItem implements IStorageCell<IAEItemStack, ItemSlot, ItemStack>, IGuiItem, IItemGroup
 {
 	public ToolPortableCell()
 	{
@@ -82,11 +84,10 @@ public class ToolPortableCell extends AEBasePoweredItem implements IStorageCell<
 	{
 		super.addCheckedInformation( stack, world, lines, advancedTooltips );
 
-		final ICellInventoryHandler<IAEItemStack> cdi = AEApi.instance()
+		final ICellInventoryHandler<IAEItemStack, ItemSlot, ItemStack> cdi = AEApi.instance()
 				.registries()
 				.cell()
-				.getCellInventory( stack, null,
-						AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+				.getCellInventory( stack, null );
 
 		AEApi.instance().client().addCellInformation( cdi, lines );
 	}
@@ -134,7 +135,7 @@ public class ToolPortableCell extends AEBasePoweredItem implements IStorageCell<
 	}
 
 	@Override
-	public IStorageChannel<IAEItemStack> getChannel()
+	public IStorageChannel<IAEItemStack, ItemSlot, ItemStack> getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}

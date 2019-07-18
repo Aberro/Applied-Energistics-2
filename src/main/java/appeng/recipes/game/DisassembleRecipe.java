@@ -26,6 +26,8 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
@@ -105,15 +107,15 @@ public final class DisassembleRecipe extends net.minecraftforge.registries.IForg
 				{
 					ItemStack storageCellStack = maybeCellOutput.get();
 					// make sure the storage cell stackInSlot empty...
-					final IMEInventory<IAEItemStack> cellInv = AEApi.instance()
+					IStorageChannel channel = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
+					final IMEInventory cellInv = AEApi.instance()
 							.registries()
 							.cell()
-							.getCellInventory( stackInSlot, null,
-									AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+							.getCellInventory( stackInSlot, null );
 					if( cellInv != null )
 					{
-						final IItemList<IAEItemStack> list = cellInv
-								.getAvailableItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList() );
+						final IItemList<IAEStack> list = cellInv
+								.getAvailableItems( channel, channel.createList() );
 						if( !list.isEmpty() )
 						{
 							return ItemStack.EMPTY;

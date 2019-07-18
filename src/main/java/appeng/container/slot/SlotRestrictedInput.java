@@ -251,13 +251,8 @@ public class SlotRestrictedInput extends AppEngSlot
 			if( !is.isEmpty() && is.getItem() instanceof ItemEncodedPattern )
 			{
 				final ItemEncodedPattern iep = (ItemEncodedPattern) is.getItem();
-				ItemStack out = iep.getOutput( is );
+				ItemStack out = (ItemStack)iep.getOutput( is ).getStack();
 				if( !out.isEmpty() )
-				{
-					return out;
-				}
-				out = iep.getOutputFluidDummyStack( is );
-				if(out != null)
 				{
 					return out;
 				}

@@ -21,6 +21,7 @@ package appeng.client.me;
 
 import javax.annotation.Nonnull;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -42,7 +43,7 @@ public class SlotFluidME extends SlotItemHandler implements IMEFluidSlot
 
 	private IAEFluidStack getAEStack()
 	{
-		return this.repo.getReferenceFluid( this.offset );
+		return (IAEFluidStack)this.repo.getReferenceFluid( this.offset );
 	}
 
 	public SlotFluidME( final FluidRepo def, final int offset, final int displayX, final int displayY )

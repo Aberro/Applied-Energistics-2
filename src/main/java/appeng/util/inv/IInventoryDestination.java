@@ -19,11 +19,11 @@
 package appeng.util.inv;
 
 
-import net.minecraft.item.ItemStack;
+import appeng.api.storage.data.IAEStack;
 
 
 public interface IInventoryDestination
 {
 
-	boolean canInsert( ItemStack stack );
+	boolean canInsert( IAEStack stack );
 }

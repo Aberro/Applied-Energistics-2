@@ -21,6 +21,14 @@ package appeng.util.inv;
 
 import java.util.Iterator;
 
+import appeng.api.AEApi;
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.channels.IItemStorageChannel;
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
+import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.item.AEItemStack;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 
@@ -29,14 +37,17 @@ import appeng.util.InventoryAdaptor;
 import appeng.util.Platform;
 
 
-public class AdaptorItemHandler extends InventoryAdaptor
+public class AdaptorItemHandler extends ItemInventoryAdaptor
 {
 	protected final IItemHandler itemHandler;
+	private final IStorageChannel<IAEItemStack, ItemSlot, ItemStack> channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
 
 	public AdaptorItemHandler( IItemHandler itemHandler )
 	{
 		this.itemHandler = itemHandler;
 	}
+
+
 
 	@Override
 	public boolean hasSlots()
@@ -45,22 +56,22 @@ public class AdaptorItemHandler extends InventoryAdaptor
 	}
 
 	@Override
-	public ItemStack removeItems( int amount, ItemStack filter, IInventoryDestination destination )
+	public IAEStack removeItems(long amount, IAEStack filter, IInventoryDestination destination )
 	{
 		int slots = this.itemHandler.getSlots();
-		ItemStack rv = ItemStack.EMPTY;
+		IAEItemStack rv = null;
 
 		for( int slot = 0; slot < slots && amount > 0; slot++ )
 		{
 			final ItemStack is = this.itemHandler.getStackInSlot( slot );
-			if( is.isEmpty() || ( !filter.isEmpty() && !Platform.itemComparisons().isSameItem( is, filter ) ) )
+			if( is.isEmpty() || ( !filter.isEmpty() && !is.equals(filter) ) )
 			{
 				continue;
 			}
 
 			if( destination != null )
 			{
-				ItemStack extracted = this.itemHandler.extractItem( slot, amount, true );
+				IAEStack extracted = AEItemStack.fromItemStack( this.itemHandler.extractItem( slot, (int)amount, true ) );
 				if( extracted.isEmpty() )
 				{
 					continue;
@@ -73,25 +84,25 @@ public class AdaptorItemHandler extends InventoryAdaptor
 			}
 
 			// Attempt extracting it
-			ItemStack extracted = this.itemHandler.extractItem( slot, amount, false );
+			IAEItemStack extracted = AEItemStack.fromItemStack(this.itemHandler.extractItem( slot, (int)amount, false ));
 
 			if( extracted.isEmpty() )
 			{
 				continue;
 			}
 
-			if( rv.isEmpty() )
+			if( rv == null || rv.isEmpty() )
 			{
 				// Use the first stack as a template for the result
 				rv = extracted;
 				filter = extracted;
-				amount -= extracted.getCount();
+				amount -= extracted.getStackSize();
 			}
 			else
 			{
 				// Subsequent stacks will just increase the extracted size
-				rv.grow( extracted.getCount() );
-				amount -= extracted.getCount();
+				rv.setStackSize(rv.getStackSize() + extracted.getStackSize() );
+				amount -= extracted.getStackSize();
 			}
 		}
 
@@ -99,17 +110,17 @@ public class AdaptorItemHandler extends InventoryAdaptor
 	}
 
 	@Override
-	public ItemStack simulateRemove( int amount, ItemStack filter, IInventoryDestination destination )
+	public IAEStack simulateRemove( long amount, IAEStack filter, IInventoryDestination destination )
 	{
 		int slots = this.itemHandler.getSlots();
-		ItemStack rv = ItemStack.EMPTY;
+		IAEStack rv = null;
 
 		for( int slot = 0; slot < slots && amount > 0; slot++ )
 		{
 			final ItemStack is = this.itemHandler.getStackInSlot( slot );
-			if( !is.isEmpty() && ( filter.isEmpty() || Platform.itemComparisons().isSameItem( is, filter ) ) )
+			if( !is.isEmpty() && ( filter.isEmpty() || is.equals(filter) ) )
 			{
-				ItemStack extracted = this.itemHandler.extractItem( slot, amount, true );
+				IAEStack extracted = AEItemStack.fromItemStack( this.itemHandler.extractItem( slot, (int)amount, true ) );
 
 				if( extracted.isEmpty() )
 				{
@@ -124,18 +135,18 @@ public class AdaptorItemHandler extends InventoryAdaptor
 					}
 				}
 
-				if( rv.isEmpty() )
+				if( rv == null || rv.isEmpty() )
 				{
 					// Use the first stack as a template for the result
 					rv = extracted.copy();
 					filter = extracted;
-					amount -= extracted.getCount();
+					amount -= extracted.getStackSize();
 				}
 				else
 				{
 					// Subsequent stacks will just increase the extracted size
-					rv.grow( extracted.getCount() );
-					amount -= extracted.getCount();
+					rv.incStackSize( extracted.getStackSize() );
+					amount -= extracted.getStackSize();
 				}
 			}
 		}
@@ -148,22 +159,22 @@ public class AdaptorItemHandler extends InventoryAdaptor
 	 * different damage values.
 	 */
 	@Override
-	public ItemStack removeSimilarItems( int amount, ItemStack filter, FuzzyMode fuzzyMode, IInventoryDestination destination )
+	public IAEStack removeSimilarItems( long amount, IAEStack filter, FuzzyMode fuzzyMode, IInventoryDestination destination )
 	{
 		int slots = this.itemHandler.getSlots();
-		ItemStack extracted = ItemStack.EMPTY;
+		IAEStack extracted = null;
 
-		for( int slot = 0; slot < slots && extracted.isEmpty(); slot++ )
+		for( int slot = 0; slot < slots &&  (extracted == null || extracted.isEmpty()); slot++ )
 		{
-			final ItemStack is = this.itemHandler.getStackInSlot( slot );
-			if( is.isEmpty() || ( !filter.isEmpty() && !Platform.itemComparisons().isFuzzyEqualItem( is, filter, fuzzyMode ) ) )
+			final IAEStack is = AEItemStack.fromItemStack( this.itemHandler.getStackInSlot( slot ) );
+			if( is.isEmpty() || ( !filter.isEmpty() && !is.fuzzyComparison( filter, fuzzyMode ) ) )
 			{
 				continue;
 			}
 
 			if( destination != null )
 			{
-				ItemStack simulated = this.itemHandler.extractItem( slot, amount, true );
+				IAEStack simulated = AEItemStack.fromItemStack( this.itemHandler.extractItem( slot, (int)amount, true ) );
 				if( simulated.isEmpty() )
 				{
 					continue;
@@ -176,34 +187,34 @@ public class AdaptorItemHandler extends InventoryAdaptor
 			}
 
 			// Attempt extracting it
-			extracted = this.itemHandler.extractItem( slot, amount, false );
+			extracted = AEItemStack.fromItemStack( this.itemHandler.extractItem( slot, (int)amount, false ) );
 		}
 
 		return extracted;
 	}
 
 	@Override
-	public ItemStack simulateSimilarRemove( int amount, ItemStack filter, FuzzyMode fuzzyMode, IInventoryDestination destination )
+	public IAEStack simulateSimilarRemove( long amount, IAEStack filter, FuzzyMode fuzzyMode, IInventoryDestination destination )
 	{
 		int slots = this.itemHandler.getSlots();
-		ItemStack extracted = ItemStack.EMPTY;
+		IAEStack extracted = null;
 
-		for( int slot = 0; slot < slots && extracted.isEmpty(); slot++ )
+		for( int slot = 0; slot < slots && (extracted == null || extracted.isEmpty()); slot++ )
 		{
-			final ItemStack is = this.itemHandler.getStackInSlot( slot );
-			if( is.isEmpty() || ( !filter.isEmpty() && !Platform.itemComparisons().isFuzzyEqualItem( is, filter, fuzzyMode ) ) )
+			final IAEStack is = AEItemStack.fromItemStack( this.itemHandler.getStackInSlot( slot ) );
+			if( is.isEmpty() || ( !filter.isEmpty() && !is.fuzzyComparison( filter, fuzzyMode ) ) )
 			{
 				continue;
 			}
 
 			// Attempt extracting it
-			extracted = this.itemHandler.extractItem( slot, amount, true );
+			extracted = AEItemStack.fromItemStack( this.itemHandler.extractItem( slot, (int)amount, true ) );
 
 			if( !extracted.isEmpty() && destination != null )
 			{
 				if( !destination.canInsert( extracted ) )
 				{
-					extracted = ItemStack.EMPTY; // Keep on looking...
+					extracted = null; // Keep on looking...
 				}
 			}
 		}
@@ -212,33 +223,35 @@ public class AdaptorItemHandler extends InventoryAdaptor
 	}
 
 	@Override
-	public ItemStack addItems( ItemStack toBeAdded )
+	public IAEStack addItems( IAEStack toBeAdded )
 	{
 		return this.addItems( toBeAdded, false );
 	}
 
 	@Override
-	public ItemStack simulateAdd( ItemStack toBeSimulated )
+	public IAEStack simulateAdd( IAEStack toBeSimulated )
 	{
 		return this.addItems( toBeSimulated, true );
 	}
 
-	protected ItemStack addItems( final ItemStack itemsToAdd, final boolean simulate )
+	protected IAEStack addItems( final IAEStack itemsToAdd, final boolean simulate )
 	{
-		if( itemsToAdd.isEmpty() )
+		if( itemsToAdd == null || itemsToAdd.isEmpty()  )
 		{
-			return ItemStack.EMPTY;
+			return null;
 		}
+		if( itemsToAdd.getChannel() != AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class) )
+			return itemsToAdd;
 
-		ItemStack left = itemsToAdd.copy();
+		IAEStack left = itemsToAdd.copy();
 
 		for( int slot = 0; slot < this.itemHandler.getSlots(); slot++ )
 		{
-			left = this.itemHandler.insertItem( slot, left, simulate );
+			left = AEItemStack.fromItemStack( this.itemHandler.insertItem( slot, (ItemStack)left.getStack(), simulate ) );
 
 			if( left.isEmpty() )
 			{
-				return ItemStack.EMPTY;
+				return null;
 			}
 		}
 
@@ -260,7 +273,7 @@ public class AdaptorItemHandler extends InventoryAdaptor
 	}
 
 	@Override
-	public Iterator<ItemSlot> iterator()
+	public Iterator<ISlot> iterator()
 	{
 		return new ItemHandlerIterator( this.itemHandler );
 	}

@@ -25,6 +25,7 @@ import java.util.Optional;
 
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ItemInventoryAdaptor;
 import appeng.container.slot.*;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -41,7 +42,6 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
-import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.PlayerInvWrapper;
 
@@ -61,7 +61,6 @@ import appeng.items.storage.ItemViewCell;
 import appeng.me.helpers.MachineSource;
 import appeng.parts.reporting.PartPatternTerminal;
 import appeng.tile.inventory.AppEngInternalInventory;
-import appeng.util.InventoryAdaptor;
 import appeng.util.Platform;
 import appeng.util.inv.AdaptorItemHandler;
 import appeng.util.inv.IAEAppEngInventory;
@@ -462,15 +461,15 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 		if( packetPatternSlot.slotItem != null && this.getCellInventory() != null )
 		{
 			final IAEItemStack out = packetPatternSlot.slotItem.copy();
-			InventoryAdaptor inv = new AdaptorItemHandler( new WrapperCursorItemHandler( this.getPlayerInv().player.inventory ) );
-			final InventoryAdaptor playerInv = InventoryAdaptor.getAdaptor( this.getPlayerInv().player );
+			ItemInventoryAdaptor inv = new AdaptorItemHandler( new WrapperCursorItemHandler( this.getPlayerInv().player.inventory ) );
+			final ItemInventoryAdaptor playerInv = ItemInventoryAdaptor.getAdaptor( this.getPlayerInv().player );
 
 			if( packetPatternSlot.shift )
 			{
 				inv = playerInv;
 			}
 
-			if( !inv.simulateAdd( out.createItemStack() ).isEmpty() )
+			if( !inv.simulateAdd( out ).isEmpty() )
 			{
 				return;
 			}
@@ -480,7 +479,7 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 
 			if( extracted != null )
 			{
-				inv.addItems( extracted.createItemStack() );
+				inv.addItems( extracted );
 				if( p instanceof EntityPlayerMP )
 				{
 					this.updateHeld( (EntityPlayerMP) p );
@@ -494,7 +493,7 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 
 			for( int x = 0; x < 9; x++ )
 			{
-				ic.setInventorySlotContents( x, packetPatternSlot.pattern[x] == null ? ItemStack.EMPTY : packetPatternSlot.pattern[x].createItemStack() );
+				ic.setInventorySlotContents( x, packetPatternSlot.pattern[x] == null ? ItemStack.EMPTY : packetPatternSlot.pattern[x].getItemStack() );
 			}
 
 			final IRecipe r = CraftingManager.findMatchingRecipe( ic, p.world );
@@ -504,8 +503,7 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 				return;
 			}
 
-			final IMEMonitor storage = this.getPatternTerminal()
-					.getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+			final IMEMonitor storage = this.getPatternTerminal().getInventory( );
 			final IItemList<IAEStack> all = storage.getStorageList(AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ));
 
 			final ItemStack is = r.getCraftingResult( ic );
@@ -532,15 +530,15 @@ public class ContainerPatternTerm extends ContainerMEMonitorable implements IAEA
 
 				for( int x = 0; x < real.getSizeInventory(); x++ )
 				{
-					final ItemStack failed = playerInv.addItems( real.getStackInSlot( x ) );
+					final IAEStack failed = playerInv.addItems( AEItemStack.fromItemStack( real.getStackInSlot( x ) ) );
 
-					if( !failed.isEmpty() )
+					if( failed != null && !failed.isEmpty() )
 					{
-						p.dropItem( failed, false );
+						p.dropItem( failed.asItemStackRepresentation(), false );
 					}
 				}
 
-				inv.addItems( is );
+				inv.addItems( AEItemStack.fromItemStack( is ) );
 				if( p instanceof EntityPlayerMP )
 				{
 					this.updateHeld( (EntityPlayerMP) p );

@@ -22,15 +22,11 @@ package appeng.helpers;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import appeng.api.networking.crafting.IInventoryCrafting;
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.channels.IFluidStorageChannel;
-import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEStack;
-import appeng.core.api.ApiStorage;
-import appeng.fluids.container.slots.IMEFluidSlot;
-import appeng.fluids.util.AEFluidStack;
-import com.google.common.collect.Iterables;
-import net.minecraft.inventory.InventoryCrafting;
+import appeng.crafting.InventoryCrafting;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
@@ -49,16 +45,14 @@ import appeng.core.AELog;
 import appeng.core.features.AEFeature;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
-import net.minecraftforge.fluids.FluidStack;
-import org.apache.commons.lang3.ArrayUtils;
 
 
 public class PatternHelper implements ICraftingPatternDetails, Comparable<PatternHelper>
 {
 
 	private final ItemStack patternItem;
-	private final InventoryCrafting crafting = new InventoryCrafting( new ContainerNull(), 3, 3 );
-	private final InventoryCrafting testFrame = new InventoryCrafting( new ContainerNull(), 3, 3 );
+	private final net.minecraft.inventory.InventoryCrafting crafting = new net.minecraft.inventory.InventoryCrafting( new ContainerNull(), 3, 3 );
+	private final net.minecraft.inventory.InventoryCrafting testFrame = new net.minecraft.inventory.InventoryCrafting( new ContainerNull(), 3, 3 );
 	private final ItemStack correctOutput; // This is for crafting mode only.
 	private final IRecipe standardRecipe;
 	private final Map<IStorageChannel, IAEStack[]> inputs;
@@ -87,7 +81,7 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 		inputs = new HashMap<>();
 		outputs = new HashMap<>();
 
-		Collection<IStorageChannel<?>> channels = AEApi.instance().storage().storageChannels();
+		Collection<IStorageChannel<?,?,?>> channels = AEApi.instance().storage().storageChannels();
 		NBTTagList tagList;
 		for( IStorageChannel channel : channels)
 		{
@@ -111,7 +105,7 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 					in.add( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( gs ) );
 					if(channel.getChannelType() == AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class))
 					{
-						ItemStack item = ((IAEItemStack)gs).createItemStack();
+						ItemStack item = ((IAEItemStack)gs).getItemStack();
 						this.crafting.setInventorySlotContents(x, item);
 
 						if (!gs.isEmpty() && (!this.isCrafting || !item.hasTagCompound())) {
@@ -301,6 +295,19 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 		this.markItemAs( slotIndex, i, TestStatus.DECLINE );
 		return false;
 	}
+	public IInventoryCrafting getInventoryCrafting()
+	{
+		InventoryCrafting result = new InventoryCrafting();
+		if(this.isCrafting) {
+			result.setSlotsCount(AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class), 9);
+		}
+		else {
+			result.setSlotsCount(AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class), 9);
+			result.setSlotsCount(AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class), 3);
+		}
+		return result;
+	}
+
 
 	@Override
 	public boolean isCraftable()
@@ -362,23 +369,24 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
 	}
 
 	@Override
-	public ItemStack getOutput( final InventoryCrafting craftingInv, final World w )
+	public ItemStack getOutput( final IInventoryCrafting craftingInv, final World w )
 	{
 		if( !this.isCrafting )
 		{
 			throw new IllegalStateException( "Only crafting recipes supported." );
 		}
 
-		for( int x = 0; x < craftingInv.getSizeInventory(); x++ )
+		IStorageChannel channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
+		for( int x = 0; x < craftingInv.getSlotsCount(channel); x++ )
 		{
-			if( !this.isValidItemForSlot( x, craftingInv.getStackInSlot( x ), w ) )
+			if( !this.isValidItemForSlot( x, (ItemStack)craftingInv.getStackInSlot( channel, x ).getStack(), w ) )
 			{
 				return ItemStack.EMPTY;
 			}
 		}
 		IAEItemStack output = this.getOutput();
 
-		return output != null ? output.createItemStack() : ItemStack.EMPTY;
+		return output != null ? output.getItemStack() : ItemStack.EMPTY;
 	}
 
 	private TestStatus getStatus( final int slotIndex, final ItemStack i )

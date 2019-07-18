@@ -21,6 +21,8 @@ package appeng.fluids.container;
 
 import java.util.Iterator;
 
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraftforge.items.IItemHandler;
 
@@ -158,13 +160,14 @@ public class ContainerFluidStorageBus extends ContainerFluidConfigurable
 	{
 		IAEFluidTank h = this.storageBus.getConfig();
 
-		final IMEInventory<IAEFluidStack> cellInv = this.storageBus.getInternalHandler();
+		final IMEInventory cellInv = this.storageBus.getInternalHandler();
 
-		Iterator<IAEFluidStack> i = new NullIterator<>();
+		Iterator<IAEStack> i = new NullIterator<>();
 		if( cellInv != null )
 		{
-			final IItemList<IAEFluidStack> list = cellInv
-					.getAvailableItems( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList() );
+			IStorageChannel channel = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class );
+			final IItemList<IAEStack> list = cellInv
+					.getAvailableItems( channel, channel.createList() );
 			i = list.iterator();
 		}
 
@@ -172,7 +175,7 @@ public class ContainerFluidStorageBus extends ContainerFluidConfigurable
 		{
 			if( i.hasNext() && this.isSlotEnabled( ( x / 9 ) - 2 ) )
 			{
-				h.setFluidInSlot( x, i.next() );
+				h.setFluidInSlot( x, (IAEFluidStack)i.next() );
 			}
 			else
 			{

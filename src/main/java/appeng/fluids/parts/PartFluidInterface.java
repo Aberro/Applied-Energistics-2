@@ -145,9 +145,9 @@ public class PartFluidInterface extends PartBasicState implements IGridTickable,
 	}
 
 	@Override
-	public <T extends IAEStack> IMEMonitor getInventory( IStorageChannel<T> channel )
+	public  IMEMonitor getInventory( )
 	{
-		return this.duality.getInventory( channel );
+		return this.duality.getInventory( );
 	}
 
 	@Override

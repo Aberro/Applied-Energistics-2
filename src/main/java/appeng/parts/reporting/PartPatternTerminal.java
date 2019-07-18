@@ -21,9 +21,12 @@ package appeng.parts.reporting;
 
 import java.util.List;
 
+import appeng.api.AEApi;
+import appeng.api.storage.channels.IFluidStorageChannel;
+import appeng.api.storage.channels.IItemStorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.core.Api;
-import appeng.fluids.container.slots.IMEFluidSlot;
 import appeng.fluids.items.FluidDummyItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -143,26 +146,26 @@ public class PartPatternTerminal extends AbstractPartTerminal
 				{
 					this.setCraftingRecipe( details.isCraftable() );
 					this.setSubstitution( details.canSubstitute() );
-					IAEItemStack[] inputs = details.getInputs();
-					IAEItemStack[] outputs = details.getOutputs();
-					IAEFluidStack[] inputFluids = details.getInputFluids();
-					IAEFluidStack[] outputFluids = details.getOutputFluids();
+					IAEStack[] inputs = details.getChannelInputs(AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class));
+					IAEStack[] outputs = details.getChannelOutputs(AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class));
+					IAEStack[] inputFluids = details.getChannelInputs(AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class));
+					IAEStack[] outputFluids = details.getChannelOutputs(AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class));
 
 					for( int x = 0; x < this.crafting.getSlots() && x < inputs.length; x++ )
 					{
-						final IAEItemStack item = inputs[x];
-						this.crafting.setStackInSlot( x, item == null ? ItemStack.EMPTY : item.createItemStack() );
+						final IAEItemStack item = (IAEItemStack)inputs[x];
+						this.crafting.setStackInSlot( x, item == null ? ItemStack.EMPTY : item.getItemStack() );
 					}
 
 					for( int x = 0; x < this.output.getSlots() && x < outputs.length; x++ )
 					{
-						final IAEItemStack item = outputs[x];
-						this.output.setStackInSlot( x, item == null ? ItemStack.EMPTY : item.createItemStack() );
+						final IAEItemStack item = (IAEItemStack)outputs[x];
+						this.output.setStackInSlot( x, item == null ? ItemStack.EMPTY : item.getItemStack() );
 					}
 
 					for(int x = 0; x < this.inputFluids.getSlots() && x < inputFluids.length; x++)
 					{
-						final IAEFluidStack fluid = inputFluids[x];
+						final IAEFluidStack fluid = (IAEFluidStack)inputFluids[x];
 
 						if(fluid == null)
 							this.inputFluids.setStackInSlot( x, ItemStack.EMPTY );
@@ -177,7 +180,7 @@ public class PartPatternTerminal extends AbstractPartTerminal
 
 					for(int x = 0; x < this.outputFluids.getSlots() && x < outputFluids.length; x++)
 					{
-						final IAEFluidStack fluid = outputFluids[x];
+						final IAEFluidStack fluid = (IAEFluidStack)outputFluids[x];
 
 						if(fluid == null)
 							this.outputFluids.setStackInSlot( x, ItemStack.EMPTY );

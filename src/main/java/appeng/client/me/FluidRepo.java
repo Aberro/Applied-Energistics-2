@@ -33,6 +33,7 @@ import appeng.api.config.ViewItems;
 import appeng.api.config.YesNo;
 import appeng.api.storage.channels.IFluidStorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.client.gui.widgets.IScrollSource;
 import appeng.client.gui.widgets.ISortSource;
@@ -49,7 +50,7 @@ import appeng.util.prioritylist.IPartitionList;
  */
 public class FluidRepo
 {
-	private final IItemList<IAEFluidStack> list = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
+	private final IItemList<IAEStack> list = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
 	private final ArrayList<IAEFluidStack> view = new ArrayList<>();
 	private final IScrollSource src;
 	private final ISortSource sortSrc;
@@ -102,7 +103,7 @@ public class FluidRepo
 		final boolean terminalSearchToolTips = AEConfig.instance().getConfigManager().getSetting( Settings.SEARCH_TOOLTIPS ) != YesNo.NO;
 
 		boolean notDone = false;
-		for( IAEFluidStack fs : this.list )
+		for( IAEStack fs : this.list )
 		{
 			if( viewMode == ViewItems.CRAFTABLE && !fs.isCraftable() )
 			{
@@ -146,7 +147,7 @@ public class FluidRepo
 					fs.setStackSize( 0 );
 				}
 
-				this.view.add( fs );
+				this.view.add( (IAEFluidStack)fs );
 			}
 		}
 
@@ -171,7 +172,7 @@ public class FluidRepo
 
 	public void postUpdate( final IAEFluidStack is )
 	{
-		final IAEFluidStack st = this.list.findPrecise( is );
+		final IAEStack st = this.list.findPrecise( is );
 
 		if( st != null )
 		{

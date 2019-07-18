@@ -21,6 +21,7 @@ package appeng.parts.automation;
 
 import java.util.List;
 
+import appeng.api.storage.data.IAEStack;
 import com.google.common.collect.Lists;
 
 import net.minecraft.block.material.Material;
@@ -335,7 +336,7 @@ public class PartAnnihilationPlane extends PartBasicState implements IGridTickab
 			final IStorageGrid storage = this.getProxy().getStorage();
 			final IEnergyGrid energy = this.getProxy().getEnergy();
 			final IAEItemStack overflow = Platform.poweredInsert( energy,
-					storage.getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) ), itemToStore, this.mySrc );
+					storage.getInventory( ), itemToStore, this.mySrc );
 
 			this.isAccepting = overflow == null;
 
@@ -528,7 +529,7 @@ public class PartAnnihilationPlane extends PartBasicState implements IGridTickab
 			for( final ItemStack itemStack : itemStacks )
 			{
 				final IAEItemStack itemToTest = AEItemStack.fromItemStack( itemStack );
-				final IAEItemStack overflow = storage.getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
+				final IAEStack overflow = storage.getInventory( )
 						.injectItems( itemToTest, Actionable.SIMULATE, this.mySrc );
 				if( overflow == null || itemToTest.getStackSize() > overflow.getStackSize() )
 				{

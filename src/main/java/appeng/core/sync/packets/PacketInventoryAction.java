@@ -168,7 +168,7 @@ public class PacketInventoryAction extends AppEngPacket
 			}
 			else
 			{
-				AppEng.proxy.getPlayers().get( 0 ).inventory.setItemStack( this.slotItem.createItemStack() );
+				AppEng.proxy.getPlayers().get( 0 ).inventory.setItemStack( this.slotItem.getItemStack() );
 			}
 		}
 	}

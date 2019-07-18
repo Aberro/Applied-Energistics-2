@@ -30,15 +30,15 @@ import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 
-public final class FluidList implements IItemList<IAEFluidStack>
+public final class FluidList implements IItemList<IAEStack>
 {
 
-	private final Map<IAEFluidStack, IAEFluidStack> records = new HashMap<>();
+	private final Map<IAEStack, IAEFluidStack> records = new HashMap<>();
 
 	@Override
-	public void add( final IAEFluidStack option )
+	public void add( final IAEStack option )
 	{
-		if( option == null )
+		if( option == null || !(option instanceof IAEFluidStack) )
 		{
 			return;
 		}
@@ -51,15 +51,15 @@ public final class FluidList implements IItemList<IAEFluidStack>
 			return;
 		}
 
-		final IAEFluidStack opt = option.copy();
+		final IAEFluidStack opt = (IAEFluidStack)option.copy();
 
 		this.putFluidRecord( opt );
 	}
 
 	@Override
-	public IAEFluidStack findPrecise( final IAEFluidStack fluidStack )
+	public IAEStack findPrecise( final IAEStack fluidStack )
 	{
-		if( fluidStack == null )
+		if( fluidStack == null|| !(fluidStack instanceof IAEFluidStack) )
 		{
 			return null;
 		}
@@ -68,9 +68,9 @@ public final class FluidList implements IItemList<IAEFluidStack>
 	}
 
 	@Override
-	public Collection<IAEFluidStack> findFuzzy( final IAEFluidStack filter, final FuzzyMode fuzzy )
+	public Collection<IAEStack> findFuzzy( final IAEStack filter, final FuzzyMode fuzzy )
 	{
-		if( filter == null )
+		if( filter == null || !(filter instanceof IAEFluidStack) )
 		{
 			return Collections.emptyList();
 		}
@@ -85,9 +85,9 @@ public final class FluidList implements IItemList<IAEFluidStack>
 	}
 
 	@Override
-	public void addStorage( final IAEFluidStack option )
+	public void addStorage( final IAEStack option )
 	{
-		if( option == null )
+		if( option == null || !(option instanceof IAEFluidStack))
 		{
 			return;
 		}
@@ -100,7 +100,7 @@ public final class FluidList implements IItemList<IAEFluidStack>
 			return;
 		}
 
-		final IAEFluidStack opt = option.copy();
+		final IAEFluidStack opt = (IAEFluidStack)option.copy();
 
 		this.putFluidRecord( opt );
 	}
@@ -111,9 +111,9 @@ public final class FluidList implements IItemList<IAEFluidStack>
 	 */
 
 	@Override
-	public void addCrafting( final IAEFluidStack option )
+	public void addCrafting( final IAEStack option )
 	{
-		if( option == null )
+		if( option == null || !(option instanceof IAEFluidStack))
 		{
 			return;
 		}
@@ -126,7 +126,7 @@ public final class FluidList implements IItemList<IAEFluidStack>
 			return;
 		}
 
-		final IAEFluidStack opt = option.copy();
+		final IAEFluidStack opt = (IAEFluidStack)option.copy();
 		opt.setStackSize( 0 );
 		opt.setCraftable( true );
 
@@ -134,9 +134,9 @@ public final class FluidList implements IItemList<IAEFluidStack>
 	}
 
 	@Override
-	public void addRequestable( final IAEFluidStack option )
+	public void addRequestable( final IAEStack option )
 	{
-		if( option == null )
+		if( option == null || !(option instanceof IAEFluidStack))
 		{
 			return;
 		}
@@ -149,7 +149,7 @@ public final class FluidList implements IItemList<IAEFluidStack>
 			return;
 		}
 
-		final IAEFluidStack opt = option.copy();
+		final IAEFluidStack opt = (IAEFluidStack)option.copy();
 		opt.setStackSize( 0 );
 		opt.setCraftable( false );
 		opt.setCountRequestable( option.getCountRequestable() );
@@ -158,9 +158,9 @@ public final class FluidList implements IItemList<IAEFluidStack>
 	}
 
 	@Override
-	public IAEFluidStack getFirstItem()
+	public IAEStack getFirstItem()
 	{
-		for( final IAEFluidStack stackType : this )
+		for( final IAEStack stackType : this )
 		{
 			return stackType;
 		}
@@ -175,27 +175,27 @@ public final class FluidList implements IItemList<IAEFluidStack>
 	}
 
 	@Override
-	public Iterator<IAEFluidStack> iterator()
+	public Iterator<IAEStack> iterator()
 	{
-		return new MeaningfulFluidIterator<>( this.records.values().iterator() );
+		return new MeaningfulFluidIterator<>( this.records.values().stream().map(x -> (IAEStack)x).iterator() );
 	}
 
 	@Override
 	public void resetStatus()
 	{
-		for( final IAEFluidStack i : this )
+		for( final IAEStack i : this )
 		{
 			i.reset();
 		}
 	}
 
-	private IAEFluidStack getFluidRecord( final IAEFluidStack fluid )
+	private IAEFluidStack getFluidRecord( final IAEStack fluid )
 	{
 		return this.records.get( fluid );
 	}
 
-	private IAEFluidStack putFluidRecord( final IAEFluidStack fluid )
+	private IAEFluidStack putFluidRecord( final IAEStack fluid )
 	{
-		return this.records.put( fluid, fluid );
+		return this.records.put( fluid, (IAEFluidStack)fluid );
 	}
 }

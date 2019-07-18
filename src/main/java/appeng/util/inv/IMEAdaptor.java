@@ -21,6 +21,9 @@ package appeng.util.inv;
 
 import java.util.Iterator;
 
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
 import com.google.common.collect.ImmutableList;
 
 import net.minecraft.item.ItemStack;
@@ -37,14 +40,14 @@ import appeng.util.InventoryAdaptor;
 import appeng.util.item.AEItemStack;
 
 
-public class IMEAdaptor extends InventoryAdaptor
+public abstract class IMEAdaptor extends InventoryAdaptor
 {
 
 	private final IMEInventory target;
 	private final IActionSource src;
 	private int maxSlots = 0;
 
-	public IMEAdaptor( final IMEInventory input, final IActionSource src )
+	public IMEAdaptor(final IMEInventory input, final IActionSource src )
 	{
 		this.target = input;
 		this.src = src;
@@ -57,29 +60,26 @@ public class IMEAdaptor extends InventoryAdaptor
 	}
 
 	@Override
-	public Iterator<ItemSlot> iterator()
+	public Iterator<ISlot> iterator()
 	{
 		return new IMEAdaptorIterator( this, this.getList() );
 	}
 
-	private IItemList<IAEItemStack> getList()
-	{
-		return this.target.getAvailableItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList() );
-	}
+	protected abstract IItemList<IAEStack> getList();
 
 	@Override
-	public ItemStack removeItems( final int amount, final ItemStack filter, final IInventoryDestination destination )
+	public IAEStack removeItems( final long amount, final IAEStack filter, final IInventoryDestination destination )
 	{
 		return this.doRemoveItems( amount, filter, destination, Actionable.MODULATE );
 	}
 
-	private ItemStack doRemoveItems( final int amount, final ItemStack filter, final IInventoryDestination destination, final Actionable type )
+	private IAEStack doRemoveItems( final long amount, final IAEStack filter, final IInventoryDestination destination, final Actionable type )
 	{
-		IAEItemStack req = null;
+		IAEStack req = null;
 
 		if( filter.isEmpty() )
 		{
-			final IItemList<IAEItemStack> list = this.getList();
+			final IItemList<IAEStack> list = this.getList();
 			if( !list.isEmpty() )
 			{
 				req = list.getFirstItem();
@@ -87,10 +87,10 @@ public class IMEAdaptor extends InventoryAdaptor
 		}
 		else
 		{
-			req = AEItemStack.fromItemStack( filter );
+			req = filter;
 		}
 
-		IAEItemStack out = null;
+		IAEStack out = null;
 
 		if( req != null )
 		{
@@ -100,20 +100,20 @@ public class IMEAdaptor extends InventoryAdaptor
 
 		if( out != null )
 		{
-			return out.createItemStack();
+			return out;
 		}
 
-		return ItemStack.EMPTY;
+		return null;
 	}
 
 	@Override
-	public ItemStack simulateRemove( final int amount, final ItemStack filter, final IInventoryDestination destination )
+	public IAEStack simulateRemove( final long amount, final IAEStack filter, final IInventoryDestination destination )
 	{
 		return this.doRemoveItems( amount, filter, destination, Actionable.SIMULATE );
 	}
 
 	@Override
-	public ItemStack removeSimilarItems( final int amount, final ItemStack filter, final FuzzyMode fuzzyMode, final IInventoryDestination destination )
+	public IAEStack removeSimilarItems( final long amount, final IAEStack filter, final FuzzyMode fuzzyMode, final IInventoryDestination destination )
 	{
 		if( filter.isEmpty() )
 		{
@@ -122,70 +122,69 @@ public class IMEAdaptor extends InventoryAdaptor
 		return this.doRemoveItemsFuzzy( amount, filter, destination, Actionable.MODULATE, fuzzyMode );
 	}
 
-	private ItemStack doRemoveItemsFuzzy( final int amount, final ItemStack filter, final IInventoryDestination destination, final Actionable type, final FuzzyMode fuzzyMode )
+	private IAEStack doRemoveItemsFuzzy( final long amount, final IAEStack filter, final IInventoryDestination destination, final Actionable type, final FuzzyMode fuzzyMode )
 	{
-		final IAEItemStack reqFilter = AEItemStack.fromItemStack( filter );
-		if( reqFilter == null )
+		if( filter == null )
 		{
-			return ItemStack.EMPTY;
+			return null;
 		}
 
-		IAEItemStack out = null;
+		IAEStack out = null;
 
-		for( final IAEItemStack req : ImmutableList.copyOf( this.getList().findFuzzy( reqFilter, fuzzyMode ) ) )
+		for( final IAEStack req : ImmutableList.copyOf( this.getList().findFuzzy( filter, fuzzyMode ) ) )
 		{
 			if( req != null )
 			{
 				req.setStackSize( amount );
 				out = this.target.extractItems( req, type, this.src );
-				if( out != null )
+				if( out != null && out.getChannel() == AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class) )
 				{
-					return out.createItemStack();
+					return out;
 				}
 			}
 		}
 
-		return ItemStack.EMPTY;
+		return null;
 	}
 
 	@Override
-	public ItemStack simulateSimilarRemove( final int amount, final ItemStack filter, final FuzzyMode fuzzyMode, final IInventoryDestination destination )
+	public IAEStack simulateSimilarRemove( final long amount, final IAEStack filter, final FuzzyMode fuzzyMode, final IInventoryDestination destination )
 	{
 		if( filter.isEmpty() )
 		{
-			return this.doRemoveItems( amount, ItemStack.EMPTY, destination, Actionable.SIMULATE );
+			return this.doRemoveItems( amount, null, destination, Actionable.SIMULATE );
 		}
 		return this.doRemoveItemsFuzzy( amount, filter, destination, Actionable.SIMULATE, fuzzyMode );
 	}
 
 	@Override
-	public ItemStack addItems( final ItemStack toBeAdded )
+	public IAEStack addItems( final IAEStack toBeAdded )
 	{
-		final IAEItemStack in = AEItemStack.fromItemStack( toBeAdded );
+		final IAEStack in = toBeAdded;
 		if( in != null )
 		{
-			final IAEItemStack out = this.target.injectItems( in, Actionable.MODULATE, this.src );
-			if( out != null )
+			final IAEStack out = this.target.injectItems( in, Actionable.MODULATE, this.src );
+			if( out != null && out.getChannel() == AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class))
 			{
-				return out.createItemStack();
+				return out;
 			}
 		}
-		return ItemStack.EMPTY;
+		return null;
 	}
 
 	@Override
-	public ItemStack simulateAdd( final ItemStack toBeSimulated )
+	public IAEStack simulateAdd( final IAEStack toBeSimulated )
 	{
-		final IAEItemStack in = AEItemStack.fromItemStack( toBeSimulated );
+		final IAEStack in = toBeSimulated;
 		if( in != null )
 		{
-			final IAEItemStack out = this.target.injectItems( in, Actionable.SIMULATE, this.src );
-			if( out != null )
+			final IAEStack out = this.target.injectItems( in, Actionable.SIMULATE, this.src );
+			if( out != null && out.getChannel() == AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class) )
 			{
-				return out.createItemStack();
+				return out;
 			}
 		}
-		return ItemStack.EMPTY;
+		return null;
 	}
 
 	@Override

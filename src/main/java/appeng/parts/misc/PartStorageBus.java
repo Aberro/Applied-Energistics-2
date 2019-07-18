@@ -19,10 +19,13 @@
 package appeng.parts.misc;
 
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import appeng.api.storage.data.IAEStack;
+import appeng.util.item.MixedList;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -93,7 +96,7 @@ import appeng.util.prioritylist.FuzzyPriorityList;
 import appeng.util.prioritylist.PrecisePriorityList;
 
 
-public class PartStorageBus extends PartUpgradeable implements IGridTickable, ICellContainer, IMEMonitorHandlerReceiver<IAEItemStack>, IPriorityHost
+public class PartStorageBus extends PartUpgradeable implements IGridTickable, ICellContainer, IMEMonitorHandlerReceiver, IPriorityHost
 {
 
 	public static final ResourceLocation MODEL_BASE = new ResourceLocation( AppEng.MOD_ID, "part/storage_bus_base" );
@@ -112,7 +115,7 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 	private int priority = 0;
 	private boolean cached = false;
 	private ITickingMonitor monitor = null;
-	private MEInventoryHandler<IAEItemStack> handler = null;
+	private MEInventoryHandler handler = null;
 	private int handlerHash = 0;
 	private boolean wasActive = false;
 	private byte resetCacheLogic = 0;
@@ -251,16 +254,13 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 	}
 
 	@Override
-	public void postChange( final IBaseMonitor<IAEItemStack> monitor, final Iterable<IAEItemStack> change, final IActionSource source )
+	public void postChange(final IBaseMonitor monitor, final Iterable<IAEStack> change, final IActionSource source )
 	{
 		try
 		{
 			if( this.getProxy().isActive() )
 			{
-				this.getProxy()
-						.getStorage()
-						.postAlterationOfStoredItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ), change,
-								this.mySrc );
+				this.getProxy().getStorage().postAlterationOfStoredItems( change, this.mySrc );
 			}
 		}
 		catch( final GridAccessException e )
@@ -346,11 +346,12 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 		final boolean fullReset = this.resetCacheLogic == 2;
 		this.resetCacheLogic = 0;
 
-		final IMEInventory<IAEItemStack> in = this.getInternalHandler();
-		IItemList<IAEItemStack> before = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+		final IMEInventory in = this.getInternalHandler();
+		IItemList<IAEStack> before = new MixedList();
+		IStorageChannel channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
 		if( in != null )
 		{
-			before = in.getAvailableItems( before );
+			before = in.getAvailableItems( channel, before );
 		}
 
 		this.cached = false;
@@ -359,20 +360,20 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 			this.handlerHash = 0;
 		}
 
-		final IMEInventory<IAEItemStack> out = this.getInternalHandler();
+		final IMEInventory out = this.getInternalHandler();
 
 		if( in != out )
 		{
-			IItemList<IAEItemStack> after = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+			IItemList<IAEStack> after = new MixedList();
 			if( out != null )
 			{
-				after = out.getAvailableItems( after );
+				after = out.getAvailableItems( channel, after );
 			}
 			Platform.postListChanges( before, after, this, this.mySrc );
 		}
 	}
 
-	private IMEInventory<IAEItemStack> getInventoryWrapper( TileEntity target )
+	private IMEInventory getInventoryWrapper( TileEntity target )
 	{
 
 		EnumFacing targetSide = this.getSide().getFacing().getOpposite();
@@ -385,7 +386,7 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 			IStorageMonitorable inventory = accessor.getInventory( this.mySrc );
 			if( inventory != null )
 			{
-				return inventory.getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+				return inventory.getInventory( );
 			}
 
 			// So this could / can be a design decision. If the tile does support our custom capability,
@@ -430,7 +431,7 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 		return 0;
 	}
 
-	public MEInventoryHandler<IAEItemStack> getInternalHandler()
+	public MEInventoryHandler getInternalHandler()
 	{
 		if( this.cached )
 		{
@@ -454,7 +455,7 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 		this.monitor = null;
 		if( target != null )
 		{
-			IMEInventory<IAEItemStack> inv = this.getInventoryWrapper( target );
+			IMEInventory inv = this.getInventoryWrapper( target );
 
 			if( inv instanceof MEMonitorIInventory )
 			{
@@ -472,13 +473,13 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 			{
 				this.checkInterfaceVsStorageBus( target, this.getSide().getOpposite() );
 
-				this.handler = new MEInventoryHandler<IAEItemStack>( inv, AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+				this.handler = new MEInventoryHandler( inv );
 
 				this.handler.setBaseAccess( (AccessRestriction) this.getConfigManager().getSetting( Settings.ACCESS ) );
 				this.handler.setWhitelist( this.getInstalledUpgrades( Upgrades.INVERTER ) > 0 ? IncludeExclude.BLACKLIST : IncludeExclude.WHITELIST );
 				this.handler.setPriority( this.priority );
 
-				final IItemList<IAEItemStack> priorityList = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+				final IItemList<IAEStack> priorityList = new MixedList();
 
 				final int slotsToUse = 18 + this.getInstalledUpgrades( Upgrades.CAPACITY ) * 9;
 				for( int x = 0; x < this.Config.getSlots() && x < slotsToUse; x++ )
@@ -493,17 +494,17 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 				if( this.getInstalledUpgrades( Upgrades.FUZZY ) > 0 )
 				{
 					this.handler
-							.setPartitionList( new FuzzyPriorityList<IAEItemStack>( priorityList, (FuzzyMode) this.getConfigManager()
+							.setPartitionList( new FuzzyPriorityList( priorityList, (FuzzyMode) this.getConfigManager()
 									.getSetting( Settings.FUZZY_MODE ) ) );
 				}
 				else
 				{
-					this.handler.setPartitionList( new PrecisePriorityList<IAEItemStack>( priorityList ) );
+					this.handler.setPartitionList( new PrecisePriorityList( priorityList ) );
 				}
 
 				if( inv instanceof IBaseMonitor )
 				{
-					( (IBaseMonitor<IAEItemStack>) inv ).addListener( this, this.handler );
+					( (IBaseMonitor) inv ).addListener( this, this.handler );
 				}
 			}
 		}
@@ -569,17 +570,20 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 	}
 
 	@Override
-	public List<IMEInventoryHandler> getCellArray( final IStorageChannel channel )
+	public List<IMEInventoryHandler> getCellArray( )
 	{
-		if( channel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
+		final IMEInventoryHandler out = this.getProxy().isActive() ? this.getInternalHandler() : null;
+		if( out != null )
 		{
-			final IMEInventoryHandler<IAEItemStack> out = this.getProxy().isActive() ? this.getInternalHandler() : null;
-			if( out != null )
-			{
-				return Collections.singletonList( out );
-			}
+			return Collections.singletonList( out );
 		}
 		return Collections.emptyList();
+	}
+
+	@Override
+	public List<IMEInventoryHandler> getCellArray( final IStorageChannel channel )
+	{
+		return getCellArray();
 	}
 
 	@Override
@@ -611,7 +615,7 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
 	 * }
 	 */
 	@Override
-	public void saveChanges( final ICellInventory<?> cellInventory )
+	public void saveChanges( final ICellInventory<?, ?, ?> cellInventory )
 	{
 		// nope!
 	}

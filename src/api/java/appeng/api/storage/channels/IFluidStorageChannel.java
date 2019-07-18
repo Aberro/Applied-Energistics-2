@@ -26,9 +26,12 @@ package appeng.api.storage.channels;
 
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.util.ISlot;
+import appeng.fluids.container.slots.IMEFluidSlot;
+import net.minecraftforge.fluids.FluidStack;
 
 
-public interface IFluidStorageChannel extends IStorageChannel<IAEFluidStack>
+public interface IFluidStorageChannel extends IStorageChannel<IAEFluidStack, ISlot<FluidStack, IAEFluidStack>, FluidStack>
 {
 
 }

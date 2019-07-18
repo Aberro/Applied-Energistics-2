@@ -20,6 +20,9 @@ package appeng.me.storage;
 
 
 import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.util.ISlot;
+import appeng.util.item.AEItemStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.items.IItemHandler;
@@ -38,7 +41,7 @@ import appeng.util.Platform;
  * @version rv6 - 2018-01-17
  * @since rv6 2018-01-17
  */
-public abstract class AbstractCellInventory<T extends IAEStack> implements ICellInventory<T>
+public abstract class AbstractCellInventory<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> implements ICellInventory<TAEStack, TSlot, TStack>
 {
 	private static final int MAX_ITEM_TYPES = 63;
 	private static final String ITEM_TYPE_TAG = "it";
@@ -55,12 +58,14 @@ public abstract class AbstractCellInventory<T extends IAEStack> implements ICell
 	protected final ISaveProvider container;
 	private int maxItemTypes = MAX_ITEM_TYPES;
 	private short storedItems = 0;
-	private int storedItemCount = 0;
-	protected IItemList<T> cellItems;
+	private long storedItemCount = 0;
+	protected IItemList<TAEStack> cellItems;
+	//This is this cell
 	private final ItemStack i;
-	protected final IStorageCell<T> cellType;
+	protected final IStorageCell<TAEStack, TSlot, TStack> cellType;
 	protected final int itemsPerByte;
 	private boolean isPersisted = true;
+	private IStorageChannel channel;
 
 	static
 	{
@@ -71,8 +76,9 @@ public abstract class AbstractCellInventory<T extends IAEStack> implements ICell
 		}
 	}
 
-	protected AbstractCellInventory( final IStorageCell<T> cellType, final ItemStack o, final ISaveProvider container )
+	protected AbstractCellInventory(IStorageChannel channel, final IStorageCell<TAEStack, TSlot, TStack> cellType, final ItemStack o, final ISaveProvider container )
 	{
+		this.channel = channel;
 		this.i = o;
 		this.cellType = cellType;
 		this.itemsPerByte = this.cellType.getChannel().getUnitsPerByte();
@@ -94,11 +100,11 @@ public abstract class AbstractCellInventory<T extends IAEStack> implements ICell
 		this.cellItems = null;
 	}
 
-	protected IItemList<T> getCellItems()
+	protected IItemList<TAEStack> getCellItems()
 	{
 		if( this.cellItems == null )
 		{
-			this.cellItems = this.<T>getChannel().createList();
+			this.cellItems = this.channel.createList();
 			this.loadCellItems();
 		}
 
@@ -113,18 +119,18 @@ public abstract class AbstractCellInventory<T extends IAEStack> implements ICell
 			return;
 		}
 
-		int itemCount = 0;
+		long itemCount = 0;
 
 		// add new pretty stuff...
 		int x = 0;
-		for( final T v : this.cellItems )
+		for( final TAEStack v : this.cellItems )
 		{
 			itemCount += v.getStackSize();
 
 			final NBTTagCompound g = new NBTTagCompound();
 			v.writeToNBT( g );
 			this.tagCompound.setTag( ITEM_SLOT_KEYS[x], g );
-			this.tagCompound.setInteger( ITEM_SLOT_COUNT_KEYS[x], (int) v.getStackSize() );
+			this.tagCompound.setLong( ITEM_SLOT_COUNT_KEYS[x], v.getStackSize() );
 
 			x++;
 		}
@@ -148,7 +154,7 @@ public abstract class AbstractCellInventory<T extends IAEStack> implements ICell
 		}
 		else
 		{
-			this.tagCompound.setInteger( ITEM_COUNT_TAG, itemCount );
+			this.tagCompound.setLong( ITEM_COUNT_TAG, itemCount );
 		}
 
 		// clean any old crusty stuff...
@@ -166,7 +172,7 @@ public abstract class AbstractCellInventory<T extends IAEStack> implements ICell
 		// recalculate values
 		this.storedItems = (short) this.cellItems.size();
 		this.storedItemCount = 0;
-		for( final T v : this.cellItems )
+		for( final TAEStack v : this.cellItems )
 		{
 			this.storedItemCount += v.getStackSize();
 		}
@@ -187,7 +193,7 @@ public abstract class AbstractCellInventory<T extends IAEStack> implements ICell
 	{
 		if( this.cellItems == null )
 		{
-			this.cellItems = this.<T>getChannel().createList();
+			this.cellItems = this.channel.createList();
 		}
 
 		this.cellItems.resetStatus(); // clears totals and stuff.
@@ -220,9 +226,9 @@ public abstract class AbstractCellInventory<T extends IAEStack> implements ICell
 	@Override
 	public IItemList<IAEStack> getAvailableItems(IStorageChannel channel, final IItemList<IAEStack> out )
 	{
-		if( channel != this.getChannel())
+		if( channel != this.channel)
 			return out;
-		for( final T item : this.getCellItems() )
+		for( final TAEStack item : this.getCellItems() )
 		{
 			out.add( item );
 		}
@@ -231,7 +237,7 @@ public abstract class AbstractCellInventory<T extends IAEStack> implements ICell
 	}
 
 	@Override
-	public ItemStack getItemStack()
+	public ItemStack getStack()
 	{
 		return this.i;
 	}

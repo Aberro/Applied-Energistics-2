@@ -21,6 +21,7 @@ package appeng.fluids.parts;
 
 import javax.annotation.Nonnull;
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
@@ -109,7 +110,7 @@ public class PartFluidExportBus extends PartSharedFluidBus
 			try
 			{
 				final IFluidHandler fh = te.getCapability( CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, this.getSide().getFacing().getOpposite() );
-				final IMEMonitor<IAEFluidStack> inv = this.getProxy().getStorage().getInventory( this.getChannel() );
+				final IMEMonitor inv = this.getProxy().getStorage().getInventory( );
 
 				if( fh != null )
 				{
@@ -122,11 +123,11 @@ public class PartFluidExportBus extends PartSharedFluidBus
 
 							toExtract.setStackSize( this.calculateAmountToSend() );
 
-							final IAEFluidStack out = inv.extractItems( toExtract, Actionable.SIMULATE, this.source );
+							final IAEStack out = inv.extractItems( toExtract, Actionable.SIMULATE, this.source );
 
 							if( out != null )
 							{
-								int wasInserted = fh.fill( out.getFluidStack(), true );
+								int wasInserted = fh.fill( ((IAEFluidStack)out).getFluidStack(), true );
 
 								if( wasInserted > 0 )
 								{

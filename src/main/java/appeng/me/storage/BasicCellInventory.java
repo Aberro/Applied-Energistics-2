@@ -2,6 +2,8 @@
 package appeng.me.storage;
 
 
+import appeng.api.util.ISlot;
+import appeng.util.item.AEItemStack;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -20,17 +22,17 @@ import appeng.core.AELog;
 import appeng.util.item.AEStack;
 
 
-public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventory<T>
+public class BasicCellInventory<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> extends AbstractCellInventory<TAEStack, TSlot, TStack>
 {
-	private final IStorageChannel<T> channel;
+	private final IStorageChannel channel;
 
-	private BasicCellInventory( final IStorageCell<T> cellType, final ItemStack o, final ISaveProvider container )
+	private BasicCellInventory(IStorageChannel channel, final IStorageCell<TAEStack, TSlot, TStack> cellType, final ItemStack o, final ISaveProvider container )
 	{
-		super( cellType, o, container );
+		super( channel, cellType, o, container );
 		this.channel = cellType.getChannel();
 	}
 
-	public static <T extends IAEStack> ICellInventory<T> createInventory( final ItemStack o, final ISaveProvider container )
+	public static <TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> ICellInventory<TAEStack, TSlot, TStack> createInventory( IStorageChannel channel, final ItemStack o, final ISaveProvider container )
 	{
 		try
 		{
@@ -40,10 +42,10 @@ public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventor
 			}
 
 			final Item type = o.getItem();
-			final IStorageCell<T> cellType;
+			final IStorageCell<TAEStack, TSlot, TStack> cellType;
 			if( type instanceof IStorageCell )
 			{
-				cellType = (IStorageCell<T>) type;
+				cellType = (IStorageCell<TAEStack, TSlot, TStack>) type;
 			}
 			else
 			{
@@ -55,7 +57,7 @@ public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventor
 				throw new AppEngException( "ItemStack was used as a cell, but was not a cell!" );
 			}
 
-			return new BasicCellInventory<T>( cellType, o, container );
+			return new BasicCellInventory( channel, cellType, o, container );
 		}
 		catch( final AppEngException e )
 		{
@@ -64,24 +66,25 @@ public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventor
 		}
 	}
 
-	public static <T extends AEStack<T>> boolean isCellOfType( final ItemStack input, IStorageChannel<?> channel )
+	public static boolean isCellOfType( final ItemStack input, IStorageChannel channel )
 	{
-		final IStorageCell<?> type = getStorageCell( input );
+		final IStorageCell type = getStorageCell( input );
 
 		return type != null && type.getChannel() == channel;
 	}
 
-	public static boolean isCell( final ItemStack input )
+	public static boolean isCell( final ItemStack input, IStorageChannel channel )
 	{
-		return getStorageCell( input ) != null;
+		IStorageCell cell = getStorageCell( input );
+		return cell != null && cell.getChannel() == channel;
 	}
 
-	private boolean isStorageCell( final T input )
+	private boolean isStorageCell( final TAEStack input )
 	{
 		if( input instanceof IAEItemStack )
 		{
 			final IAEItemStack stack = (IAEItemStack) input;
-			final IStorageCell<?> type = getStorageCell( stack.getDefinition() );
+			final IStorageCell type = getStorageCell( stack.getDefinition() );
 
 			return type != null && !type.storableInStorageCell();
 		}
@@ -89,7 +92,7 @@ public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventor
 		return false;
 	}
 
-	private static IStorageCell<?> getStorageCell( final ItemStack input )
+	private static IStorageCell getStorageCell( final ItemStack input )
 	{
 		if( input != null )
 		{
@@ -97,7 +100,7 @@ public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventor
 
 			if( type instanceof IStorageCell )
 			{
-				return (IStorageCell<?>) type;
+				return (IStorageCell) type;
 			}
 		}
 
@@ -125,21 +128,23 @@ public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventor
 		if(input.getChannel() != this.getChannel())
 			return input;
 
-		if( this.cellType.isBlackListed( this.getItemStack(), (T)input ) )
+		if( this.cellType.isBlackListed( this.getStack(), (TAEStack)input ) )
 			return input;
 		// This is slightly hacky as it expects a read-only access, but fine for now.
 		// TODO: Guarantee a read-only access. E.g. provide an isEmpty() method and ensure CellInventory does not write
 		// any NBT data for empty cells instead of relying on an empty IItemContainer
-		if( this.isStorageCell( (T)input ) )
+		IStorageCell cell = this.getStorageCell((ItemStack)input.getStack());
+		if( cell != null )
 		{
-			final ICellInventory<?> meInventory = createInventory( ( (IAEItemStack) input ).createItemStack(), null );
+
+			final ICellInventory meInventory = createInventory( cell.getChannel(), (ItemStack)input.getStack(), null );
 			if( !isCellEmpty( meInventory ) )
 			{
 				return input;
 			}
 		}
 
-		final T l = this.getCellItems().findPrecise( (T)input );
+		final TAEStack l = this.getCellItems().findPrecise( (TAEStack)input );
 		if( l != null )
 		{
 			final long remainingItemCount = this.getRemainingItemCount();
@@ -150,7 +155,7 @@ public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventor
 
 			if( input.getStackSize() > remainingItemCount )
 			{
-				final T r = (T)input.copy();
+				final TAEStack r = (TAEStack)input.copy();
 				r.setStackSize( r.getStackSize() - remainingItemCount );
 				if( mode == Actionable.MODULATE )
 				{
@@ -177,11 +182,11 @@ public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventor
 			{
 				if( input.getStackSize() > remainingItemCount )
 				{
-					final T toReturn = (T)input.copy();
+					final TAEStack toReturn = (TAEStack)input.copy();
 					toReturn.setStackSize( input.getStackSize() - remainingItemCount );
 					if( mode == Actionable.MODULATE )
 					{
-						final T toWrite = (T)input.copy();
+						final TAEStack toWrite = (TAEStack)input.copy();
 						toWrite.setStackSize( remainingItemCount );
 
 						this.cellItems.add( toWrite );
@@ -192,7 +197,7 @@ public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventor
 
 				if( mode == Actionable.MODULATE )
 				{
-					this.cellItems.add( (T)input );
+					this.cellItems.add( (TAEStack)input );
 					this.saveChanges();
 				}
 
@@ -213,12 +218,12 @@ public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventor
 
 		final long size = Math.min( Integer.MAX_VALUE, request.getStackSize() );
 
-		T Results = null;
+		TAEStack Results = null;
 
-		final T l = this.getCellItems().findPrecise( (T)request );
+		final TAEStack l = this.getCellItems().findPrecise( (TAEStack)request );
 		if( l != null )
 		{
-			Results = (T)l.copy();
+			Results = (TAEStack)l.copy();
 
 			if( l.getStackSize() <= size )
 			{
@@ -244,7 +249,7 @@ public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventor
 	}
 
 	@Override
-	public IStorageChannel<T> getChannel()
+	public IStorageChannel<TAEStack, TSlot, TStack> getChannel()
 	{
 		return this.channel;
 	}
@@ -253,7 +258,7 @@ public class BasicCellInventory<T extends IAEStack> extends AbstractCellInventor
 	protected boolean loadCellItem( NBTTagCompound compoundTag, int stackSize )
 	{
 		// Now load the item stack
-		final T t;
+		final TAEStack t;
 		try
 		{
 			t = this.getChannel().createFromNBT( compoundTag );

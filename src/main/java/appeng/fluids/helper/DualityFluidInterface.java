@@ -90,12 +90,7 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 	private int isWorking = -1;
 	private int priority;
 
-	private final MEMonitorPassThrough items = new MEMonitorPassThrough( new NullInventory<IAEItemStack>(), AEApi.instance()
-			.storage()
-			.getStorageChannel( IItemStorageChannel.class ) );
-	private final MEMonitorPassThrough fluids = new MEMonitorPassThrough( new NullInventory<IAEFluidStack>(), AEApi.instance()
-			.storage()
-			.getStorageChannel( IFluidStorageChannel.class ) );
+	private final MEMonitorPassThrough items = new MEMonitorPassThrough( new NullInventory() );
 
 	public DualityFluidInterface( final AENetworkProxy networkProxy, final IFluidInterfaceHost ih )
 	{
@@ -106,7 +101,6 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 		this.mySource = new MachineSource( this.iHost );
 		this.interfaceRequestSource = new InterfaceRequestSource( this.iHost );
 
-		this.fluids.setChangeSource( this.mySource );
 		this.items.setChangeSource( this.mySource );
 
 		this.requireWork = new IAEFluidStack[NUMBER_OF_TANKS];
@@ -130,28 +124,15 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 	}
 
 	@Override
-	public <T extends IAEStack> IMEMonitor getInventory( IStorageChannel<T> channel )
+	public IMEMonitor getInventory( )
 	{
-		if( channel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
-		{
-			if( this.hasConfig() )
-			{
-				return null;
-			}
 
-			return (IMEMonitor) this.items;
-		}
-		else if( channel == AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) )
+		if( this.hasConfig() )
 		{
-			if( this.hasConfig() )
-			{
-				return (IMEMonitor) new InterfaceInventory( this );
-			}
-
-			return (IMEMonitor) this.fluids;
+			return new InterfaceInventory( this );
 		}
 
-		return null;
+		return this.items;
 	}
 
 	public IStorageMonitorable getMonitorable( final IActionSource src )
@@ -207,13 +188,11 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 	{
 		try
 		{
-			this.items.setInternal( this.gridProxy.getStorage().getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) ) );
-			this.fluids.setInternal( this.gridProxy.getStorage().getInventory( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) ) );
+			this.items.setInternal( this.gridProxy.getStorage().getInventory( ) );
 		}
 		catch( final GridAccessException gae )
 		{
-			this.items.setInternal( new NullInventory<IAEItemStack>() );
-			this.fluids.setInternal( new NullInventory<IAEFluidStack>() );
+			this.items.setInternal( new NullInventory() );
 		}
 
 		this.notifyNeighbors();
@@ -371,8 +350,7 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 		boolean changed = false;
 		try
 		{
-			final IMEInventory dest = this.gridProxy.getStorage()
-					.getInventory( AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ) );
+			final IMEInventory dest = this.gridProxy.getStorage().getInventory( );
 			final IEnergySource src = this.gridProxy.getEnergy();
 
 			if( work.getStackSize() > 0 )
@@ -558,7 +536,7 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 		}
 
 		@Override
-		public IAEFluidStack injectItems( final IAEFluidStack input, final Actionable type, final IActionSource src )
+		public IAEStack injectItems( final IAEStack input, final Actionable type, final IActionSource src )
 		{
 			final Optional<InterfaceRequestContext> context = src.context( InterfaceRequestContext.class );
 			final boolean isInterface = context.isPresent();
@@ -572,7 +550,7 @@ public class DualityFluidInterface implements IGridTickable, IStorageMonitorable
 		}
 
 		@Override
-		public IAEFluidStack extractItems( final IAEFluidStack request, final Actionable type, final IActionSource src )
+		public IAEStack extractItems( final IAEStack request, final Actionable type, final IActionSource src )
 		{
 			final Optional<InterfaceRequestContext> context = src.context( InterfaceRequestContext.class );
 			final boolean hasLowerOrEqualPriority = context.map( c -> c.compareTo( DualityFluidInterface.this.priority ) <= 0 ).orElse( false );

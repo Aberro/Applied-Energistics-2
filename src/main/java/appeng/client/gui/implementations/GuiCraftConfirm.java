@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import appeng.api.storage.data.IAEStack;
 import com.google.common.base.Joiner;
 
 import org.lwjgl.input.Mouse;
@@ -62,11 +63,11 @@ public class GuiCraftConfirm extends AEBaseGui
 
 	private final int rows = 5;
 
-	private final IItemList<IAEItemStack> storage = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
-	private final IItemList<IAEItemStack> pending = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
-	private final IItemList<IAEItemStack> missing = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+	private final IItemList<IAEStack> storage = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+	private final IItemList<IAEStack> pending = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+	private final IItemList<IAEStack> missing = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
 
-	private final List<IAEItemStack> visual = new ArrayList<>();
+	private final List<IAEStack> visual = new ArrayList<>();
 
 	private GuiBridge OriginalGui;
 	private GuiButton cancel;
@@ -245,15 +246,15 @@ public class GuiCraftConfirm extends AEBaseGui
 
 		for( int z = viewStart; z < Math.min( viewEnd, this.visual.size() ); z++ )
 		{
-			final IAEItemStack refStack = this.visual.get( z );// repo.getReferenceItem( z );
+			final IAEStack refStack = this.visual.get( z );// repo.getReferenceItem( z );
 			if( refStack != null )
 			{
 				GlStateManager.pushMatrix();
 				GlStateManager.scale( 0.5, 0.5, 0.5 );
 
-				final IAEItemStack stored = this.storage.findPrecise( refStack );
-				final IAEItemStack pendingStack = this.pending.findPrecise( refStack );
-				final IAEItemStack missingStack = this.missing.findPrecise( refStack );
+				final IAEStack stored = this.storage.findPrecise( refStack );
+				final IAEStack pendingStack = this.pending.findPrecise( refStack );
+				final IAEStack missingStack = this.missing.findPrecise( refStack );
 
 				int lines = 0;
 
@@ -408,33 +409,33 @@ public class GuiCraftConfirm extends AEBaseGui
 		this.getScrollBar().setRange( 0, ( size + 2 ) / 3 - this.rows, 1 );
 	}
 
-	public void postUpdate( final List<IAEItemStack> list, final byte ref )
+	public void postUpdate( final List<IAEStack> list, final byte ref )
 	{
 		switch( ref )
 		{
 			case 0:
-				for( final IAEItemStack l : list )
+				for( final IAEStack l : list )
 				{
 					this.handleInput( this.storage, l );
 				}
 				break;
 
 			case 1:
-				for( final IAEItemStack l : list )
+				for( final IAEStack l : list )
 				{
 					this.handleInput( this.pending, l );
 				}
 				break;
 
 			case 2:
-				for( final IAEItemStack l : list )
+				for( final IAEStack l : list )
 				{
 					this.handleInput( this.missing, l );
 				}
 				break;
 		}
 
-		for( final IAEItemStack l : list )
+		for( final IAEStack l : list )
 		{
 			final long amt = this.getTotal( l );
 
@@ -444,7 +445,7 @@ public class GuiCraftConfirm extends AEBaseGui
 			}
 			else
 			{
-				final IAEItemStack is = this.findVisualStack( l );
+				final IAEStack is = this.findVisualStack( l );
 				is.setStackSize( amt );
 			}
 		}
@@ -452,9 +453,9 @@ public class GuiCraftConfirm extends AEBaseGui
 		this.setScrollBar();
 	}
 
-	private void handleInput( final IItemList<IAEItemStack> s, final IAEItemStack l )
+	private void handleInput( final IItemList<IAEStack> s, final IAEStack l )
 	{
-		IAEItemStack a = s.findPrecise( l );
+		IAEStack a = s.findPrecise( l );
 
 		if( l.getStackSize() <= 0 )
 		{
@@ -478,11 +479,11 @@ public class GuiCraftConfirm extends AEBaseGui
 		}
 	}
 
-	private long getTotal( final IAEItemStack is )
+	private long getTotal( final IAEStack is )
 	{
-		final IAEItemStack a = this.storage.findPrecise( is );
-		final IAEItemStack c = this.pending.findPrecise( is );
-		final IAEItemStack m = this.missing.findPrecise( is );
+		final IAEStack a = this.storage.findPrecise( is );
+		final IAEStack c = this.pending.findPrecise( is );
+		final IAEStack m = this.missing.findPrecise( is );
 
 		long total = 0;
 
@@ -504,12 +505,12 @@ public class GuiCraftConfirm extends AEBaseGui
 		return total;
 	}
 
-	private void deleteVisualStack( final IAEItemStack l )
+	private void deleteVisualStack( final IAEStack l )
 	{
-		final Iterator<IAEItemStack> i = this.visual.iterator();
+		final Iterator<IAEStack> i = this.visual.iterator();
 		while( i.hasNext() )
 		{
-			final IAEItemStack o = i.next();
+			final IAEStack o = i.next();
 			if( o.equals( l ) )
 			{
 				i.remove();
@@ -518,9 +519,9 @@ public class GuiCraftConfirm extends AEBaseGui
 		}
 	}
 
-	private IAEItemStack findVisualStack( final IAEItemStack l )
+	private IAEStack findVisualStack( final IAEStack l )
 	{
-		for( final IAEItemStack o : this.visual )
+		for( final IAEStack o : this.visual )
 		{
 			if( o.equals( l ) )
 			{
@@ -528,7 +529,7 @@ public class GuiCraftConfirm extends AEBaseGui
 			}
 		}
 
-		final IAEItemStack stack = l.copy();
+		final IAEStack stack = l.copy();
 		this.visual.add( stack );
 		return stack;
 	}

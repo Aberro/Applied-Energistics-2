@@ -21,6 +21,8 @@ package appeng.tile.misc;
 
 import javax.annotation.Nullable;
 
+import appeng.api.util.ISlot;
+import appeng.fluids.container.slots.IMEFluidSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
@@ -316,7 +318,7 @@ public class TileCondenser extends AEBaseInvTile implements IConfigManagerHost, 
 		{
 			if( doFill )
 			{
-				final IStorageChannel<IAEFluidStack> chan = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class );
+				final IStorageChannel<IAEFluidStack, ISlot<FluidStack, IAEFluidStack>, FluidStack> chan = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class );
 				TileCondenser.this.addPower( ( resource == null ? 0.0 : (double) resource.amount ) / chan.transferFactor() );
 			}
 
@@ -362,16 +364,9 @@ public class TileCondenser extends AEBaseInvTile implements IConfigManagerHost, 
 		}
 
 		@Override
-		public <T extends IAEStack> IMEMonitor getInventory( IStorageChannel<T> channel )
+		public IMEMonitor getInventory( )
 		{
-			if( channel == AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) )
-			{
-				return (IMEMonitor) this.itemInventory;
-			}
-			else
-			{
-				return new CondenserVoidInventory<>( TileCondenser.this, channel );
-			}
+			return this.itemInventory;
 		}
 	}
 }

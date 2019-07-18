@@ -19,6 +19,7 @@
 package appeng.client.me;
 
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -38,7 +39,7 @@ public class SlotME extends SlotItemHandler
 		this.mySlot = me;
 	}
 
-	public IAEItemStack getAEStack()
+	public IAEStack getAEStack()
 	{
 		if( this.mySlot.hasPower() )
 		{

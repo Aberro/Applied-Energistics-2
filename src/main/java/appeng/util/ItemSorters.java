@@ -21,11 +21,14 @@ package appeng.util;
 
 import java.util.Comparator;
 
+import appeng.api.AEApi;
 import appeng.api.config.SortDir;
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.channels.IItemStorageChannel;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.integration.Integrations;
 import appeng.integration.abstraction.IInvTweaks;
-import appeng.util.item.AEItemStack;
 
 
 public class ItemSorters
@@ -33,16 +36,16 @@ public class ItemSorters
 
 	private static SortDir Direction = SortDir.ASCENDING;
 
-	public static final Comparator<IAEItemStack> CONFIG_BASED_SORT_BY_NAME = ( o1, o2 ) ->
+	public static final Comparator<IAEStack> CONFIG_BASED_SORT_BY_NAME = ( o1, o2 ) ->
 	{
 		final int cmp = Platform.getItemDisplayName( o1 ).compareToIgnoreCase( Platform.getItemDisplayName( o2 ) );
 		return applyDirection( cmp );
 	};
 
-	public static final Comparator<IAEItemStack> CONFIG_BASED_SORT_BY_MOD = ( o1, o2 ) ->
+	public static final Comparator<IAEStack> CONFIG_BASED_SORT_BY_MOD = (o1, o2 ) ->
 	{
-		final AEItemStack op1 = (AEItemStack) o1;
-		final AEItemStack op2 = (AEItemStack) o2;
+		final IAEStack op1 = (IAEStack) o1;
+		final IAEStack op2 = (IAEStack) o2;
 		int cmp = op1.getModID().compareToIgnoreCase( op2.getModID() );
 
 		if( cmp == 0 )
@@ -53,7 +56,7 @@ public class ItemSorters
 		return applyDirection( cmp );
 	};
 
-	public static final Comparator<IAEItemStack> CONFIG_BASED_SORT_BY_SIZE = ( o1, o2 ) ->
+	public static final Comparator<IAEStack> CONFIG_BASED_SORT_BY_SIZE = ( o1, o2 ) ->
 	{
 		final int cmp = Long.compare( o2.getStackSize(), o1.getStackSize() );
 		return applyDirection( cmp );
@@ -61,14 +64,15 @@ public class ItemSorters
 
 	private static IInvTweaks api;
 
-	public static final Comparator<IAEItemStack> CONFIG_BASED_SORT_BY_INV_TWEAKS = ( o1, o2 ) ->
+	public static final Comparator<IAEStack> CONFIG_BASED_SORT_BY_INV_TWEAKS = ( o1, o2 ) ->
 	{
-		if( api == null )
+		IStorageChannel itemsChannel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
+		if( api == null || o1.getChannel() != itemsChannel || o2.getChannel() != itemsChannel)
 		{
 			return CONFIG_BASED_SORT_BY_NAME.compare( o1, o2 );
 		}
 
-		final int cmp = api.compareItems( o1.createItemStack(), o2.createItemStack() );
+		final int cmp = api.compareItems( ((IAEItemStack)o1).getItemStack(), ((IAEItemStack)o2).getItemStack() );
 		return applyDirection( cmp );
 	};
 

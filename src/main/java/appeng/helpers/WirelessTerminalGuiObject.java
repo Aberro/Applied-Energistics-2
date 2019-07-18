@@ -96,7 +96,7 @@ public class WirelessTerminalGuiObject implements IPortableCell, IActionHost, II
 					this.sg = this.targetGrid.getCache( IStorageGrid.class );
 					if( this.sg != null )
 					{
-						this.itemStorage = this.sg.getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+						this.itemStorage = this.sg.getInventory( );
 					}
 				}
 			}
@@ -109,9 +109,9 @@ public class WirelessTerminalGuiObject implements IPortableCell, IActionHost, II
 	}
 
 	@Override
-	public <T extends IAEStack> IMEMonitor getInventory( IStorageChannel<T> channel )
+	public IMEMonitor getInventory( )
 	{
-		return this.sg.getInventory( channel );
+		return this.sg.getInventory( );
 	}
 
 	@Override
@@ -226,16 +226,6 @@ public class WirelessTerminalGuiObject implements IPortableCell, IActionHost, II
 			return this.itemStorage.extractItems( request, mode, src );
 		}
 		return null;
-	}
-
-	@Override
-	public IStorageChannel getChannel()
-	{
-		if( this.itemStorage != null )
-		{
-			return this.itemStorage.getChannel();
-		}
-		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}
 
 	@Override

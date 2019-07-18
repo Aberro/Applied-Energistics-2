@@ -25,6 +25,7 @@ import java.util.concurrent.Future;
 import appeng.api.storage.data.IAEStack;
 import com.google.common.collect.ImmutableSet;
 
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
@@ -84,7 +85,7 @@ public class MultiCraftingTracker
 
 	public boolean handleCrafting(final int x, final long itemToCraft, final IAEStack ais, final InventoryAdaptor d, final World w, final IGrid g, final ICraftingGrid cg, final IActionSource mySrc )
 	{
-		if( ais != null && d.simulateAdd( ais ).isEmpty() )
+		if( ais != null && d.simulateAdd(ais).isEmpty())
 		{
 			final Future<ICraftingJob> craftingJob = this.getJob( x );
 

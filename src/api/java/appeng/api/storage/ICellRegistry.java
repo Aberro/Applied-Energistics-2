@@ -27,6 +27,7 @@ package appeng.api.storage;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import appeng.api.util.ISlot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 
@@ -88,7 +89,7 @@ public interface ICellRegistry
 	 * @return the handler registered for this channel.
 	 */
 	@Nullable
-	<T extends IAEStack> ICellGuiHandler getGuiHandler( IStorageChannel<T> channel, ItemStack is );
+	<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> ICellGuiHandler getGuiHandler(IStorageChannel<TAEStack, TSlot, TStack> channel, ItemStack is );
 
 	/**
 	 * returns an ICellInventoryHandler for the provided item by querying all registered handlers.
@@ -100,5 +101,5 @@ public interface ICellRegistry
 	 * @return new ICellInventoryHandler, or null if there isn't one.
 	 */
 	@Nullable
-	<T extends IAEStack> ICellInventoryHandler<T> getCellInventory( ItemStack is, ISaveProvider host, IStorageChannel<T> chan );
+	<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> ICellInventoryHandler<TAEStack, TSlot, TStack> getCellInventory( ItemStack is, ISaveProvider host );
 }

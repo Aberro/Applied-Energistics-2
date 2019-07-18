@@ -74,9 +74,4 @@ public interface IMEInventory
 	 * @return returns same list that was passed in, is passed out
 	 */
 	IItemList<IAEStack> getAvailableItems(IStorageChannel channel, IItemList<IAEStack> out );
-
-	/**
-	 * @return the type of channel your handler should be part of
-	 */
-	<T extends IAEStack> IStorageChannel<T> getChannel();
 }

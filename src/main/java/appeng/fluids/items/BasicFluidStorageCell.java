@@ -19,8 +19,15 @@
 package appeng.fluids.items;
 
 
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
+import appeng.api.util.ItemInventoryAdaptor;
+import appeng.fluids.container.slots.IMEFluidSlot;
+import appeng.util.item.AEItemStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.IItemHandler;
 
 import appeng.api.AEApi;
@@ -38,7 +45,7 @@ import appeng.util.InventoryAdaptor;
  * @version rv6 - 2018-01-17
  * @since rv6 2018-01-17
  */
-public final class BasicFluidStorageCell extends AbstractStorageCell<IAEFluidStack>
+public final class BasicFluidStorageCell extends AbstractStorageCell<IAEFluidStack, ISlot<FluidStack, IAEFluidStack>, FluidStack>
 {
 
 	private final int perType;
@@ -85,7 +92,7 @@ public final class BasicFluidStorageCell extends AbstractStorageCell<IAEFluidSta
 	}
 
 	@Override
-	public IStorageChannel<IAEFluidStack> getChannel()
+	public IStorageChannel<IAEFluidStack, ISlot<FluidStack, IAEFluidStack>, FluidStack> getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class );
 	}
@@ -103,14 +110,14 @@ public final class BasicFluidStorageCell extends AbstractStorageCell<IAEFluidSta
 	}
 
 	@Override
-	protected void dropEmptyStorageCellCase( final InventoryAdaptor ia, final EntityPlayer player )
+	protected void dropEmptyStorageCellCase(final ItemInventoryAdaptor ia, final EntityPlayer player )
 	{
 		AEApi.instance().definitions().materials().emptyStorageCell().maybeStack( 1 ).ifPresent( is ->
 		{
-			final ItemStack extraA = ia.addItems( is );
+			final IAEStack extraA = ia.addItems(AEItemStack.fromItemStack( is ) );
 			if( !extraA.isEmpty() )
 			{
-				player.dropItem( extraA, false );
+				player.dropItem( (ItemStack)extraA.getStack(), false );
 			}
 		} );
 	}

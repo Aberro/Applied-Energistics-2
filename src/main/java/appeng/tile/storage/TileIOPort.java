@@ -21,8 +21,9 @@ package appeng.tile.storage;
 
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 
+import appeng.api.storage.ICellHandler;
+import appeng.util.item.AEItemStack;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -93,7 +94,8 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
 	private final IActionSource mySrc;
 	private YesNo lastRedstoneState;
 	private ItemStack currentCell;
-	private Map<IStorageChannel<?>, IMEInventory<?>> cachedInventories;
+	private ICellHandler cachedHandler;
+	private IMEInventory cachedInventory;
 
 	public TileIOPort()
 	{
@@ -303,37 +305,34 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
 				{
 					boolean shouldMove = true;
 
-					for( IStorageChannel<? extends IAEStack<?>> c : AEApi.instance().storage().storageChannels() )
+					if( itemsToMove > 0 )
 					{
+						final IMEMonitor network = this.getProxy().getStorage().getInventory( );
+						final IMEInventory inv = this.getInv( is );
+
+						if( inv == null )
+						{
+							continue;
+						}
+
+						if( this.manager.getSetting( Settings.OPERATION_MODE ) == OperationMode.EMPTY )
+						{
+							itemsToMove = this.transferContents( energy, inv, network, itemsToMove );
+						}
+						else
+						{
+							itemsToMove = this.transferContents( energy, network, inv, itemsToMove );
+						}
+
+						shouldMove &= this.shouldMove( inv );
+
 						if( itemsToMove > 0 )
 						{
-							final IMEMonitor<? extends IAEStack<?>> network = this.getProxy().getStorage().getInventory( c );
-							final IMEInventory<?> inv = this.getInv( is, c );
-
-							if( inv == null )
-							{
-								continue;
-							}
-
-							if( this.manager.getSetting( Settings.OPERATION_MODE ) == OperationMode.EMPTY )
-							{
-								itemsToMove = this.transferContents( energy, inv, network, itemsToMove, c );
-							}
-							else
-							{
-								itemsToMove = this.transferContents( energy, network, inv, itemsToMove, c );
-							}
-
-							shouldMove &= this.shouldMove( inv );
-
-							if( itemsToMove > 0 )
-							{
-								ret = TickRateModulation.IDLE;
-							}
-							else
-							{
-								ret = TickRateModulation.URGENT;
-							}
+							ret = TickRateModulation.IDLE;
+						}
+						else
+						{
+							ret = TickRateModulation.URGENT;
 						}
 					}
 
@@ -363,35 +362,32 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
 		return this.upgrades.getInstalledUpgrades( u );
 	}
 
-	private IMEInventory<?> getInv( final ItemStack is, final IStorageChannel<?> chan )
+	private IMEInventory getInv( final ItemStack is )
 	{
 		if( this.currentCell != is )
 		{
 			this.currentCell = is;
-			this.cachedInventories = new IdentityHashMap<>();
 
-			for( IStorageChannel<? extends IAEStack<?>> c : AEApi.instance().storage().storageChannels() )
-			{
-				this.cachedInventories.put( c, AEApi.instance().registries().cell().getCellInventory( is, null, c ) );
-			}
+			this.cachedHandler = AEApi.instance().registries().cell().getHandler( is );
+			this.cachedInventory = AEApi.instance().registries().cell().getCellInventory( is, null );
 		}
 
-		return this.cachedInventories.get( chan );
+		return this.cachedInventory;
 	}
 
-	private long transferContents( final IEnergySource energy, final IMEInventory src, final IMEInventory destination, long itemsToMove, final IStorageChannel chan )
+	private long transferContents( final IEnergySource energy, final IMEInventory src, final IMEInventory destination, long itemsToMove )
 	{
 		final IItemList<? extends IAEStack> myList;
 		if( src instanceof IMEMonitor )
 		{
-			myList = ( (IMEMonitor) src ).getStorageList();
+			myList = ( (IMEMonitor) src ).getStorageList(cachedHandler.getChannel());
 		}
 		else
 		{
-			myList = src.getAvailableItems( src.getChannel().createList() );
+			myList = src.getAvailableItems( cachedHandler.getChannel(), cachedHandler.getChannel().createList() );
 		}
 
-		itemsToMove *= chan.transferFactor();
+		itemsToMove *= cachedHandler.getChannel().transferFactor();
 
 		boolean didStuff;
 
@@ -447,10 +443,10 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
 		}
 		while( itemsToMove > 0 && didStuff );
 
-		return itemsToMove / chan.transferFactor();
+		return itemsToMove / cachedHandler.getChannel().transferFactor();
 	}
 
-	private boolean shouldMove( final IMEInventory<?> inv )
+	private boolean shouldMove( final IMEInventory inv )
 	{
 		final FullnessMode fm = (FullnessMode) this.manager.getSetting( Settings.FULLNESS_MODE );
 
@@ -465,7 +461,7 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
 	private boolean moveSlot( final int x )
 	{
 		final InventoryAdaptor ad = new AdaptorItemHandler( this.outputCells );
-		if( ad.addItems( this.inputCells.getStackInSlot( x ) ).isEmpty() )
+		if( ad.addItems(AEItemStack.fromItemStack( this.inputCells.getStackInSlot( x ) ) ).isEmpty() )
 		{
 			this.inputCells.setStackInSlot( x, ItemStack.EMPTY );
 			return true;
@@ -484,11 +480,11 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
 
 		if( src instanceof IMEMonitor )
 		{
-			myList = ( (IMEMonitor) src ).getStorageList();
+			myList = ( (IMEMonitor) src ).getStorageList(cachedHandler.getChannel());
 		}
 		else
 		{
-			myList = src.getAvailableItems( src.getChannel().createList() );
+			myList = src.getAvailableItems( cachedHandler.getChannel(), cachedHandler.getChannel().createList() );
 		}
 
 		if( fm == FullnessMode.EMPTY )
@@ -509,9 +505,7 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
 	 * Adds the items in the upgrade slots to the drop list.
 	 *
 	 * @param w world
-	 * @param x x pos of tile entity
-	 * @param y y pos of tile entity
-	 * @param z z pos of tile entity
+	 * @param pos pos of tile entity
 	 * @param drops drops of tile entity
 	 */
 	@Override

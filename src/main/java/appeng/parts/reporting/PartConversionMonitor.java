@@ -22,6 +22,8 @@ package appeng.parts.reporting;
 import java.util.Collections;
 import java.util.List;
 
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ItemInventoryAdaptor;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -177,10 +179,7 @@ public class PartConversionMonitor extends AbstractPartMonitor
 		try
 		{
 			final IEnergySource energy = this.getProxy().getEnergy();
-			final IMEMonitor<IAEItemStack> cell = this.getProxy()
-					.getStorage()
-					.getInventory(
-							AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+			final IMEMonitor cell = this.getProxy().getStorage().getInventory();
 			if( allItems )
 			{
 				final IAEItemStack input = this.getDisplayed().copy();
@@ -206,7 +205,7 @@ public class PartConversionMonitor extends AbstractPartMonitor
 			{
 				final IAEItemStack input = AEItemStack.fromItemStack( player.getHeldItem( hand ) );
 				final IAEItemStack failedToInsert = Platform.poweredInsert( energy, cell, input, new PlayerSource( player, this ) );
-				player.setHeldItem( hand, failedToInsert == null ? ItemStack.EMPTY : failedToInsert.createItemStack() );
+				player.setHeldItem( hand, failedToInsert == null ? ItemStack.EMPTY : failedToInsert.getItemStack() );
 			}
 		}
 		catch( final GridAccessException e )
@@ -228,23 +227,20 @@ public class PartConversionMonitor extends AbstractPartMonitor
 				}
 
 				final IEnergySource energy = this.getProxy().getEnergy();
-				final IMEMonitor<IAEItemStack> cell = this.getProxy()
-						.getStorage()
-						.getInventory(
-								AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+				final IMEMonitor cell = this.getProxy().getStorage().getInventory( );
 
 				input.setStackSize( count );
 
 				final IAEItemStack retrieved = Platform.poweredExtraction( energy, cell, input, new PlayerSource( player, this ) );
 				if( retrieved != null )
 				{
-					ItemStack newItems = retrieved.createItemStack();
-					final InventoryAdaptor adaptor = InventoryAdaptor.getAdaptor( player );
+					IAEStack newItems = retrieved;
+					final InventoryAdaptor adaptor = ItemInventoryAdaptor.getAdaptor( player );
 					newItems = adaptor.addItems( newItems );
 					if( !newItems.isEmpty() )
 					{
 						final TileEntity te = this.getTile();
-						final List<ItemStack> list = Collections.singletonList( newItems );
+						final List<ItemStack> list = Collections.singletonList( (ItemStack)newItems.getStack() );
 						Platform.spawnDrops( player.world, te.getPos().offset( this.getSide().getFacing() ), list );
 					}
 

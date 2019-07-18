@@ -64,9 +64,7 @@ public class PartFluidFormationPlane extends PartAbstractFormationPlane<IAEFluid
 		return MODELS.getModels();
 	}
 
-	private final MEInventoryHandler myHandler = new MEInventoryHandler( this, AEApi.instance()
-			.storage()
-			.getStorageChannel( IFluidStorageChannel.class ) );
+	private final MEInventoryHandler myHandler = new MEInventoryHandler( this );
 	private final AEFluidInventory config = new AEFluidInventory( this, 63 );
 
 	public PartFluidFormationPlane( final ItemStack is )
@@ -82,7 +80,7 @@ public class PartFluidFormationPlane extends PartAbstractFormationPlane<IAEFluid
 		this.myHandler.setWhitelist( this.getInstalledUpgrades( Upgrades.INVERTER ) > 0 ? IncludeExclude.BLACKLIST : IncludeExclude.WHITELIST );
 		this.myHandler.setPriority( this.getPriority() );
 
-		final IItemList<IAEFluidStack> priorityList = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
+		final IItemList<IAEStack> priorityList = AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class ).createList();
 
 		final int slotsToUse = 18 + this.getInstalledUpgrades( Upgrades.CAPACITY ) * 9;
 		for( int x = 0; x < this.config.getSlots() && x < slotsToUse; x++ )
@@ -93,7 +91,7 @@ public class PartFluidFormationPlane extends PartAbstractFormationPlane<IAEFluid
 				priorityList.add( is );
 			}
 		}
-		this.myHandler.setPartitionList( new PrecisePriorityList<IAEFluidStack>( priorityList ) );
+		this.myHandler.setPartitionList( new PrecisePriorityList( priorityList ) );
 
 		try
 		{
@@ -195,11 +193,10 @@ public class PartFluidFormationPlane extends PartAbstractFormationPlane<IAEFluid
 	}
 
 	@Override
-	public IStorageChannel<IAEFluidStack> getChannel()
+	public List<IMEInventoryHandler> getCellArray( )
 	{
-		return AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class );
+		return getCellArray(AEApi.instance().storage().getStorageChannel(IFluidStorageChannel.class) );
 	}
-
 	@Override
 	public List<IMEInventoryHandler> getCellArray( final IStorageChannel channel )
 	{

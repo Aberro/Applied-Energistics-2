@@ -19,6 +19,7 @@
 package appeng.parts.automation;
 
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
@@ -84,28 +85,27 @@ public class PartImportBus extends PartSharedItemBus implements IInventoryDestin
 	}
 
 	@Override
-	public boolean canInsert( final ItemStack stack )
+	public boolean canInsert( final IAEStack stack )
 	{
-		if( stack.isEmpty() || stack.getItem() == Items.AIR )
+		if( stack == null || stack.isEmpty() )
 		{
 			return false;
 		}
 
 		try
 		{
-			final IMEMonitor<IAEItemStack> inv = this.getProxy()
+			final IMEMonitor inv = this.getProxy()
 					.getStorage()
-					.getInventory(
-							AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+					.getInventory( );
 
-			final IAEItemStack out = inv.injectItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( stack ),
+			final IAEStack out = inv.injectItems( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createStack( stack ),
 					Actionable.SIMULATE,
 					this.source );
 			if( out == null )
 			{
 				return true;
 			}
-			return out.getStackSize() != stack.getCount();
+			return out.getStackSize() != stack.getStackSize();
 		}
 		catch( GridAccessException ex )
 		{
@@ -168,10 +168,9 @@ public class PartImportBus extends PartSharedItemBus implements IInventoryDestin
 			{
 				this.itemsToSend = this.calculateItemsToSend();
 
-				final IMEMonitor<IAEItemStack> inv = this.getProxy()
+				final IMEMonitor inv = this.getProxy()
 						.getStorage()
-						.getInventory(
-								AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+						.getInventory();
 				final IEnergyGrid energy = this.getProxy().getEnergy();
 
 				boolean Configured = false;
@@ -215,18 +214,18 @@ public class PartImportBus extends PartSharedItemBus implements IInventoryDestin
 		return this.worked ? TickRateModulation.FASTER : TickRateModulation.SLOWER;
 	}
 
-	private boolean importStuff( final InventoryAdaptor myAdaptor, final IAEItemStack whatToImport, final IMEMonitor<IAEItemStack> inv, final IEnergySource energy, final FuzzyMode fzMode )
+	private boolean importStuff( final InventoryAdaptor myAdaptor, final IAEItemStack whatToImport, final IMEMonitor inv, final IEnergySource energy, final FuzzyMode fzMode )
 	{
 		final int toSend = this.calculateMaximumAmountToImport( myAdaptor, whatToImport, inv, fzMode );
-		final ItemStack newItems;
+		final IAEStack newItems;
 
 		if( this.getInstalledUpgrades( Upgrades.FUZZY ) > 0 )
 		{
-			newItems = myAdaptor.removeSimilarItems( toSend, whatToImport == null ? ItemStack.EMPTY : whatToImport.getDefinition(), fzMode, this );
+			newItems = myAdaptor.removeSimilarItems( toSend, whatToImport == null ? null : whatToImport, fzMode, this );
 		}
 		else
 		{
-			newItems = myAdaptor.removeItems( toSend, whatToImport == null ? ItemStack.EMPTY : whatToImport.getDefinition(), this );
+			newItems = myAdaptor.removeItems( toSend, whatToImport == null ? null : whatToImport, this );
 		}
 
 		if( !newItems.isEmpty() )
@@ -237,17 +236,17 @@ public class PartImportBus extends PartSharedItemBus implements IInventoryDestin
 			if( failed != null )
 			{
 				// try unpowered insert, better be a bit lenient then void items
-				final IAEItemStack spill = inv.injectItems( failed, Actionable.MODULATE, this.source );
-				if( spill != null )
+				final IAEStack spill = inv.injectItems( failed, Actionable.MODULATE, this.source );
+				if( spill != null && spill.getChannel() == AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class))
 				{
 					// last resort try to put it back .. lets hope it's a chest type of thing
-					myAdaptor.addItems( spill.createItemStack() );
+					myAdaptor.addItems( spill );
 				}
 				return true;
 			}
 			else
 			{
-				this.itemsToSend -= newItems.getCount();
+				this.itemsToSend -= newItems.getStackSize();
 				this.worked = true;
 			}
 		}
@@ -259,36 +258,36 @@ public class PartImportBus extends PartSharedItemBus implements IInventoryDestin
 		return false;
 	}
 
-	private int calculateMaximumAmountToImport( final InventoryAdaptor myAdaptor, final IAEItemStack whatToImport, final IMEMonitor<IAEItemStack> inv, final FuzzyMode fzMode )
+	private int calculateMaximumAmountToImport( final InventoryAdaptor myAdaptor, final IAEItemStack whatToImport, final IMEMonitor inv, final FuzzyMode fzMode )
 	{
 		final int toSend = Math.min( this.itemsToSend, 64 );
-		final ItemStack itemStackToImport;
+		final IAEStack itemStackToImport;
 
 		if( whatToImport == null )
 		{
-			itemStackToImport = ItemStack.EMPTY;
+			itemStackToImport = null;
 		}
 		else
 		{
-			itemStackToImport = whatToImport.getDefinition();
+			itemStackToImport = whatToImport;
 		}
 
-		final IAEItemStack itemAmountNotStorable;
-		final ItemStack simResult;
+		final IAEStack itemAmountNotStorable;
+		final IAEStack simResult;
 		if( this.getInstalledUpgrades( Upgrades.FUZZY ) > 0 )
 		{
 			simResult = myAdaptor.simulateSimilarRemove( toSend, itemStackToImport, fzMode, this );
-			itemAmountNotStorable = inv.injectItems( AEItemStack.fromItemStack( simResult ), Actionable.SIMULATE, this.source );
+			itemAmountNotStorable = inv.injectItems( simResult, Actionable.SIMULATE, this.source );
 		}
 		else
 		{
 			simResult = myAdaptor.simulateRemove( toSend, itemStackToImport, this );
-			itemAmountNotStorable = inv.injectItems( AEItemStack.fromItemStack( simResult ), Actionable.SIMULATE, this.source );
+			itemAmountNotStorable = inv.injectItems( simResult, Actionable.SIMULATE, this.source );
 		}
 
 		if( itemAmountNotStorable != null )
 		{
-			return (int) Math.min( simResult.getCount() - itemAmountNotStorable.getStackSize(), toSend );
+			return (int) Math.min( simResult.getStackSize() - itemAmountNotStorable.getStackSize(), toSend );
 		}
 
 		return toSend;

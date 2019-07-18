@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import appeng.api.storage.data.IAEStack;
+import appeng.util.inv.ItemSlot;
 import appeng.util.item.MixedList;
 import net.minecraft.item.ItemStack;
 
@@ -106,8 +107,7 @@ class CondenserItemInventory implements IMEMonitor, ITickingMonitor
 		return this.cachedList;
 	}
 
-	@Override
-	public IStorageChannel<IAEItemStack> getChannel()
+	public IStorageChannel<IAEItemStack, ItemSlot, ItemStack> getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}

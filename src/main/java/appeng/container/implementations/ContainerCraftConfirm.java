@@ -26,6 +26,7 @@ import java.util.concurrent.Future;
 
 import javax.annotation.Nonnull;
 
+import appeng.api.storage.data.IAEStack;
 import com.google.common.collect.ImmutableSet;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -209,26 +210,26 @@ public class ContainerCraftConfirm extends AEBaseContainer
 					final PacketMEInventoryUpdate b = new PacketMEInventoryUpdate( (byte) 1 );
 					final PacketMEInventoryUpdate c = this.result.isSimulation() ? new PacketMEInventoryUpdate( (byte) 2 ) : null;
 
-					final IItemList<IAEItemStack> plan = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+					final IItemList<IAEStack> plan = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
 					this.result.populatePlan( plan );
 
 					this.setUsedBytes( this.result.getByteTotal() );
 
-					for( final IAEItemStack out : plan )
+					for( final IAEStack out : plan )
 					{
 
-						IAEItemStack o = out.copy();
+						IAEStack o = out.copy();
 						o.reset();
 						o.setStackSize( out.getStackSize() );
 
-						final IAEItemStack p = out.copy();
+						final IAEStack p = out.copy();
 						p.reset();
 						p.setStackSize( out.getCountRequestable() );
 
 						final IStorageGrid sg = this.getGrid().getCache( IStorageGrid.class );
-						final IMEInventory<IAEItemStack> items = sg.getInventory( AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
+						final IMEInventory items = sg.getInventory( );
 
-						IAEItemStack m = null;
+						IAEStack m = null;
 						if( c != null && this.result.isSimulation() )
 						{
 							m = o.copy();

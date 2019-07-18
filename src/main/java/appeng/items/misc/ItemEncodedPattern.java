@@ -23,7 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.core.Api;
 import appeng.fluids.items.FluidDummyItem;
 import net.minecraft.client.util.ITooltipFlag;
@@ -56,8 +58,7 @@ import appeng.util.Platform;
 public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternItem
 {
 	// rather simple client side caching.
-	private static final Map<ItemStack, ItemStack> SIMPLE_CACHE = new WeakHashMap<>();
-	private static final Map<ItemStack, ItemStack> SIMPLE_FLUID_CACHE = new WeakHashMap<>();
+	private static final Map<ItemStack, IAEStack> SIMPLE_CACHE = new WeakHashMap<>();
 
 	public ItemEncodedPattern()
 	{
@@ -160,17 +161,15 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
 		final boolean isCrafting = details.isCraftable();
 		final boolean substitute = details.canSubstitute();
 
-		final IAEItemStack[] in = details.getCondensedInputs();
-		final IAEItemStack[] out = details.getCondensedOutputs();
-		final IAEFluidStack[] inFluids = details.getInputFluids();
-		final IAEFluidStack[] outFluids = details.getOutputFluids();
+
 
 		final String label = ( isCrafting ? GuiText.Crafts.getLocal() : GuiText.Creates.getLocal() ) + ": ";
 		final String and = ' ' + GuiText.And.getLocal() + ' ';
 		final String with = GuiText.With.getLocal() + ": ";
 
 		boolean first = true;
-		for( final IAEItemStack anOut : out )
+
+		for( final IAEStack anOut : details.getAllCondensedOutputs() )
 		{
 			if( anOut == null )
 			{
@@ -181,19 +180,8 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
 			first = false;
 		}
 
-		for( final IAEFluidStack anOut : outFluids )
-		{
-			if( anOut == null )
-			{
-				continue;
-			}
-
-			lines.add( ( first ? label : and ) + anOut.getFluidStack().amount + ' ' + anOut.getFluidStack().getLocalizedName() );
-			first = false;
-		}
-
 		first = true;
-		for( final IAEItemStack anIn : in )
+		for( final IAEStack anIn : details.getAllCondensedInputs() )
 		{
 			if( anIn == null )
 			{
@@ -201,17 +189,6 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
 			}
 
 			lines.add( ( first ? with : and ) + anIn.getStackSize() + ' ' + Platform.getItemDisplayName( anIn ) );
-			first = false;
-		}
-
-		for( final IAEFluidStack anIn : inFluids )
-		{
-			if( anIn == null )
-			{
-				continue;
-			}
-
-			lines.add( ( first ? with : and ) + anIn.getFluidStack().amount + ' ' + anIn.getFluidStack().getLocalizedName() );
 			first = false;
 		}
 
@@ -237,9 +214,9 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
 		}
 	}
 
-	public ItemStack getOutput( final ItemStack item )
+	public IAEStack getOutput( final ItemStack item )
 	{
-		ItemStack out = SIMPLE_CACHE.get( item );
+		IAEStack out = SIMPLE_CACHE.get( item );
 
 		if( out != null )
 		{
@@ -249,53 +226,21 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
 		final World w = AppEng.proxy.getWorld();
 		if( w == null )
 		{
-			return ItemStack.EMPTY;
+			return null;
 		}
 
 		final ICraftingPatternDetails details = this.getPatternForItem( item, w );
 		if( details == null )
 		{
-			out = ItemStack.EMPTY;
+			out = null;
 		}
 		else
 		{
-			IAEItemStack[] outputs = details.getOutputs();
-			out = outputs != null && outputs.length > 0 ? outputs[0].createItemStack() : ItemStack.EMPTY;
+			IAEStack[] outputs = details.getAllCondensedOutputs();
+			out = outputs != null && outputs.length > 0 ? outputs[0] : null;
 		}
 
 		SIMPLE_CACHE.put( item, out );
-		return out;
-	}
-	public ItemStack getOutputFluidDummyStack(final ItemStack item )
-	{
-		ItemStack out = SIMPLE_FLUID_CACHE.get( item );
-
-		if( out != null )
-		{
-			return out;
-		}
-
-		final World w = AppEng.proxy.getWorld();
-		if (w == null)
-		{
-			return ItemStack.EMPTY;
-		}
-
-		final ICraftingPatternDetails details = this.getPatternForItem(item, w);
-		if( details == null )
-		{
-			out = ItemStack.EMPTY;
-		}
-		else
-		{
-			IAEFluidStack[] outputs = details.getOutputFluids();
-			FluidStack outFluid = outputs != null ? outputs[0].getFluidStack() : null;
-			out = Api.INSTANCE.definitions().items().dummyFluidItem().maybeStack( 1 ).get();
-			FluidDummyItem dummyItem = (FluidDummyItem) out.getItem();
-			dummyItem.setFluidStack( out, outFluid );
-		}
-
-		SIMPLE_FLUID_CACHE.put(item, out);
 		return out;
 	}
 }

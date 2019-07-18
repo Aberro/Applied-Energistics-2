@@ -164,12 +164,6 @@ public class FluidHandlerAdapter implements IMEInventory, IBaseMonitor, ITicking
 	}
 
 	@Override
-	public IStorageChannel<IAEFluidStack> getChannel()
-	{
-		return AEApi.instance().storage().getStorageChannel( IFluidStorageChannel.class );
-	}
-
-	@Override
 	public void setActionSource( IActionSource source )
 	{
 		this.source = source;

@@ -9,20 +9,21 @@ import appeng.api.storage.ICellInventory;
 import appeng.api.storage.ICellInventoryHandler;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.util.IClientHelper;
+import appeng.api.util.ISlot;
 import appeng.core.localization.GuiText;
 
 
 public class ApiClientHelper implements IClientHelper
 {
 	@Override
-	public <T extends IAEStack> void addCellInformation( ICellInventoryHandler<T> handler, List<String> lines )
+	public <TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> void addCellInformation(ICellInventoryHandler<TAEStack, TSlot, TStack> handler, List<String> lines )
 	{
 		if( handler == null )
 		{
 			return;
 		}
 
-		final ICellInventory<?> cellInventory = handler.getCellInv();
+		final ICellInventory<TAEStack, TSlot, TStack> cellInventory = handler.getCellInv();
 
 		if( cellInventory != null )
 		{

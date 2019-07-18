@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
+import appeng.api.util.ISlot;
+import appeng.fluids.container.slots.IMEFluidSlot;
+import appeng.util.inv.ItemSlot;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ClassToInstanceMap;
 import com.google.common.collect.MutableClassToInstanceMap;
@@ -56,12 +59,13 @@ import appeng.fluids.util.FluidList;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import appeng.util.item.ItemList;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 
 public class ApiStorage implements IStorageHelper
 {
 
-	private final ClassToInstanceMap<IStorageChannel<?>> channels;
+	private final ClassToInstanceMap<IStorageChannel<?, ?, ?>> channels;
 
 	public ApiStorage()
 	{
@@ -71,7 +75,8 @@ public class ApiStorage implements IStorageHelper
 	}
 
 	@Override
-	public <T extends IAEStack, C extends IStorageChannel<T>> void registerStorageChannel( Class<C> channel, C factory )
+
+	public <TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack, C extends IStorageChannel<TAEStack, TSlot, TStack>> void registerStorageChannel(Class<C> channel, C factory )
 	{
 		Preconditions.checkNotNull( channel );
 		Preconditions.checkNotNull( factory );
@@ -82,7 +87,7 @@ public class ApiStorage implements IStorageHelper
 	}
 
 	@Override
-	public <T extends IAEStack, C extends IStorageChannel<T>> C getStorageChannel( Class<C> channel )
+	public <TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack, C extends IStorageChannel<TAEStack, TSlot, TStack>> C getStorageChannel( Class<C> channel )
 	{
 		Preconditions.checkNotNull( channel );
 
@@ -94,7 +99,7 @@ public class ApiStorage implements IStorageHelper
 	}
 
 	@Override
-	public Collection<IStorageChannel<? extends IAEStack>> storageChannels()
+	public Collection<IStorageChannel<? extends IAEStack, ?, ?>> storageChannels()
 	{
 		return Collections.unmodifiableCollection( this.channels.values() );
 	}
@@ -146,7 +151,17 @@ public class ApiStorage implements IStorageHelper
 		public String getPatternNBTOutputTag() { return "out"; }
 
 		@Override
-		public IItemList<IAEItemStack> createList()
+		public String getNBTName() { return "items"; }
+
+		public ItemStack getEMPTY() { return ItemStack.EMPTY; }
+
+		public ItemSlot createSlot()
+		{
+			return new ItemSlot();
+		}
+
+		@Override
+		public IItemList<IAEStack> createList()
 		{
 			return new ItemList();
 		}
@@ -172,6 +187,11 @@ public class ApiStorage implements IStorageHelper
 		}
 
 		@Override
+		public int getDefaultStackLimit() {
+			return 64;
+		}
+
+		@Override
 		public IAEItemStack readFromPacket( ByteBuf input ) throws IOException
 		{
 			Preconditions.checkNotNull( input );
@@ -194,6 +214,17 @@ public class ApiStorage implements IStorageHelper
 		public String getPatternNBTOutputTag() { return "outFluids"; }
 
 		@Override
+		public String getNBTName() { return "fluids"; }
+
+		@Override
+		public FluidStack getEMPTY() { return null; }
+
+		@Override
+		public ISlot createSlot() {
+			throw new NotImplementedException();
+		}
+
+		@Override
 		public int transferFactor()
 		{
 			return 125;
@@ -206,7 +237,7 @@ public class ApiStorage implements IStorageHelper
 		}
 
 		@Override
-		public IItemList<IAEFluidStack> createList()
+		public IItemList<IAEStack> createList()
 		{
 			return new FluidList();
 		}
@@ -249,6 +280,11 @@ public class ApiStorage implements IStorageHelper
 		{
 			Preconditions.checkNotNull( nbt );
 			return AEFluidStack.fromNBT( nbt );
+		}
+
+		@Override
+		public int getDefaultStackLimit() {
+			return 16000;
 		}
 	}
 

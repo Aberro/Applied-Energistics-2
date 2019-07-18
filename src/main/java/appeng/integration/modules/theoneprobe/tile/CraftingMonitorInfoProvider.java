@@ -19,6 +19,7 @@
 package appeng.integration.modules.theoneprobe.tile;
 
 
+import appeng.api.storage.data.IAEStack;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -44,7 +45,7 @@ public class CraftingMonitorInfoProvider implements ITileProbInfoProvider
 		if( tile instanceof TileCraftingMonitorTile )
 		{
 			final TileCraftingMonitorTile monitor = (TileCraftingMonitorTile) tile;
-			final IAEItemStack displayStack = monitor.getJobProgress();
+			final IAEStack displayStack = monitor.getJobProgress();
 
 			if( displayStack != null )
 			{

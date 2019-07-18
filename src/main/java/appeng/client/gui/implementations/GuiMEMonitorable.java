@@ -22,6 +22,7 @@ package appeng.client.gui.implementations;
 import java.io.IOException;
 import java.util.List;
 
+import appeng.api.storage.data.IAEStack;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
@@ -152,9 +153,9 @@ public class GuiMEMonitorable extends AEBaseMEGui implements ISortSource, IConfi
 		}
 	}
 
-	public void postUpdate( final List<IAEItemStack> list )
+	public void postUpdate( final List<IAEStack> list )
 	{
-		for( final IAEItemStack is : list )
+		for( final IAEStack is : list )
 		{
 			this.repo.postUpdate( is );
 		}

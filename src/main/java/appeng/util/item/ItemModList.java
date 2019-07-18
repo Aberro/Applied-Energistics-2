@@ -19,12 +19,15 @@
 package appeng.util.item;
 
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import appeng.api.AEApi;
 import appeng.api.config.FuzzyMode;
 import appeng.api.storage.channels.IItemStorageChannel;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemContainer;
 
 
@@ -32,7 +35,7 @@ public class ItemModList implements IItemContainer<IAEItemStack>
 {
 
 	private final IItemContainer<IAEItemStack> backingStore;
-	private final IItemContainer<IAEItemStack> overrides = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
+	private final IItemContainer<IAEStack> overrides = AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ).createList();
 
 	public ItemModList( final IItemContainer<IAEItemStack> backend )
 	{
@@ -42,7 +45,7 @@ public class ItemModList implements IItemContainer<IAEItemStack>
 	@Override
 	public void add( final IAEItemStack option )
 	{
-		IAEItemStack over = this.overrides.findPrecise( option );
+		IAEStack over = this.overrides.findPrecise( option );
 		if( over == null )
 		{
 			over = this.backingStore.findPrecise( option );
@@ -65,18 +68,18 @@ public class ItemModList implements IItemContainer<IAEItemStack>
 	@Override
 	public IAEItemStack findPrecise( final IAEItemStack i )
 	{
-		final IAEItemStack over = this.overrides.findPrecise( i );
+		final IAEStack over = this.overrides.findPrecise( i );
 		if( over == null )
 		{
 			return this.backingStore.findPrecise( i );
 		}
-		return over;
+		return (IAEItemStack)over;
 	}
 
 	@Override
 	public Collection<IAEItemStack> findFuzzy( final IAEItemStack input, final FuzzyMode fuzzy )
 	{
-		return this.overrides.findFuzzy( input, fuzzy );
+		return this.overrides.findFuzzy( input, fuzzy ).stream().map(x -> (IAEItemStack)x).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	@Override

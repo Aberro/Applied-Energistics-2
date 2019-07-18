@@ -19,6 +19,8 @@
 package appeng.core.features.registries.cell;
 
 
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.util.ISlot;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.storage.ICellHandler;
@@ -31,24 +33,32 @@ import appeng.me.storage.BasicCellInventory;
 import appeng.me.storage.BasicCellInventoryHandler;
 
 
-public class BasicCellHandler implements ICellHandler
+public abstract class BasicCellHandler<TAEStack extends IAEStack, TSlot extends ISlot<TStack, TAEStack>, TStack> implements ICellHandler<TAEStack, TSlot, TStack>
 {
+	private IStorageChannel channel;
+	protected BasicCellHandler(IStorageChannel<TAEStack, TSlot, TStack> channel)
+	{
+		this.channel = channel;
+	}
+
+	@Override
+	public IStorageChannel<TAEStack, TSlot, TStack> getChannel() { return this.channel; }
 
 	@Override
 	public boolean isCell( final ItemStack is )
 	{
-		return BasicCellInventory.isCell( is );
+		return BasicCellInventory.isCell( is, getChannel() );
 	}
 
 	@Override
-	public <T extends IAEStack> ICellInventoryHandler<T> getCellInventory( final ItemStack is, final ISaveProvider container, final IStorageChannel<T> channel )
+	public ICellInventoryHandler<TAEStack, TSlot, TStack> getCellInventory(final ItemStack is, final ISaveProvider container)
 	{
-		final ICellInventory<T> inv = BasicCellInventory.createInventory( is, container );
-		if( inv == null || inv.getChannel() != channel )
+		final ICellInventory<TAEStack, TSlot, TStack> inv = BasicCellInventory.createInventory( getChannel(), is, container );
+		if( inv == null || inv.getChannel() != getChannel() )
 		{
 			return null;
 		}
-		return new BasicCellInventoryHandler<>( inv, channel );
+		return new BasicCellInventoryHandler<>( inv, getChannel() );
 	}
 
 }

@@ -27,8 +27,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import appeng.api.storage.data.IAEStack;
+import appeng.util.inv.ItemSlot;
 import io.netty.buffer.ByteBuf;
 
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -46,7 +48,7 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.util.Platform;
 
 
-public final class AEItemStack extends AEStack implements IAEItemStack
+public final class AEItemStack extends AEStack<AEItemStack> implements IAEItemStack
 {
 	private AESharedItemStack sharedStack;
 	private Optional<OreReference> oreReference;
@@ -67,7 +69,7 @@ public final class AEItemStack extends AEStack implements IAEItemStack
 		this.oreReference = is.oreReference;
 	}
 
-	private AEItemStack( final AESharedItemStack is, long size )
+	private AEItemStack( final AESharedItemStack is, int size )
 	{
 		this.sharedStack = is;
 		this.setStackSize( size );
@@ -101,7 +103,7 @@ public final class AEItemStack extends AEStack implements IAEItemStack
 		}
 
 		final AEItemStack item = AEItemStack.fromItemStack( itemstack );
-		item.setStackSize( i.getLong( "Cnt" ) );
+		item.setStackSize( (int)i.getLong( "Cnt" ) );
 		item.setCountRequestable( i.getLong( "Req" ) );
 		item.setCraftable( i.getBoolean( "Craft" ) );
 		return item;
@@ -124,7 +126,7 @@ public final class AEItemStack extends AEStack implements IAEItemStack
 		final boolean isCraftable = ( mask & 0x40 ) > 0;
 
 		final ItemStack itemstack = new ItemStack( ByteBufUtils.readTag( data ) );
-		final long stackSize = getPacketValue( stackType, data );
+		final int stackSize = (int)getPacketValue( stackType, data );
 		final long countRequestable = getPacketValue( countReqType, data );
 
 		if( itemstack.isEmpty() )
@@ -199,19 +201,36 @@ public final class AEItemStack extends AEStack implements IAEItemStack
 	}
 
 	@Override
-	public IStorageChannel<IAEItemStack> getChannel()
+    public Object getStack()
+    {
+        return getItemStack();
+    }
+
+	@Override
+	public IStorageChannel<IAEItemStack, ItemSlot, ItemStack> getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}
 
 	@Override
-	public ItemStack createItemStack()
+	public ItemStack getItemStack()
 	{
 		return ItemHandlerHelper.copyStackWithSize( this.getDefinition(), (int) Math.min( Integer.MAX_VALUE, this.getStackSize() ) );
 	}
+	@Override
+	public long getMaxStackSize()
+	{
+		return this.getItemStack().getMaxStackSize();
+	}
 
 	@Override
-	public boolean isEmpty() {return this.getStackSize() == 0; }
+	public boolean isEmpty() {return this.getStackSize() <= 0 || this.getItem() == Items.AIR; }
+
+	@Override
+	public String getUnlocalizedName()
+	{
+		return this.sharedStack.getDefinition().getUnlocalizedName();
+	}
 
 	@Override
 	public Item getItem()
@@ -240,6 +259,14 @@ public final class AEItemStack extends AEStack implements IAEItemStack
 		}
 
 		return Objects.equals( this.sharedStack, ( (AEItemStack) otherStack ).sharedStack );
+	}
+
+	@Override
+	public boolean isSameType( final IAEStack otherStack )
+	{
+		if(otherStack.getChannel() != this.getChannel())
+			return false;
+		return isSameType((IAEItemStack)otherStack);
 	}
 
 	@Override

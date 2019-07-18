@@ -22,6 +22,12 @@ package appeng.util.inv;
 import java.util.Iterator;
 import java.util.List;
 
+import appeng.api.AEApi;
+import appeng.api.storage.IStorageChannel;
+import appeng.api.storage.channels.IItemStorageChannel;
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.config.FuzzyMode;
@@ -33,9 +39,9 @@ import appeng.util.iterators.StackToSlotIterator;
 public class AdaptorList extends InventoryAdaptor
 {
 
-	private final List<ItemStack> i;
+	private final List<IAEStack> i;
 
-	public AdaptorList( final List<ItemStack> s )
+	public AdaptorList( final List<IAEStack> s )
 	{
 		this.i = s;
 	}
@@ -47,17 +53,17 @@ public class AdaptorList extends InventoryAdaptor
 	}
 
 	@Override
-	public ItemStack removeItems( int amount, final ItemStack filter, final IInventoryDestination destination )
+	public IAEStack removeItems( long amount, final IAEStack filter, final IInventoryDestination destination )
 	{
 		final int s = this.i.size();
 		for( int x = 0; x < s; x++ )
 		{
-			final ItemStack is = this.i.get( x );
-			if( !is.isEmpty() && ( filter.isEmpty() || Platform.itemComparisons().isSameItem( is, filter ) ) )
+			final IAEStack is = this.i.get( x );
+			if( !is.isEmpty() && ( filter.isEmpty() || is.equals(filter) ) )
 			{
-				if( amount > is.getCount() )
+				if( amount > is.getStackSize() )
 				{
-					amount = is.getCount();
+					amount = is.getStackSize();
 				}
 				if( destination != null && !destination.canInsert( is ) )
 				{
@@ -66,12 +72,12 @@ public class AdaptorList extends InventoryAdaptor
 
 				if( amount > 0 )
 				{
-					final ItemStack rv = is.copy();
-					rv.setCount( amount );
-					is.grow( -amount );
+					final IAEStack rv = is.copy();
+					rv.setStackSize( amount );
+					is.decStackSize( amount );
 
 					// remove it..
-					if( is.getCount() <= 0 )
+					if( is.getStackSize() <= 0 )
 					{
 						this.i.remove( x );
 					}
@@ -80,19 +86,19 @@ public class AdaptorList extends InventoryAdaptor
 				}
 			}
 		}
-		return ItemStack.EMPTY;
+		return null;
 	}
 
 	@Override
-	public ItemStack simulateRemove( int amount, final ItemStack filter, final IInventoryDestination destination )
+	public IAEStack simulateRemove( long amount, final IAEStack filter, final IInventoryDestination destination )
 	{
-		for( final ItemStack is : this.i )
+		for( final IAEStack is : this.i )
 		{
-			if( !is.isEmpty() && ( filter.isEmpty() || Platform.itemComparisons().isSameItem( is, filter ) ) )
+			if( !is.isEmpty() && ( filter.isEmpty() || is.equals( filter ) ) )
 			{
-				if( amount > is.getCount() )
+				if( amount > is.getStackSize() )
 				{
-					amount = is.getCount();
+					amount = is.getStackSize();
 				}
 				if( destination != null && !destination.canInsert( is ) )
 				{
@@ -101,27 +107,27 @@ public class AdaptorList extends InventoryAdaptor
 
 				if( amount > 0 )
 				{
-					final ItemStack rv = is.copy();
-					rv.setCount( amount );
+					final IAEStack rv = is.copy();
+					rv.setStackSize( amount );
 					return rv;
 				}
 			}
 		}
-		return ItemStack.EMPTY;
+		return null;
 	}
 
 	@Override
-	public ItemStack removeSimilarItems( int amount, final ItemStack filter, final FuzzyMode fuzzyMode, final IInventoryDestination destination )
+	public IAEStack removeSimilarItems( long amount, final IAEStack filter, final FuzzyMode fuzzyMode, final IInventoryDestination destination )
 	{
 		final int s = this.i.size();
 		for( int x = 0; x < s; x++ )
 		{
-			final ItemStack is = this.i.get( x );
-			if( !is.isEmpty() && ( filter.isEmpty() || Platform.itemComparisons().isFuzzyEqualItem( is, filter, fuzzyMode ) ) )
+			final IAEStack is = this.i.get( x );
+			if( !is.isEmpty() && ( filter.isEmpty() || is.fuzzyComparison( filter, fuzzyMode ) ) )
 			{
-				if( amount > is.getCount() )
+				if( amount > is.getStackSize() )
 				{
-					amount = is.getCount();
+					amount = is.getStackSize();
 				}
 				if( destination != null && !destination.canInsert( is ) )
 				{
@@ -130,12 +136,12 @@ public class AdaptorList extends InventoryAdaptor
 
 				if( amount > 0 )
 				{
-					final ItemStack rv = is.copy();
-					rv.setCount( amount );
-					is.grow( -amount );
+					final IAEStack rv = is.copy();
+					rv.setStackSize( amount );
+					is.decStackSize( amount );
 
 					// remove it..
-					if( is.getCount() <= 0 )
+					if( is.getStackSize() <= 0 )
 					{
 						this.i.remove( x );
 					}
@@ -144,19 +150,19 @@ public class AdaptorList extends InventoryAdaptor
 				}
 			}
 		}
-		return ItemStack.EMPTY;
+		return null;
 	}
 
 	@Override
-	public ItemStack simulateSimilarRemove( int amount, final ItemStack filter, final FuzzyMode fuzzyMode, final IInventoryDestination destination )
+	public IAEStack simulateSimilarRemove( long amount, final IAEStack filter, final FuzzyMode fuzzyMode, final IInventoryDestination destination )
 	{
-		for( final ItemStack is : this.i )
+		for( final IAEStack is : this.i )
 		{
-			if( !is.isEmpty() && ( filter.isEmpty() || Platform.itemComparisons().isFuzzyEqualItem( is, filter, fuzzyMode ) ) )
+			if( !is.isEmpty() && ( filter.isEmpty() || is.fuzzyComparison( filter, fuzzyMode ) ) )
 			{
-				if( amount > is.getCount() )
+				if( amount > is.getStackSize() )
 				{
-					amount = is.getCount();
+					amount = is.getStackSize();
 				}
 				if( destination != null && !destination.canInsert( is ) )
 				{
@@ -165,52 +171,48 @@ public class AdaptorList extends InventoryAdaptor
 
 				if( amount > 0 )
 				{
-					final ItemStack rv = is.copy();
-					rv.setCount( amount );
+					final IAEStack rv = is.copy();
+					rv.setStackSize( amount );
 					return rv;
 				}
 			}
 		}
-		return ItemStack.EMPTY;
+		return null;
 	}
 
 	@Override
-	public ItemStack addItems( final ItemStack toBeAdded )
+	public IAEStack addItems( final IAEStack toBeAdded )
 	{
-		if( toBeAdded.isEmpty() )
+		if( toBeAdded == null || toBeAdded.isEmpty() )
 		{
-			return ItemStack.EMPTY;
-		}
-		if( toBeAdded.getCount() == 0 )
-		{
-			return ItemStack.EMPTY;
+			return null;
 		}
 
-		final ItemStack left = toBeAdded.copy();
+		final IAEStack left = toBeAdded.copy();
 
-		for( final ItemStack is : this.i )
+		for( final IAEStack is : this.i )
 		{
-			if( ItemStack.areItemsEqual( is, left ) )
+			if( is.equals( left ) )
 			{
-				is.grow( left.getCount() );
-				return ItemStack.EMPTY;
+				is.incStackSize( left.getStackSize() );
+				return null;
 			}
 		}
 
 		this.i.add( left );
-		return ItemStack.EMPTY;
+		return null;
 	}
 
 	@Override
-	public ItemStack simulateAdd( final ItemStack toBeSimulated )
+	public IAEStack simulateAdd( final IAEStack toBeSimulated )
 	{
-		return ItemStack.EMPTY;
+		return null;
 	}
 
 	@Override
 	public boolean containsItems()
 	{
-		for( final ItemStack is : this.i )
+		for( final IAEStack is : this.i )
 		{
 			if( !is.isEmpty() )
 			{
@@ -221,7 +223,7 @@ public class AdaptorList extends InventoryAdaptor
 	}
 
 	@Override
-	public Iterator<ItemSlot> iterator()
+	public Iterator<ISlot> iterator()
 	{
 		return new StackToSlotIterator( this.i.iterator() );
 	}
