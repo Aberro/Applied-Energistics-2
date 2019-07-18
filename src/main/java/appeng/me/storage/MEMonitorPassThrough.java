@@ -90,7 +90,11 @@ public class MEMonitorPassThrough extends MEPassThrough implements IMEMonitor, I
 		for(IStorageChannel channel : AEApi.instance().storage().storageChannels())
 		{
 			IItemList b = before.get(channel);
+			if(b == null)
+				b = channel.createList();
 			IItemList a = after.get(channel);
+			if(a == null)
+				a = channel.createList();
 			Platform.postListChanges( b, a, this, this.getChangeSource() );
 		}
 
