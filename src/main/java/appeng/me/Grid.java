@@ -213,7 +213,11 @@ public class Grid implements IGrid
 	@SuppressWarnings( "unchecked" )
 	public <C extends IGridCache> C getCache( final Class<? extends IGridCache> iface )
 	{
-		return (C) this.caches.get( iface ).getCache();
+
+		GridCacheWrapper wrapper = this.caches.get( iface );
+		if(wrapper == null)
+			throw new NullPointerException();
+		return (C) wrapper.getCache();
 	}
 
 	@Override

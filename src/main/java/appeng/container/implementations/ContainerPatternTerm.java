@@ -25,7 +25,7 @@ import java.util.Optional;
 
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEStack;
-import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.ItemInventoryAdaptor;
 import appeng.container.slot.*;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;

@@ -24,9 +24,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
-import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.ItemInventoryAdaptor;
 import appeng.util.item.AEItemStack;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -48,7 +47,6 @@ import appeng.api.definitions.IMaterials;
 import appeng.core.AEConfig;
 import appeng.core.features.AEFeature;
 import appeng.core.worlddata.WorldData;
-import appeng.util.InventoryAdaptor;
 import appeng.util.Platform;
 import appeng.worldgen.meteorite.Fallout;
 import appeng.worldgen.meteorite.FalloutCopy;

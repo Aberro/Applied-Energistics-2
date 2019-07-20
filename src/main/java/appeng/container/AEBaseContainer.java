@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import appeng.api.storage.data.IAEStack;
-import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.ItemInventoryAdaptor;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -74,7 +74,6 @@ import appeng.core.sync.packets.PacketValueConfig;
 import appeng.helpers.ICustomNameObject;
 import appeng.helpers.InventoryAction;
 import appeng.me.helpers.PlayerSource;
-import appeng.util.InventoryAdaptor;
 import appeng.util.Platform;
 import appeng.util.inv.AdaptorItemHandler;
 import appeng.util.inv.WrapperCursorItemHandler;

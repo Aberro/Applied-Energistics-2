@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
 
 import appeng.api.networking.crafting.*;
 import appeng.api.util.*;
+import appeng.util.*;
 import com.google.common.collect.ImmutableSet;
 
 import net.minecraft.block.Block;
@@ -76,7 +77,6 @@ import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.IStorageMonitorable;
 import appeng.api.storage.IStorageMonitorableAccessor;
-import appeng.api.storage.channels.IFluidStorageChannel;
 import appeng.api.storage.channels.IItemStorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
@@ -92,10 +92,6 @@ import appeng.parts.automation.StackUpgradeInventory;
 import appeng.parts.automation.UpgradeInventory;
 import appeng.tile.inventory.AppEngInternalAEInventory;
 import appeng.tile.inventory.AppEngInternalInventory;
-import appeng.util.ConfigManager;
-import appeng.util.IConfigManagerHost;
-import appeng.util.InventoryAdaptor;
-import appeng.util.Platform;
 import appeng.util.inv.AdaptorItemHandler;
 import appeng.util.inv.IAEAppEngInventory;
 import appeng.util.inv.IInventoryDestination;

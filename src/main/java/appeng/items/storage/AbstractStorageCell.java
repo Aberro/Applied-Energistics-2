@@ -23,13 +23,12 @@ import java.util.List;
 import java.util.Set;
 
 import appeng.api.util.ISlot;
-import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.ItemInventoryAdaptor;
 import appeng.util.item.AEItemStack;
 import appeng.util.item.MixedList;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
@@ -48,7 +47,6 @@ import appeng.api.implementations.items.IItemGroup;
 import appeng.api.implementations.items.IStorageCell;
 import appeng.api.implementations.items.IUpgradeModule;
 import appeng.api.storage.IMEInventoryHandler;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.core.AEConfig;
@@ -58,7 +56,6 @@ import appeng.items.AEBaseItem;
 import appeng.items.contents.CellConfig;
 import appeng.items.contents.CellUpgrades;
 import appeng.items.materials.MaterialType;
-import appeng.util.InventoryAdaptor;
 import appeng.util.Platform;
 
 

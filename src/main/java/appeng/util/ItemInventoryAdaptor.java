@@ -1,16 +1,12 @@
-package appeng.api.util;
+package appeng.util;
 
 
 import appeng.api.AEApi;
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.channels.IItemStorageChannel;
-import appeng.api.storage.data.IAEItemStack;
-import appeng.util.InventoryAdaptor;
 import appeng.util.inv.AdaptorItemHandler;
 import appeng.util.inv.AdaptorItemHandlerPlayerInv;
-import appeng.util.inv.ItemSlot;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.items.CapabilityItemHandler;

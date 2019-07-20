@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import appeng.api.storage.data.IAEStack;
-import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.ItemInventoryAdaptor;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.Item;

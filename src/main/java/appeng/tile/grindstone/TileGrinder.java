@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import appeng.api.storage.data.IAEStack;
-import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.ItemInventoryAdaptor;
 import appeng.util.item.AEItemStack;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;

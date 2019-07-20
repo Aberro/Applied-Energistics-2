@@ -21,6 +21,7 @@ package appeng.me.storage;
 
 import appeng.api.implementations.items.IStorageCell;
 import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
 import appeng.items.storage.ItemCreativeStorageCell;
 import appeng.util.inv.ItemSlot;
 import net.minecraft.item.Item;
@@ -64,7 +65,7 @@ public class CreativeCellInventory implements IMEInventoryHandler
 		return new BasicCellInventoryHandler( new CreativeCellInventory( o ), AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class ) );
 	}
 
-	public static boolean isCell(ItemStack is, IStorageChannel<IAEItemStack, ItemSlot, ItemStack> channel)
+	public static boolean isCell(ItemStack is, IStorageChannel<IAEItemStack, ISlot<ItemStack, IAEItemStack>, ItemStack> channel)
 	{
 		return !is.isEmpty() && is.getItem() instanceof ItemCreativeStorageCell;
 	}

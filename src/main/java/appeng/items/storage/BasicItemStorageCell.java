@@ -20,7 +20,8 @@ package appeng.items.storage;
 
 
 import appeng.api.storage.data.IAEStack;
-import appeng.api.util.ItemInventoryAdaptor;
+import appeng.api.util.ISlot;
+import appeng.util.ItemInventoryAdaptor;
 import appeng.util.inv.ItemSlot;
 import appeng.util.item.AEItemStack;
 import net.minecraft.entity.player.EntityPlayer;
@@ -31,10 +32,9 @@ import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.channels.IItemStorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.items.materials.MaterialType;
-import appeng.util.InventoryAdaptor;
 
 
-public final class BasicItemStorageCell extends AbstractStorageCell<IAEItemStack, ItemSlot, ItemStack>
+public final class BasicItemStorageCell extends AbstractStorageCell<IAEItemStack, ISlot<ItemStack, IAEItemStack>, ItemStack>
 {
 
 	protected final int perType;
@@ -81,7 +81,7 @@ public final class BasicItemStorageCell extends AbstractStorageCell<IAEItemStack
 	}
 
 	@Override
-	public IStorageChannel<IAEItemStack, ItemSlot, ItemStack> getChannel()
+	public IStorageChannel<IAEItemStack, ISlot<ItemStack, IAEItemStack>, ItemStack> getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}

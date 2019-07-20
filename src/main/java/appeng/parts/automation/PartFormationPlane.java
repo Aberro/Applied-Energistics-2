@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
 import appeng.util.inv.ItemSlot;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -365,7 +366,7 @@ public class PartFormationPlane extends PartAbstractFormationPlane<IAEItemStack>
 		return itemInput;
 	}
 
-	public IStorageChannel<IAEItemStack, ItemSlot, ItemStack> getChannel()
+	public IStorageChannel<IAEItemStack, ISlot<ItemStack, IAEItemStack>, ItemStack> getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}

@@ -27,20 +27,18 @@ import appeng.api.storage.channels.IItemStorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.util.ISlot;
-import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.ItemInventoryAdaptor;
 import appeng.util.item.AEItemStack;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 
 import appeng.api.config.FuzzyMode;
-import appeng.util.InventoryAdaptor;
-import appeng.util.Platform;
 
 
 public class AdaptorItemHandler extends ItemInventoryAdaptor
 {
 	protected final IItemHandler itemHandler;
-	private final IStorageChannel<IAEItemStack, ItemSlot, ItemStack> channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
+	private final IStorageChannel<IAEItemStack, ISlot<ItemStack, IAEItemStack>, ItemStack> channel = AEApi.instance().storage().getStorageChannel(IItemStorageChannel.class);
 
 	public AdaptorItemHandler( IItemHandler itemHandler )
 	{

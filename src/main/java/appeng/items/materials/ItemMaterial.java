@@ -30,7 +30,7 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import appeng.api.util.ItemInventoryAdaptor;
+import appeng.util.ItemInventoryAdaptor;
 import appeng.util.item.AEItemStack;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -68,7 +68,6 @@ import appeng.core.features.AEFeature;
 import appeng.core.features.IStackSrc;
 import appeng.core.features.MaterialStackSrc;
 import appeng.items.AEBaseItem;
-import appeng.util.InventoryAdaptor;
 import appeng.util.Platform;
 import appeng.util.inv.AdaptorItemHandler;
 

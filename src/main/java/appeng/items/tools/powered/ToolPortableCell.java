@@ -22,6 +22,7 @@ package appeng.items.tools.powered;
 import java.util.List;
 import java.util.Set;
 
+import appeng.api.util.ISlot;
 import appeng.util.inv.ItemSlot;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
@@ -57,7 +58,7 @@ import appeng.items.tools.powered.powersink.AEBasePoweredItem;
 import appeng.util.Platform;
 
 
-public class ToolPortableCell extends AEBasePoweredItem implements IStorageCell<IAEItemStack, ItemSlot, ItemStack>, IGuiItem, IItemGroup
+public class ToolPortableCell extends AEBasePoweredItem implements IStorageCell<IAEItemStack, ISlot<ItemStack, IAEItemStack>, ItemStack>, IGuiItem, IItemGroup
 {
 	public ToolPortableCell()
 	{
@@ -135,7 +136,7 @@ public class ToolPortableCell extends AEBasePoweredItem implements IStorageCell<
 	}
 
 	@Override
-	public IStorageChannel<IAEItemStack, ItemSlot, ItemStack> getChannel()
+	public IStorageChannel<IAEItemStack, ISlot<ItemStack, IAEItemStack>, ItemStack> getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}

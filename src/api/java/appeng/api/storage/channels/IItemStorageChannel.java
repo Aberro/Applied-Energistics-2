@@ -27,11 +27,11 @@ package appeng.api.storage.channels;
 import appeng.api.storage.IStorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
-import appeng.util.inv.ItemSlot;
+import appeng.api.util.ISlot;
 import net.minecraft.item.ItemStack;
 
 
-public interface IItemStorageChannel extends IStorageChannel<IAEItemStack, ItemSlot, ItemStack>
+public interface IItemStorageChannel extends IStorageChannel<IAEItemStack, ISlot<ItemStack, IAEItemStack>, ItemStack>
 {
 
 }

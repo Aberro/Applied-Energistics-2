@@ -19,11 +19,9 @@
 package appeng.fluids.items;
 
 
-import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.util.ISlot;
-import appeng.api.util.ItemInventoryAdaptor;
-import appeng.fluids.container.slots.IMEFluidSlot;
+import appeng.util.ItemInventoryAdaptor;
 import appeng.util.item.AEItemStack;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -37,7 +35,6 @@ import appeng.api.storage.data.IAEFluidStack;
 import appeng.fluids.helper.FluidCellConfig;
 import appeng.items.materials.MaterialType;
 import appeng.items.storage.AbstractStorageCell;
-import appeng.util.InventoryAdaptor;
 
 
 /**

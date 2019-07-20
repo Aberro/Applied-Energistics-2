@@ -27,6 +27,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import appeng.api.storage.data.IAEStack;
+import appeng.api.util.ISlot;
 import appeng.util.inv.ItemSlot;
 import io.netty.buffer.ByteBuf;
 
@@ -207,7 +208,7 @@ public final class AEItemStack extends AEStack<AEItemStack> implements IAEItemSt
     }
 
 	@Override
-	public IStorageChannel<IAEItemStack, ItemSlot, ItemStack> getChannel()
+	public IStorageChannel<IAEItemStack, ISlot<ItemStack, IAEItemStack>, ItemStack> getChannel()
 	{
 		return AEApi.instance().storage().getStorageChannel( IItemStorageChannel.class );
 	}
